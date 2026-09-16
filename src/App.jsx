@@ -202,7 +202,7 @@ export default function App(){
   const fadeStyle=id=>({opacity:visible[id]?1:0,transform:visible[id]?"translateY(0)":"translateY(24px)",transition:"opacity .7s ease, transform .7s ease"});
 
   return(
-    <div style={{background:"#09090f",color:"#fff",fontFamily:"system-ui,-apple-system,sans-serif",minHeight:"100%",overflowY:"auto"}}>
+    <div style={{background:"radial-gradient(ellipse 1200px 800px at 15% 0%,rgba(124,58,237,0.10),transparent 60%),radial-gradient(ellipse 1000px 700px at 90% 30%,rgba(57,255,136,0.06),transparent 55%),#0B0B0F",color:"#fff",fontFamily:"system-ui,-apple-system,sans-serif",minHeight:"100%",overflowY:"auto"}}>
       <style>{`
         @keyframes kenBurns{0%{transform:scale(1) translate(0,0)}50%{transform:scale(1.07) translate(-1%,-1%)}100%{transform:scale(1.03) translate(1%,0.5%)}}
         @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
@@ -296,13 +296,13 @@ export default function App(){
             </div>
           </div>
 
-          {/* STATS */}
-          <div data-id="stats" style={{...fadeStyle("stats"),display:"grid",gridTemplateColumns:"repeat(4,1fr)",borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
-            {[{n:"7",l:"активных\nчелленджей",e:"🏆"},{n:"200+",l:"участников\nв сезоне",e:"👥"},{n:"1.24M",l:"шагов\nза май",e:"👟"},{n:"3",l:"года\nкорп.спорта",e:"🎯"}].map((s,i)=>(
-              <div key={i} style={{padding:"28px 20px",textAlign:"center",borderRight:i<3?"1px solid rgba(255,255,255,0.04)":"none"}}>
+          {/* STATS — floating glass cards, слегка перекрывают hero снизу для цельности */}
+          <div data-id="stats" style={{...fadeStyle("stats"),position:"relative",zIndex:3,marginTop:-64,padding:"0 32px",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,maxWidth:1240,margin:"-64px auto 0"}}>
+            {[{n:"7",l:"активных челленджей",e:"🏆",c:P},{n:"200+",l:"участников в сезоне",e:"👥",c:NEON_GREEN},{n:"1.24M",l:"шагов за май",e:"👟",c:P},{n:"3",l:"года корп.спорта",e:"🎯",c:NEON_GREEN}].map((s,i)=>(
+              <div key={i} style={{...glass(s.c,0.05),borderRadius:16,padding:"22px 20px",textAlign:"center"}}>
                 <div style={{fontSize:22,marginBottom:8}}>{s.e}</div>
-                <div style={{fontSize:36,fontWeight:800,letterSpacing:"-1px"}}>{s.n}</div>
-                <div style={{fontSize:11,color:"#444",marginTop:6,whiteSpace:"pre-line",lineHeight:1.5}}>{s.l}</div>
+                <div style={{fontSize:32,fontWeight:800,letterSpacing:"-1px",color:s.c===P?"#fff":s.c}}>{s.n}</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:6,lineHeight:1.5}}>{s.l}</div>
               </div>
             ))}
           </div>
@@ -395,18 +395,6 @@ export default function App(){
             </div>
           </div>
 
-          {/* ROUTE PROGRESS MAP — Москва → Санкт-Петербург */}
-          <div data-id="routemap" style={{...fadeStyle("routemap"),margin:"48px 32px 0",borderRadius:20,padding:"28px 32px",...glass(NEON_GREEN,0.03)}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
-              <div>
-                <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontWeight:600,letterSpacing:".1em",textTransform:"uppercase"}}>Карта прогресса компании</div>
-                <div style={{fontSize:20,fontWeight:800,marginTop:4}}>62% пути Москва — Санкт-Петербург</div>
-              </div>
-              <span style={{fontSize:12,color:NEON_GREEN,background:NEON_GREEN+"18",border:`1px solid ${NEON_GREEN}40`,borderRadius:999,padding:"4px 12px",fontWeight:600}}>576 / 930 км</span>
-            </div>
-            <RouteMap progress={0.62}/>
-          </div>
-
           {/* EPIC PHOTO BANNER — simulated swimmer at iceberg */}
           <div data-id="banner" style={{...fadeStyle("banner"),margin:"48px 32px",borderRadius:20,overflow:"hidden",height:300,position:"relative",cursor:"pointer"}} onClick={()=>setPage("leaderboard")}>
             <img src={IMG2} alt="swimmer" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 30%"}}/>
@@ -421,7 +409,7 @@ export default function App(){
 
           {/* PRIZES */}
           <div data-id="prizes" style={{...fadeStyle("prizes"),padding:"0 32px 48px"}}>
-            <div style={{background:"linear-gradient(135deg,#0f0520,#150a2a)",border:"1px solid rgba(124,58,237,0.12)",borderRadius:20,padding:"36px 32px"}}>
+            <div style={{...glass(P,0.03),borderRadius:20,padding:"36px 32px"}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:28}}>
                 <h2 style={{fontSize:26,fontWeight:800,margin:0,letterSpacing:"-0.6px"}}>Призы и награды</h2>
                 <button onClick={()=>setPage("challenges")} className="hov-btn" style={{background:P,color:"#fff",border:"none",borderRadius:8,padding:"9px 18px",fontSize:13,fontWeight:600,cursor:"pointer"}}>Участвовать →</button>
