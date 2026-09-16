@@ -244,67 +244,48 @@ export default function App(){
       {/* ── HOME ── */}
       {page==="home"&&(
         <div>
-          {/* HERO — full height с Ken Burns + parallax */}
-          <div style={{position:"relative",height:"92vh",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            {/* Ken Burns background — simulated sunset swimmer photo */}
-            <div style={{position:"absolute",inset:0,animation:"kenBurns 16s ease-in-out infinite alternate",transformOrigin:"center center"}}>
-              <img src={IMG4} alt="hero" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 40%",display:"block"}}/>
-              <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,rgba(5,2,15,0.55) 0%,rgba(5,2,15,0.1) 40%,rgba(5,2,15,0.65) 100%)"}}/>
-              {[...Array(4)].map((_,i)=>(
-                <div key={i} style={{position:"absolute",bottom:`${15+i*8}%`,left:`${10+i*20}%`,width:`${80+i*40}px`,height:`${80+i*40}px`,borderRadius:"50%",border:"1px solid rgba(255,255,255,0.06)",animation:`ripple ${3+i*.8}s ease-out ${i*.5}s infinite`}}/>
-              ))}
+          {/* HERO — реальное фото, left-aligned контент + встроенная карточка статистики (по референсам) */}
+          <div style={{position:"relative",minHeight:560,overflow:"hidden",borderRadius:"0 0 24px 24px"}}>
+            <div style={{position:"absolute",inset:0,animation:"kenBurns 18s ease-in-out infinite alternate",transformOrigin:"center center"}}>
+              <img src={IMG4} alt="hero" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 38%",display:"block"}}/>
+              <div style={{position:"absolute",inset:0,background:"linear-gradient(100deg,rgba(5,2,15,0.92) 0%,rgba(5,2,15,0.55) 45%,rgba(5,2,15,0.25) 100%)"}}/>
             </div>
 
-            {/* Parallax content */}
-            <div style={{position:"relative",zIndex:2,textAlign:"center",padding:"0 32px",transform:`translate(${mouse.x*.4}px,${mouse.y*.3}px)`,transition:"transform .1s ease"}}>
-              <h1 style={{fontSize:72,fontWeight:800,lineHeight:1.0,margin:"0 0 20px",letterSpacing:"-3px",textShadow:"0 2px 40px rgba(0,0,0,0.8)"}}>
-                Заряжаем<br/>
-                <span style={{display:"inline-block",minHeight:"1.05em",color:"transparent",backgroundClip:"text",WebkitBackgroundClip:"text",backgroundImage:"linear-gradient(135deg,#A78BFA,#7C3AED,#c084fc)",filter:"drop-shadow(0 0 30px rgba(124,58,237,0.5))"}}>
-                  <AnimatePresence mode="wait">
-                    <motion.span key={heroWordIdx} initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-16}} transition={{duration:.5,ease:"easeOut"}} style={{display:"inline-block"}}>
-                      {HERO_WORDS[heroWordIdx]},
-                    </motion.span>
-                  </AnimatePresence>
-                </span><br/>
-                вдохновляем на победы
-              </h1>
-
-              {/* Animated ticker */}
-              <div style={{overflow:"hidden",margin:"0 auto 28px",maxWidth:600,height:32,maskImage:"linear-gradient(to right,transparent,black 8%,black 92%,transparent)"}}>
-                <div style={{display:"flex",gap:24,animation:"ticker 20s linear infinite",whiteSpace:"nowrap"}}>
-                  {[...["🏊 Плавание","👟 87 000 шагов","🏃 82 км бега","🚴 Корп. велогонка","⭐ 200+ участников","🥇 Рекорд сезона"],...["🏊 Плавание","👟 87 000 шагов","🏃 82 км бега","🚴 Корп. велогонка","⭐ 200+ участников","🥇 Рекорд сезона"]].map((t,i)=>(
-                    <span key={i} style={{fontSize:13,color:"rgba(255,255,255,0.35)",display:"inline-flex",alignItems:"center",gap:8}}>
-                      {t}<span style={{width:3,height:3,borderRadius:"50%",background:"rgba(124,58,237,0.4)",display:"inline-block"}}/>
-                    </span>
-                  ))}
+            <div style={{position:"relative",zIndex:2,padding:"56px 40px",display:"flex",justifyContent:"space-between",gap:32,alignItems:"flex-start",flexWrap:"wrap"}}>
+              <div style={{maxWidth:560,paddingTop:28}}>
+                <div style={{fontSize:11,color:PL,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",marginBottom:16}}>Корпоративная спортивная платформа право(тех)</div>
+                <h1 style={{fontSize:52,fontWeight:800,lineHeight:1.08,margin:"0 0 18px",letterSpacing:"-1.5px"}}>
+                  Движение делает нас <span style={{display:"inline-block",color:"transparent",backgroundClip:"text",WebkitBackgroundClip:"text",backgroundImage:"linear-gradient(135deg,#A78BFA,#7C3AED,#c084fc)"}}>
+                    <AnimatePresence mode="wait">
+                      <motion.span key={heroWordIdx} initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-14}} transition={{duration:.5,ease:"easeOut"}} style={{display:"inline-block"}}>
+                        {HERO_WORDS[heroWordIdx]}
+                      </motion.span>
+                    </AnimatePresence>
+                  </span>
+                </h1>
+                <p style={{fontSize:15,color:"rgba(255,255,255,0.55)",margin:"0 0 28px",lineHeight:1.7,maxWidth:440}}>
+                  Участвуй в корпоративных челленджах, соревнуйся с коллегами и становись лидером сезона
+                </p>
+                <div style={{display:"flex",gap:12}}>
+                  <button onClick={()=>setPage("challenges")} className="hov-btn" style={{background:P,color:"#fff",border:"none",borderRadius:10,padding:"13px 26px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:`0 6px 20px ${P}55`}}>Начать участвовать →</button>
+                  <button onClick={()=>setPage("leaderboard")} className="hov-btn" style={{background:"rgba(255,255,255,0.06)",color:"#fff",border:"1px solid rgba(255,255,255,0.15)",borderRadius:10,padding:"13px 26px",fontSize:14,cursor:"pointer",backdropFilter:"blur(8px)"}}>Рейтинг сезона</button>
                 </div>
               </div>
 
-              <p style={{fontSize:16,color:"rgba(255,255,255,0.5)",margin:"0 auto 36px",maxWidth:420,lineHeight:1.7,textShadow:"0 1px 10px rgba(0,0,0,0.8)"}}>
-                Участвуй в корпоративных челленджах, соревнуйся с коллегами и становись лидером сезона
-              </p>
-              <div style={{display:"flex",gap:12,justifyContent:"center"}}>
-                <button onClick={()=>setPage("challenges")} className="hov-btn" style={{background:P,color:"#fff",border:"none",borderRadius:12,padding:"15px 32px",fontSize:16,fontWeight:700,cursor:"pointer",boxShadow:`0 6px 24px ${P}60`}}>Начать участвовать</button>
-                <button onClick={()=>setPage("leaderboard")} className="hov-btn" style={{background:"rgba(255,255,255,0.06)",color:"#fff",border:"1px solid rgba(255,255,255,0.15)",borderRadius:12,padding:"15px 32px",fontSize:16,cursor:"pointer",backdropFilter:"blur(8px)"}}>Рейтинг сезона</button>
+              {/* Встроенная карточка статистики — часть композиции hero, не отдельный блок */}
+              <div style={{...glass(P,0.07),borderRadius:18,padding:"20px 22px",width:300,flexShrink:0}}>
+                <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontWeight:600,letterSpacing:".08em",textTransform:"uppercase",marginBottom:14}}>Сезон 2025</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                  {[{n:"7",l:"активных челленджей",e:"🏆",c:P},{n:"200+",l:"участников",e:"👥",c:NEON_GREEN},{n:"1.24M",l:"шагов за май",e:"👟",c:P},{n:"3",l:"года платформы",e:"🎯",c:NEON_GREEN}].map((s,i)=>(
+                    <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:"12px 12px"}}>
+                      <div style={{fontSize:15,marginBottom:6}}>{s.e}</div>
+                      <div style={{fontSize:19,fontWeight:800,color:s.c===P?"#fff":s.c,letterSpacing:"-0.5px"}}>{s.n}</div>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginTop:2,lineHeight:1.4}}>{s.l}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-
-            {/* Scroll indicator */}
-            <div style={{position:"absolute",bottom:24,left:"50%",transform:"translateX(-50%)",display:"flex",flexDirection:"column",alignItems:"center",gap:6,opacity:0.4}}>
-              <div style={{fontSize:11,color:"#fff",letterSpacing:".1em",textTransform:"uppercase"}}>скролл</div>
-              <div style={{width:1,height:32,background:"linear-gradient(180deg,rgba(255,255,255,0.5),transparent)",animation:"pulse 2s ease-in-out infinite"}}/>
-            </div>
-          </div>
-
-          {/* STATS — floating glass cards, слегка перекрывают hero снизу для цельности */}
-          <div data-id="stats" style={{...fadeStyle("stats"),position:"relative",zIndex:3,marginTop:-64,padding:"0 32px",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,maxWidth:1240,margin:"-64px auto 0"}}>
-            {[{n:"7",l:"активных челленджей",e:"🏆",c:P},{n:"200+",l:"участников в сезоне",e:"👥",c:NEON_GREEN},{n:"1.24M",l:"шагов за май",e:"👟",c:P},{n:"3",l:"года корп.спорта",e:"🎯",c:NEON_GREEN}].map((s,i)=>(
-              <div key={i} style={{...glass(s.c,0.05),borderRadius:16,padding:"22px 20px",textAlign:"center"}}>
-                <div style={{fontSize:22,marginBottom:8}}>{s.e}</div>
-                <div style={{fontSize:32,fontWeight:800,letterSpacing:"-1px",color:s.c===P?"#fff":s.c}}>{s.n}</div>
-                <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:6,lineHeight:1.5}}>{s.l}</div>
-              </div>
-            ))}
           </div>
 
           {/* PHOTO STRIP — горизонтальная лента */}
@@ -336,76 +317,83 @@ export default function App(){
             </div>
           </div>
 
-          {/* CHALLENGES + LIVE */}
-          <div data-id="chal" style={{...fadeStyle("chal"),padding:"48px 32px 0",display:"grid",gridTemplateColumns:"1fr 300px",gap:20}}>
-            <div>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
-                <h2 style={{fontSize:24,fontWeight:800,margin:0,letterSpacing:"-0.5px"}}>Активные челленджи</h2>
-                <button onClick={()=>setPage("challenges")} style={{background:"transparent",color:P,border:"none",fontSize:13,cursor:"pointer",fontWeight:500}}>Все →</button>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                {CHALLENGES.map(c=>(
-                  <TiltCard key={c.id} glowColor={c.color} onClick={()=>c.status==="active"?setSubmitChal(c):notify("Скоро!")}
-                    style={{borderRadius:14,overflow:"hidden",height:180,position:"relative",...glass(c.color,0.04)}}>
+          {/* CHALLENGES — полноширинный ряд карточек по референсу: фото + бейдж + круглая стрелка + мета снизу */}
+          <div data-id="chal" style={{...fadeStyle("chal"),padding:"48px 32px 0"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+              <h2 style={{fontSize:24,fontWeight:800,margin:0,letterSpacing:"-0.5px"}}>Активные челленджи</h2>
+              <button onClick={()=>setPage("challenges")} style={{background:"transparent",color:P,border:"none",fontSize:13,cursor:"pointer",fontWeight:500}}>Все →</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+              {CHALLENGES.map(c=>(
+                <TiltCard key={c.id} glowColor={c.color} onClick={()=>c.status==="active"?setSubmitChal(c):notify("Скоро!")}
+                  style={{borderRadius:16,overflow:"hidden",position:"relative",...glass(c.color,0.04),display:"flex",flexDirection:"column"}}>
+                  <div style={{height:150,position:"relative"}}>
                     <PhotoCard scene={{bg:c.bg,shapes:[]}} style={{width:"100%",height:"100%",position:"absolute",inset:0}}>
                       <div className="photo-inner"/>
                     </PhotoCard>
-                    <div style={{position:"absolute",inset:0,background:"linear-gradient(0deg,rgba(0,0,0,0.75) 0%,transparent 60%)"}}/>
-                    <div style={{position:"absolute",top:12,right:12}}>
-                      <span style={{fontSize:10,background:c.color+"30",color:c.color,padding:"3px 8px",borderRadius:999,fontWeight:600,border:`1px solid ${c.color}50`,backdropFilter:"blur(4px)"}}>{c.statusLabel}</span>
+                    <div style={{position:"absolute",inset:0,background:"linear-gradient(0deg,rgba(0,0,0,0.35) 0%,transparent 55%)"}}/>
+                    <span style={{position:"absolute",top:10,left:10,fontSize:10,background:c.color+"35",color:c.color,padding:"3px 9px",borderRadius:999,fontWeight:600,border:`1px solid ${c.color}55`,backdropFilter:"blur(4px)"}}>{c.statusLabel}</span>
+                    <div style={{position:"absolute",top:10,right:10,width:28,height:28,borderRadius:"50%",background:"rgba(0,0,0,0.4)",border:"1px solid rgba(255,255,255,0.15)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,backdropFilter:"blur(4px)"}}>→</div>
+                  </div>
+                  <div style={{padding:"14px 16px",flex:1}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                      <span style={{fontSize:17}}>{c.emoji}</span>
+                      <span style={{fontSize:14,fontWeight:700}}>{c.title}</span>
                     </div>
-                    <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"14px 16px"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                        <span style={{fontSize:20}}>{c.emoji}</span>
-                        <span style={{fontSize:15,fontWeight:700}}>{c.title}</span>
-                      </div>
-                      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"rgba(255,255,255,0.4)"}}>
-                        <span>👥 {c.participants}</span><span>⏱ {c.daysLeft}д</span>
-                      </div>
+                    <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginBottom:10,lineHeight:1.5}}>{c.desc}</div>
+                    <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:"rgba(255,255,255,0.35)"}}>
+                      <span>👥 {c.participants} участника</span><span>⏱ {c.daysLeft}д</span>
                     </div>
-                  </TiltCard>
-                ))}
-              </div>
+                  </div>
+                </TiltCard>
+              ))}
             </div>
-            <div>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:20}}>
-                <h2 style={{fontSize:24,fontWeight:800,margin:0,letterSpacing:"-0.5px"}}>Лента</h2>
-                <span style={{display:"flex",alignItems:"center",gap:4,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:999,padding:"3px 8px",fontSize:10,color:"#F87171",fontWeight:600}}>
-                  <span style={{width:5,height:5,borderRadius:"50%",background:"#EF4444",animation:"pulse 1.5s ease-in-out infinite",display:"inline-block"}}/>LIVE
-                </span>
-              </div>
+          </div>
+
+          {/* LIVE FEED — компактная горизонтальная лента */}
+          <div data-id="livefeed" style={{...fadeStyle("livefeed"),padding:"32px 32px 0"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
+              <h2 style={{fontSize:18,fontWeight:700,margin:0}}>Лента</h2>
+              <span style={{display:"flex",alignItems:"center",gap:4,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:999,padding:"3px 8px",fontSize:10,color:"#F87171",fontWeight:600}}>
+                <span style={{width:5,height:5,borderRadius:"50%",background:"#EF4444",animation:"pulse 1.5s ease-in-out infinite",display:"inline-block"}}/>LIVE
+              </span>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
               <AnimatePresence initial={false}>
-                {liveFeed.map((item)=>(
+                {liveFeed.slice(0,4).map((item)=>(
                   <motion.div key={item.id||item.name+item.ago} layout
-                    initial={{opacity:0,y:-24,scale:.92}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,height:0,marginBottom:0}}
+                    initial={{opacity:0,y:-16,scale:.95}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,scale:.9}}
                     transition={{type:"spring",stiffness:340,damping:26}}
-                    style={{...glass(P,0.03),borderRadius:10,padding:"12px 14px",marginBottom:8,display:"flex",gap:10,alignItems:"center"}}>
-                    <Av uid={item.uid} size={30}/>
+                    style={{...glass(P,0.03),borderRadius:12,padding:"10px 12px",display:"flex",gap:8,alignItems:"center"}}>
+                    <Av uid={item.uid} size={26}/>
                     <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:12,fontWeight:600,color:"#ccc"}}>{item.name}</div>
-                      <div style={{fontSize:12,color:"#555",marginTop:1}}>{item.action}</div>
+                      <div style={{fontSize:11,fontWeight:600,color:"#ccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.name}</div>
+                      <div style={{fontSize:11,color:"#666"}}>{item.action}</div>
                     </div>
-                    <div style={{textAlign:"right",flexShrink:0}}>
-                      <div style={{fontSize:12,color:NEON_GREEN,fontWeight:600}}>+{item.pts}</div>
-                      <div style={{fontSize:10,color:"#333"}}>{item.ago}</div>
-                    </div>
+                    <div style={{fontSize:11,color:NEON_GREEN,fontWeight:600,flexShrink:0}}>+{item.pts}</div>
                   </motion.div>
                 ))}
               </AnimatePresence>
             </div>
           </div>
 
-          {/* EPIC PHOTO BANNER — simulated swimmer at iceberg */}
-          <div data-id="banner" style={{...fadeStyle("banner"),margin:"48px 32px",borderRadius:20,overflow:"hidden",height:300,position:"relative",cursor:"pointer"}} onClick={()=>setPage("leaderboard")}>
-            <img src={IMG2} alt="swimmer" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 30%"}}/>
-            <div style={{position:"absolute",inset:0,background:"linear-gradient(90deg,rgba(0,0,0,0.75) 0%,rgba(0,0,0,0.3) 50%,transparent 100%)"}}/>
-            <div style={{position:"absolute",top:"50%",left:48,transform:"translateY(-50%)"}}>
-              <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontWeight:600,letterSpacing:".1em",textTransform:"uppercase",marginBottom:10}}>Сезон 2025</div>
-              <h2 style={{fontSize:38,fontWeight:800,margin:"0 0 12px",letterSpacing:"-1px",lineHeight:1.1}}>Вместе мы прошли<br/><span style={{color:PL}}>1 240 000 шагов</span></h2>
-              <p style={{fontSize:14,color:"rgba(255,255,255,0.5)",margin:"0 0 20px"}}>Это около 930 км — от Москвы до Санкт-Петербурга и обратно</p>
-              <button style={{background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.2)",borderRadius:8,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",backdropFilter:"blur(8px)"}}>Смотреть рейтинг →</button>
+          {/* ROUTE BANNER — горизонтальный баннер с реальным фото и светящимся маршрутом (по референсу) */}
+          <div data-id="banner" style={{...fadeStyle("banner"),margin:"40px 32px 0",borderRadius:20,overflow:"hidden",position:"relative",minHeight:220,display:"flex",alignItems:"center"}}>
+            <img src={IMG3} alt="route" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",filter:"brightness(0.5)"}}/>
+            <div style={{position:"absolute",inset:0,background:"linear-gradient(100deg,rgba(5,2,15,0.85) 0%,rgba(5,2,15,0.4) 60%,rgba(5,2,15,0.7) 100%)"}}/>
+            <div style={{position:"relative",zIndex:2,display:"flex",width:"100%",alignItems:"center",justifyContent:"space-between",padding:"32px 40px",gap:24,flexWrap:"wrap"}}>
+              <div style={{maxWidth:280}}>
+                <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontWeight:600,letterSpacing:".1em",textTransform:"uppercase",marginBottom:8}}>Сезон 2025</div>
+                <h2 style={{fontSize:28,fontWeight:800,margin:"0 0 8px",letterSpacing:"-0.8px",lineHeight:1.15}}>Вместе мы прошли<br/><span style={{color:PL}}>1 240 000 шагов</span></h2>
+                <p style={{fontSize:13,color:"rgba(255,255,255,0.45)",margin:0}}>Это около 930 км — от Москвы до Санкт-Петербурга и обратно</p>
+              </div>
+              <div style={{flex:1,minWidth:260,maxWidth:420}}>
+                <RouteMap progress={0.62}/>
+              </div>
+              <button onClick={()=>setPage("leaderboard")} style={{background:"rgba(255,255,255,0.1)",color:"#fff",border:"1px solid rgba(255,255,255,0.2)",borderRadius:8,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",backdropFilter:"blur(8px)",flexShrink:0}}>Смотреть рейтинг →</button>
             </div>
           </div>
+
 
           {/* PRIZES */}
           <div data-id="prizes" style={{...fadeStyle("prizes"),padding:"0 32px 48px"}}>
