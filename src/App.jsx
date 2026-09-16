@@ -1,5 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-const P="#7C3AED",PL="#A78BFA";
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
+const P="#7C3AED",PL="#A78BFA",NEON_GREEN="#39FF88",BG_DEEP="#0B0B0F";
+const HERO_WORDS=["эмоциями","азартом","энергией","драйвом","командой"];
+// Glassmorphism helper — тонкая светящаяся обводка + блюр
+const glass=(color=P,opacity=0.08)=>({
+  background:`rgba(255,255,255,${opacity})`,
+  backdropFilter:"blur(16px)",
+  WebkitBackdropFilter:"blur(16px)",
+  border:`1px solid ${color}55`,
+  boxShadow:`0 0 0 1px ${color}22, 0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)`,
+});
 const colors=["#7C3AED","#059669","#DC2626","#D97706","#2563EB","#DB2777","#0891B2"];
 const colFor=s=>colors[Math.abs([...String(s||"x")].reduce((a,c)=>a+c.charCodeAt(0),0))%colors.length];
 const ini=n=>String(n||"?").split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();
@@ -50,6 +60,29 @@ const Av=({uid,size=36})=>{
   return <div style={{width:size,height:size,borderRadius:"50%",background:colFor(uid),display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*.33,fontWeight:700,color:"#fff",flexShrink:0}}>{ini(u?.name||uid)}</div>;
 };
 
+// 3D Tilt card — реагирует на движение мыши, наклон + смещение "голограммного" градиента
+const TiltCard=({children,style,onClick,glowColor=P,className=""})=>{
+  const ref=useRef(null);
+  const rx=useMotionValue(0),ry=useMotionValue(0);
+  const srx=useSpring(rx,{stiffness:300,damping:22}),sry=useSpring(ry,{stiffness:300,damping:22});
+  const glowX=useMotionValue(50),glowY=useMotionValue(50);
+  const handleMove=e=>{
+    const r=ref.current.getBoundingClientRect();
+    const px=(e.clientX-r.left)/r.width,py=(e.clientY-r.top)/r.height;
+    ry.set((px-0.5)*16); rx.set((0.5-py)*12);
+    glowX.set(px*100); glowY.set(py*100);
+  };
+  const reset=()=>{rx.set(0);ry.set(0);glowX.set(50);glowY.set(50);};
+  return(
+    <motion.div ref={ref} onClick={onClick} onMouseMove={handleMove} onMouseLeave={reset} className={className}
+      style={{...style,rotateX:srx,rotateY:sry,transformPerspective:800,cursor:onClick?"pointer":"default"}}>
+      <motion.div style={{position:"absolute",inset:0,pointerEvents:"none",
+        background:useTransform([glowX,glowY],([x,y])=>`radial-gradient(circle at ${x}% ${y}%,${glowColor}35,transparent 60%)`)}}/>
+      {children}
+    </motion.div>
+  );
+};
+
 // Simulated photo card component
 const PhotoCard=({scene,style,children})=>(
   <div style={{position:"relative",overflow:"hidden",background:scene.bg,...style}}>
@@ -68,6 +101,38 @@ const PhotoCard=({scene,style,children})=>(
   </div>
 );
 
+// Анимированная карта маршрута: линия заполняется по мере роста прогресса компании
+const RouteMap=({progress=0.62})=>{
+  const path="M 40 170 C 120 60, 220 200, 300 90 S 460 40, 560 110";
+  const pathRef=useRef(null);
+  const [len,setLen]=useState(0);
+  useEffect(()=>{ if(pathRef.current) setLen(pathRef.current.getTotalLength()); },[]);
+  return(
+    <svg viewBox="0 0 600 220" style={{width:"100%",height:220,overflow:"visible"}}>
+      <defs>
+        <linearGradient id="routeGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor={P}/>
+          <stop offset="100%" stopColor={NEON_GREEN}/>
+        </linearGradient>
+      </defs>
+      <path d={path} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="4" strokeLinecap="round"/>
+      <motion.path ref={pathRef} d={path} fill="none" stroke="url(#routeGrad)" strokeWidth="4" strokeLinecap="round"
+        strokeDasharray={len} initial={{strokeDashoffset:len}} animate={{strokeDashoffset:len*(1-progress)}}
+        transition={{duration:1.8,ease:"easeInOut"}}/>
+      <circle cx="40" cy="170" r="7" fill="#fff"/>
+      <text x="40" y="196" fill="#888" fontSize="12" textAnchor="middle">Москва</text>
+      <circle cx="560" cy="110" r="7" fill="#fff" opacity="0.5"/>
+      <text x="560" y="136" fill="#888" fontSize="12" textAnchor="middle">СПб</text>
+      {len>0&&(
+        <motion.g initial={{offsetDistance:"0%"}} animate={{offsetDistance:`${progress*100}%`}} transition={{duration:1.8,ease:"easeInOut"}}
+          style={{offsetPath:`path('${path}')`,offsetRotate:"0deg"}}>
+          <circle r="8" fill={NEON_GREEN} stroke="#0B0B0F" strokeWidth="2"/>
+        </motion.g>
+      )}
+    </svg>
+  );
+};
+
 export default function App(){
   const [page,setPage]=useState("home");
   const [mouse,setMouse]=useState({x:0,y:0});
@@ -82,8 +147,27 @@ export default function App(){
   const [toast,setToast]=useState(null);
   const [visible,setVisible]=useState({});
   const [stripIdx,setStripIdx]=useState(0);
+  const [heroWordIdx,setHeroWordIdx]=useState(0);
+  const [liveFeed,setLiveFeed]=useState(LIVE_FEED);
   const observerRefs=useRef({});
   const stripRef=useRef();
+
+  // Смена ключевого слова в заголовке — тайпрайтер/fade
+  useEffect(()=>{
+    const t=setInterval(()=>setHeroWordIdx(i=>(i+1)%HERO_WORDS.length),2400);
+    return()=>clearInterval(t);
+  },[]);
+
+  // Симуляция живой ленты — новые события "вталкивают" старые сверху
+  useEffect(()=>{
+    const names=[["Иван С.","u3"],["Ольга С.","u4"],["Мария П.","u2"],["Алексей К.","u1"]];
+    const acts=["9 400 шагов 👟","6 км бега 🏃","Велопрогулка 🚴","10 100 шагов 👟"];
+    const t=setInterval(()=>{
+      const i=Math.floor(Math.random()*names.length);
+      setLiveFeed(p=>[{uid:names[i][1],name:names[i][0],action:acts[i],ago:"только что",pts:+(Math.random()*10+2).toFixed(1),id:Date.now()},...p].slice(0,6));
+    },5000);
+    return()=>clearInterval(t);
+  },[]);
 
   useEffect(()=>{
     if(page!=="home")return;
@@ -175,7 +259,13 @@ export default function App(){
             <div style={{position:"relative",zIndex:2,textAlign:"center",padding:"0 32px",transform:`translate(${mouse.x*.4}px,${mouse.y*.3}px)`,transition:"transform .1s ease"}}>
               <h1 style={{fontSize:72,fontWeight:800,lineHeight:1.0,margin:"0 0 20px",letterSpacing:"-3px",textShadow:"0 2px 40px rgba(0,0,0,0.8)"}}>
                 Заряжаем<br/>
-                <span style={{color:"transparent",backgroundClip:"text",WebkitBackgroundClip:"text",backgroundImage:"linear-gradient(135deg,#A78BFA,#7C3AED,#c084fc)",filter:"drop-shadow(0 0 30px rgba(124,58,237,0.5))"}}>эмоциями,</span><br/>
+                <span style={{display:"inline-block",minHeight:"1.05em",color:"transparent",backgroundClip:"text",WebkitBackgroundClip:"text",backgroundImage:"linear-gradient(135deg,#A78BFA,#7C3AED,#c084fc)",filter:"drop-shadow(0 0 30px rgba(124,58,237,0.5))"}}>
+                  <AnimatePresence mode="wait">
+                    <motion.span key={heroWordIdx} initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-16}} transition={{duration:.5,ease:"easeOut"}} style={{display:"inline-block"}}>
+                      {HERO_WORDS[heroWordIdx]},
+                    </motion.span>
+                  </AnimatePresence>
+                </span><br/>
                 вдохновляем на победы
               </h1>
 
@@ -255,8 +345,8 @@ export default function App(){
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                 {CHALLENGES.map(c=>(
-                  <div key={c.id} className="photo-hover hov-card" onClick={()=>c.status==="active"?setSubmitChal(c):notify("Скоро!")}
-                    style={{borderRadius:14,overflow:"hidden",height:180,cursor:"pointer",position:"relative"}}>
+                  <TiltCard key={c.id} glowColor={c.color} onClick={()=>c.status==="active"?setSubmitChal(c):notify("Скоро!")}
+                    style={{borderRadius:14,overflow:"hidden",height:180,position:"relative",...glass(c.color,0.04)}}>
                     <PhotoCard scene={{bg:c.bg,shapes:[]}} style={{width:"100%",height:"100%",position:"absolute",inset:0}}>
                       <div className="photo-inner"/>
                     </PhotoCard>
@@ -273,7 +363,7 @@ export default function App(){
                         <span>👥 {c.participants}</span><span>⏱ {c.daysLeft}д</span>
                       </div>
                     </div>
-                  </div>
+                  </TiltCard>
                 ))}
               </div>
             </div>
@@ -284,20 +374,37 @@ export default function App(){
                   <span style={{width:5,height:5,borderRadius:"50%",background:"#EF4444",animation:"pulse 1.5s ease-in-out infinite",display:"inline-block"}}/>LIVE
                 </span>
               </div>
-              {LIVE_FEED.map((item,i)=>(
-                <div key={i} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:10,padding:"12px 14px",marginBottom:8,display:"flex",gap:10,alignItems:"center",animation:`slideIn .4s ease ${i*.08}s both`}}>
-                  <Av uid={item.uid} size={30}/>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:12,fontWeight:600,color:"#ccc"}}>{item.name}</div>
-                    <div style={{fontSize:12,color:"#555",marginTop:1}}>{item.action}</div>
-                  </div>
-                  <div style={{textAlign:"right",flexShrink:0}}>
-                    <div style={{fontSize:12,color:P,fontWeight:600}}>+{item.pts}</div>
-                    <div style={{fontSize:10,color:"#333"}}>{item.ago}</div>
-                  </div>
-                </div>
-              ))}
+              <AnimatePresence initial={false}>
+                {liveFeed.map((item)=>(
+                  <motion.div key={item.id||item.name+item.ago} layout
+                    initial={{opacity:0,y:-24,scale:.92}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,height:0,marginBottom:0}}
+                    transition={{type:"spring",stiffness:340,damping:26}}
+                    style={{...glass(P,0.03),borderRadius:10,padding:"12px 14px",marginBottom:8,display:"flex",gap:10,alignItems:"center"}}>
+                    <Av uid={item.uid} size={30}/>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontWeight:600,color:"#ccc"}}>{item.name}</div>
+                      <div style={{fontSize:12,color:"#555",marginTop:1}}>{item.action}</div>
+                    </div>
+                    <div style={{textAlign:"right",flexShrink:0}}>
+                      <div style={{fontSize:12,color:NEON_GREEN,fontWeight:600}}>+{item.pts}</div>
+                      <div style={{fontSize:10,color:"#333"}}>{item.ago}</div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
+          </div>
+
+          {/* ROUTE PROGRESS MAP — Москва → Санкт-Петербург */}
+          <div data-id="routemap" style={{...fadeStyle("routemap"),margin:"48px 32px 0",borderRadius:20,padding:"28px 32px",...glass(NEON_GREEN,0.03)}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:4}}>
+              <div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontWeight:600,letterSpacing:".1em",textTransform:"uppercase"}}>Карта прогресса компании</div>
+                <div style={{fontSize:20,fontWeight:800,marginTop:4}}>62% пути Москва — Санкт-Петербург</div>
+              </div>
+              <span style={{fontSize:12,color:NEON_GREEN,background:NEON_GREEN+"18",border:`1px solid ${NEON_GREEN}40`,borderRadius:999,padding:"4px 12px",fontWeight:600}}>576 / 930 км</span>
+            </div>
+            <RouteMap progress={0.62}/>
           </div>
 
           {/* EPIC PHOTO BANNER — simulated swimmer at iceberg */}
