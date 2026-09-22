@@ -324,77 +324,132 @@ function LightHome({setPage}){
         </div>
       </div>
 
-      {/* HERO */}
-      <div style={{position:"relative",zIndex:2,maxWidth:1240,margin:"0 auto",padding:"64px 32px 40px",display:"grid",gridTemplateColumns:"1.1fr 1fr",gap:40,alignItems:"center"}}>
-        <RevealSection>
-          <div style={{...lg(0.7),display:"inline-flex",alignItems:"center",gap:8,borderRadius:999,padding:"7px 16px",marginBottom:22}}>
-            <span style={{width:7,height:7,borderRadius:"50%",background:BP,display:"inline-block"}}/>
-            <span style={{fontSize:12,fontWeight:700,color:BP}}>Сезон 2025 активен</span>
-          </div>
-          <h1 style={{fontSize:"clamp(2.2rem,4.2vw,3.2rem)",fontWeight:800,lineHeight:1.1,letterSpacing:"-1.2px",margin:"0 0 20px"}}>
-            Мы — <span style={{color:BP}}>движение</span>, которое вдохновляет
-          </h1>
-          <p style={{fontSize:15,color:"#6a6472",lineHeight:1.7,maxWidth:440,margin:"0 0 28px"}}>
-            Спортивное сообщество право(тех). Отражаем нашу энергию через результат.
-          </p>
-          <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-            <MagButton onClick={()=>scrollTo("section-challenges")} style={{background:BP,color:"#fff",border:"none",borderRadius:12,padding:"15px 28px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 10px 28px rgba(140,38,234,0.35)"}}>Начать участвовать →</MagButton>
-            <MagButton onClick={()=>scrollTo("section-leaderboard")} style={{background:"#fff",color:BD,border:"1px solid #e6dcf2",borderRadius:12,padding:"15px 28px",fontSize:14,fontWeight:700,cursor:"pointer"}}>Рейтинг сезона</MagButton>
+      {/* HERO — по референсу Sozidai: живая карточка слева, заголовок с пилюлями справа */}
+      <div style={{position:"relative",zIndex:2,maxWidth:1240,margin:"0 auto",padding:"48px 32px 40px",display:"grid",gridTemplateColumns:"1fr 1.05fr",gap:36,alignItems:"center"}}>
+        <RevealSection style={{position:"relative"}}>
+          <div style={{...lg(0.85),borderRadius:24,padding:18}}>
+            <div style={{display:"flex",gap:10,marginBottom:12}}>
+              <div style={{width:34,height:34,borderRadius:"50%",background:colFor("u1"),display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:13,fontWeight:700,flexShrink:0}}>АК</div>
+              <div style={{background:"#F3EEFA",borderRadius:"4px 16px 16px 16px",padding:"10px 14px",maxWidth:260}}>
+                <div style={{fontSize:12.5,color:BD,lineHeight:1.5}}>Пробежал 10 км в утреннем забеге! 🏃 Отличный старт недели</div>
+                <div style={{fontSize:10,color:"#a89bb8",marginTop:4,textAlign:"right"}}>11:30</div>
+              </div>
+            </div>
+            <div style={{display:"flex",justifyContent:"flex-end",marginBottom:14}}>
+              <div style={{background:BP,borderRadius:"16px 4px 16px 16px",padding:"10px 14px",maxWidth:200}}>
+                <div style={{fontSize:12.5,color:"#fff"}}>Красавчик! Держим темп 💪</div>
+                <div style={{fontSize:10,color:"rgba(255,255,255,0.6)",marginTop:4,textAlign:"right"}}>11:32</div>
+              </div>
+            </div>
+            <div style={{borderRadius:16,overflow:"hidden",position:"relative"}}>
+              <img src={IMG3} alt="Финиш забега" style={{width:"100%",height:170,objectFit:"cover",display:"block"}}/>
+              <div style={{position:"absolute",bottom:10,left:10,...lg(0.9),borderRadius:999,padding:"5px 12px",display:"flex",alignItems:"center",gap:6}}>
+                <span style={{fontSize:13}}>❤️</span><span style={{fontSize:12,fontWeight:700}}>12</span>
+              </div>
+            </div>
           </div>
         </RevealSection>
 
-        <RevealSection y={40} style={{position:"relative"}}>
-          <motion.div style={{borderRadius:28,overflow:"hidden",boxShadow:"0 30px 60px -20px rgba(140,38,234,0.35)"}}
-            animate={{y:[0,-10,0]}} transition={{duration:6,repeat:Infinity,ease:"easeInOut"}}>
-            <img src={heroPhoto} alt="Сотрудники на тренировке" style={{width:"100%",height:340,objectFit:"cover",display:"block"}}/>
-          </motion.div>
-          <div style={{position:"absolute",bottom:-20,left:-20,...lg(0.85),borderRadius:16,padding:"14px 18px",display:"flex",gap:12,alignItems:"center"}}>
-            <div style={{width:38,height:38,borderRadius:"50%",background:BP,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🏆</div>
-            <div>
-              <div style={{fontSize:15,fontWeight:800}}>200+ сотрудников</div>
-              <div style={{fontSize:11,color:"#8a8494"}}>участвуют в сезоне</div>
-            </div>
+        <RevealSection y={30}>
+          <h1 style={{fontSize:"clamp(2rem,4vw,2.8rem)",fontWeight:800,lineHeight:1.15,letterSpacing:"-1px",margin:"0 0 18px"}}>
+            <span style={{...lg(0.9),display:"inline-block",padding:"4px 16px",borderRadius:999,marginRight:8}}>Заряжаем.</span>{" "}
+            <span style={{background:BP,color:"#fff",display:"inline-block",padding:"4px 16px",borderRadius:999}}>Вдохновляем.</span><br/>
+            <span style={{...lg(0.9),display:"inline-block",padding:"4px 16px",borderRadius:999,marginTop:10,marginRight:8}}>Растём.</span>{" "}
+            <span style={{...lg(0.9),display:"inline-block",padding:"4px 16px",borderRadius:999,marginTop:10}}>Вместе.</span>
+          </h1>
+          <p style={{fontSize:14,color:"#6a6472",lineHeight:1.7,maxWidth:420,margin:"0 0 16px"}}>
+            Корпоративная спортивная платформа для сотрудников право(тех).
+          </p>
+          <div style={{marginBottom:26}}>
+            <div style={{fontSize:13,color:"#6a6472",marginBottom:6}}>↓ Челленджи и командная поддержка</div>
+            <div style={{fontSize:13,color:"#6a6472"}}>↑ Рейтинг, мерчи и общий результат</div>
+          </div>
+          <div style={{display:"flex",gap:14,alignItems:"center",flexWrap:"wrap"}}>
+            <MagButton onClick={()=>scrollTo("section-challenges")} style={{background:BP,color:"#fff",border:"none",borderRadius:999,padding:"13px 26px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 10px 28px rgba(140,38,234,0.3)"}}>Присоединиться →</MagButton>
+            <button onClick={()=>scrollTo("section-steps")} style={{background:"transparent",border:"none",color:BD,fontWeight:700,fontSize:13,cursor:"pointer"}}>Узнать больше →</button>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginTop:24}}>
+            {["u1","u2","u3"].map((u,i)=>(
+              <div key={i} style={{width:26,height:26,borderRadius:"50%",background:colFor(u),border:"2px solid #FCFAFF",marginLeft:i>0?-10:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:"#fff"}}>{ini(LEADERBOARD.find(x=>x.uid===u)?.name||u)}</div>
+            ))}
+            <span style={{fontSize:12,color:"#6a6472",marginLeft:6}}>Вместе мы можем больше 🚀</span>
           </div>
         </RevealSection>
       </div>
 
-      {/* STATS — анимированный счётчик при появлении */}
-      <RevealSection style={{position:"relative",zIndex:2,maxWidth:1240,margin:"20px auto 0",padding:"32px",display:"flex",flexWrap:"wrap",gap:0}}>
-        {[{v:31722,l:"км пройдено вместе"},{v:200,l:"сотрудников участвует",suf:"+"},{v:7,l:"активных челленджей"},{v:930,l:"км Москва — СПб"}].map((s,i)=>(
-          <div key={i} style={{flex:"1 1 200px",padding:"0 24px",borderLeft:i>0?"1px solid #e6dcf2":"none"}}>
-            <div style={{fontSize:34,fontWeight:800,letterSpacing:"-1px"}}><CountUp to={s.v} seen={true} suffix={s.suf||""}/></div>
-            <div style={{fontSize:12,color:"#8a8494",marginTop:4}}>{s.l}</div>
-          </div>
-        ))}
-      </RevealSection>
-
-      {/* CHALLENGES — реальные фото, круглая стрелка, hover-lift, клик открывает форму отправки результата */}
-      <div id="section-challenges" style={{position:"relative",zIndex:2,maxWidth:1240,margin:"0 auto",padding:"64px 32px 0",scrollMarginTop:100}}>
-        <RevealSection style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
-          <h2 style={{fontSize:26,fontWeight:800,margin:0,letterSpacing:"-0.6px"}}>Активные челленджи</h2>
+      {/* ПОМОГАЕМ СОТРУДНИКАМ — 3 карточки по референсу */}
+      <div id="section-challenges" style={{position:"relative",zIndex:2,maxWidth:1240,margin:"0 auto",padding:"56px 32px 0",scrollMarginTop:100}}>
+        <RevealSection style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:24,flexWrap:"wrap",gap:12}}>
+          <h2 style={{fontSize:24,fontWeight:800,margin:0,letterSpacing:"-0.5px",maxWidth:520,lineHeight:1.3}}>
+            Помогаем сотрудникам находить <span style={{background:BP,color:"#fff",padding:"2px 10px",borderRadius:8}}>свой ритм</span> в спорте
+          </h2>
         </RevealSection>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:18}}>
-          {CHALLENGES.map((c,i)=>{
-            const photo=[IMG1,IMG2,IMG3,IMG4][i%4];
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:18}}>
+          {CHALLENGES.slice(0,3).map((c,i)=>{
+            const photo=[IMG1,IMG2,IMG3][i%3];
             return(
               <RevealSection key={c.id} y={30}>
-                <motion.div whileHover={{y:-8}} transition={{type:"spring",stiffness:300,damping:22}}
-                  onClick={()=>c.status==="active"?setSubmitChal(c):notify("Скоро!")}
-                  style={{borderRadius:20,overflow:"hidden",cursor:"pointer",background:"#fff",boxShadow:"0 4px 20px rgba(13,6,40,0.06)",border:"1px solid #f0ebf7"}}>
-                  <div style={{position:"relative",height:160}}>
+                <motion.div whileHover={{y:-6}} transition={{type:"spring",stiffness:300,damping:22}}
+                  style={{borderRadius:22,overflow:"hidden",background:"#fff",boxShadow:"0 4px 20px rgba(13,6,40,0.06)",border:"1px solid #f0ebf7"}}>
+                  <div style={{position:"relative",height:200}}>
                     <img src={photo} alt={c.title} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
-                    <span style={{position:"absolute",top:12,left:12,background:"rgba(255,255,255,0.92)",color:BP,fontSize:10,fontWeight:700,padding:"4px 10px",borderRadius:999}}>{c.statusLabel}</span>
-                    <div style={{position:"absolute",top:12,right:12,width:32,height:32,borderRadius:"50%",background:BP,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:700}}>→</div>
+                    <span style={{position:"absolute",top:12,left:12,...lg(0.9),fontSize:10,color:BD,fontWeight:700,padding:"5px 12px",borderRadius:999}}>{c.emoji} {c.type}</span>
+                    <div style={{position:"absolute",top:12,right:12,width:32,height:32,borderRadius:"50%",background:"#fff",display:"flex",alignItems:"center",justifyContent:"center",color:BP,fontSize:14,fontWeight:700}}>↗</div>
                   </div>
                   <div style={{padding:"16px 18px"}}>
-                    <div style={{fontSize:16,fontWeight:800,marginBottom:4}}>{c.emoji} {c.title}</div>
-                    <div style={{fontSize:12,color:"#8a8494"}}>{c.desc} · {c.participants} участников</div>
+                    <div style={{fontSize:10,color:BP,fontWeight:700,textTransform:"uppercase",letterSpacing:".06em",marginBottom:6}}>0{i+1} / {c.statusLabel}</div>
+                    <div style={{fontSize:16,fontWeight:800,marginBottom:10}}>{c.title}</div>
+                    <button onClick={()=>c.status==="active"?setSubmitChal(c):notify("Скоро!")} style={{background:"transparent",border:"1px solid #e6dcf2",borderRadius:999,padding:"7px 16px",fontSize:12,fontWeight:700,color:BD,cursor:"pointer"}}>Подробнее →</button>
                   </div>
                 </motion.div>
               </RevealSection>
             );
           })}
         </div>
+      </div>
+
+      {/* КАК ЭТО РАБОТАЕТ — 5 шагов с иконками и пунктирной линией, по референсу */}
+      <div id="section-steps" style={{position:"relative",zIndex:2,maxWidth:1240,margin:"0 auto",padding:"64px 32px 0",scrollMarginTop:100}}>
+        <RevealSection>
+          <div style={{...lg(0.6),borderRadius:24,padding:"32px 36px"}}>
+            <h2 style={{fontSize:22,fontWeight:800,margin:"0 0 28px",letterSpacing:"-0.5px"}}>Как это работает</h2>
+            <div style={{display:"flex",alignItems:"flex-start",position:"relative"}}>
+              <div style={{position:"absolute",top:24,left:"10%",right:"10%",height:0,borderTop:"2px dashed #ddd0ec",zIndex:0}}/>
+              {[{e:"🎯",t:"Идея",d:"Выбери челлендж"},{e:"📸",t:"Фиксация",d:"Загрузи результат"},{e:"👥",t:"Поддержка",d:"Коллеги болеют"},{e:"⭐",t:"Мерчи",d:"Получай баллы"},{e:"📈",t:"Рост",d:"Смотри рейтинг"}].map((s,i)=>(
+                <div key={i} style={{flex:1,textAlign:"center",position:"relative",zIndex:1}}>
+                  <div style={{width:48,height:48,borderRadius:"50%",background:"#fff",border:"1px solid #ece4f5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:19,margin:"0 auto 12px",boxShadow:"0 4px 12px rgba(13,6,40,0.05)"}}>{s.e}</div>
+                  <div style={{fontSize:11,color:BP,fontWeight:800,marginBottom:2}}>0{i+1}</div>
+                  <div style={{fontSize:13,fontWeight:700,marginBottom:2}}>{s.t}</div>
+                  <div style={{fontSize:10.5,color:"#8a8494"}}>{s.d}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </RevealSection>
+      </div>
+
+      {/* ИСТОРИИ / СТАТИСТИКА — иконки-кружки + фото-полоса, по референсу */}
+      <div style={{position:"relative",zIndex:2,maxWidth:1240,margin:"0 auto",padding:"64px 32px 0"}}>
+        <RevealSection>
+          <div style={{background:"linear-gradient(135deg,#F3EEFA,#E9F6EF)",borderRadius:24,padding:"32px 36px"}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:20,marginBottom:28}}>
+              {[{e:"🏆",c:BP,v:"7",l:"активных челленджей"},{e:"❤️",c:"#E0568C",v:"200+",l:"участников"},{e:"🌍",c:"#0891B2",v:"3",l:"года платформы"},{e:"⭐",c:"#D97706",v:"1.24M",l:"шагов за май"}].map((s,i)=>(
+                <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:8}}>
+                  <div style={{width:38,height:38,borderRadius:"50%",background:s.c,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{s.e}</div>
+                  <div style={{fontSize:22,fontWeight:800}}>{s.v}</div>
+                  <div style={{fontSize:11,color:"#6a6472"}}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
+              {[IMG1,IMG2,IMG3,IMG4].map((im,i)=>(
+                <div key={i} style={{borderRadius:14,overflow:"hidden",height:100}}>
+                  <img src={im} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                </div>
+              ))}
+            </div>
+          </div>
+        </RevealSection>
       </div>
 
       {/* ROUTE — прогресс маршрута, светлая версия */}
@@ -415,24 +470,6 @@ function LightHome({setPage}){
           <MagButton onClick={()=>scrollTo("section-leaderboard")} style={{background:BD,color:"#fff",border:"none",borderRadius:12,padding:"14px 24px",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>Смотреть рейтинг →</MagButton>
         </div>
       </RevealSection>
-
-      {/* КАК ЭТО РАБОТАЕТ */}
-      <div id="section-steps" style={{position:"relative",zIndex:2,maxWidth:1240,margin:"0 auto",padding:"72px 32px 0",scrollMarginTop:100}}>
-        <RevealSection style={{marginBottom:32}}>
-          <h2 style={{fontSize:26,fontWeight:800,margin:0,letterSpacing:"-0.6px"}}>Как это работает</h2>
-        </RevealSection>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:32}}>
-          {[{n:"01",t:"Выбери челлендж",d:"В разделе «Челленджи» — активные или ближайшие."},
-            {n:"02",t:"Фиксируй результат",d:"Загружай шаги, километры или фото каждый день."},
-            {n:"03",t:"Смотри рейтинг",d:"Прогресс и место в общем зачёте — на странице «Рейтинг»."}].map((s,i)=>(
-            <RevealSection key={i} y={30}>
-              <div style={{fontSize:30,fontWeight:800,color:BP,marginBottom:10}}>{s.n}</div>
-              <div style={{fontSize:16,fontWeight:700,marginBottom:6}}>{s.t}</div>
-              <div style={{fontSize:13,color:"#6a6472",lineHeight:1.6}}>{s.d}</div>
-            </RevealSection>
-          ))}
-        </div>
-      </div>
 
       {/* РЕЙТИНГ — топ участников, кликабельно ведёт в личный кабинет своей строкой */}
       <div id="section-leaderboard" style={{position:"relative",zIndex:2,maxWidth:1240,margin:"0 auto",padding:"72px 32px 0",scrollMarginTop:100}}>
