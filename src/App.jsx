@@ -53,7 +53,7 @@ const PHOTO_SCENES=[
   {label:"Финиш",      sub:"Каждый день",    img:IMG3, emoji:"🏃",bg:"linear-gradient(135deg,#1a0533,#c07040)",shapes:[]},
   {label:"Баттерфляй", sub:"Закат на воде",  img:IMG4, emoji:"🌅",bg:"linear-gradient(160deg,#2d1b00,#d4a030)",shapes:[]},
 ];
-const navItems=[{id:"home",label:"Главная"},{id:"challenges",label:"Челленджи"},{id:"news",label:"Новости"},{id:"leaderboard",label:"Рейтинг"},{id:"announcements",label:"Анонсы"}];
+const navItems=[{id:"home",label:"Главная"},{id:"challenges",label:"Челленджи"},{id:"news",label:"Новости"},{id:"leaderboard",label:"Рейтинг"}];
 
 const Av=({uid,size=36})=>{
   const u=LEADERBOARD.find(x=>x.uid===uid);
@@ -426,7 +426,7 @@ export default function App(){
           {/* HERO — реальное фото, left-aligned контент + встроенная карточка статистики (по референсам) */}
           <div style={{position:"relative",minHeight:560,overflow:"hidden",borderRadius:"0 0 24px 24px"}}>
             <div style={{position:"absolute",inset:0,animation:"kenBurns 18s ease-in-out infinite alternate",transformOrigin:"center center"}}>
-              <img src={IMG4} alt="hero" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 38%",display:"block"}}/>
+              <img src={IMG4} alt="hero" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 68%",display:"block"}}/>
               <div style={{position:"absolute",inset:0,background:"linear-gradient(100deg,rgba(19,19,25,0.9) 0%,rgba(19,19,25,0.5) 45%,rgba(19,19,25,0.2) 100%)"}}/>
             </div>
 
@@ -441,20 +441,6 @@ export default function App(){
                 <div style={{display:"flex",gap:12}}>
                   <button onClick={()=>setPage("challenges")} className="hov-btn" style={{background:P,color:"#fff",border:"none",borderRadius:10,padding:"13px 26px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:`0 6px 20px ${P}55`}}>Начать участвовать →</button>
                   <button onClick={()=>setPage("leaderboard")} className="hov-btn" style={{background:"rgba(255,255,255,0.06)",color:"#fff",border:"1px solid rgba(255,255,255,0.15)",borderRadius:10,padding:"13px 26px",fontSize:14,cursor:"pointer",backdropFilter:"blur(8px)"}}>Рейтинг сезона</button>
-                </div>
-              </div>
-
-              {/* Встроенная карточка статистики — часть композиции hero, не отдельный блок */}
-              <div style={{...glass(P,0.07),borderRadius:18,padding:"20px 22px",width:300,flexShrink:0}}>
-                <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontWeight:600,letterSpacing:".08em",textTransform:"uppercase",marginBottom:14}}>Сезон 2025</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-                  {[{n:"7",l:"активных челленджей",e:"🏆",c:P},{n:"200+",l:"участников",e:"👥",c:NEON_GREEN},{n:"1.24M",l:"шагов за май",e:"👟",c:P},{n:"3",l:"года платформы",e:"🎯",c:NEON_GREEN}].map((s,i)=>(
-                    <div key={i} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:"12px 12px"}}>
-                      <div style={{fontSize:15,marginBottom:6}}>{s.e}</div>
-                      <div style={{fontSize:19,fontWeight:800,color:s.c===P?"#fff":s.c,letterSpacing:"-0.5px"}}>{s.n}</div>
-                      <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginTop:2,lineHeight:1.4}}>{s.l}</div>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>
@@ -519,33 +505,6 @@ export default function App(){
                   </div>
                 </TiltCard>
               ))}
-            </div>
-          </div>
-
-          {/* LIVE FEED — компактная горизонтальная лента */}
-          <div data-id="livefeed" style={{...fadeStyle("livefeed"),padding:"32px 32px 0"}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
-              <h2 style={{fontSize:18,fontWeight:700,margin:0}}>Лента</h2>
-              <span style={{display:"flex",alignItems:"center",gap:4,background:"rgba(239,68,68,0.1)",border:"1px solid rgba(239,68,68,0.2)",borderRadius:999,padding:"3px 8px",fontSize:10,color:"#F87171",fontWeight:600}}>
-                <span style={{width:5,height:5,borderRadius:"50%",background:"#EF4444",animation:"pulse 1.5s ease-in-out infinite",display:"inline-block"}}/>LIVE
-              </span>
-            </div>
-            <div style={{display:"flex",gap:10,overflow:"hidden"}}>
-              <AnimatePresence initial={false}>
-                {liveFeed.slice(0,4).map((item)=>(
-                  <motion.div key={item.id||item.name+item.ago}
-                    initial={{opacity:0,y:-16,scale:.95}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,scale:.9}}
-                    transition={{type:"spring",stiffness:340,damping:26}}
-                    style={{...glass(P,0.03),borderRadius:12,padding:"10px 12px",display:"flex",gap:8,alignItems:"center",flex:"1 1 0",minWidth:0}}>
-                    <Av uid={item.uid} size={26}/>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:11,fontWeight:600,color:"#ccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.name}</div>
-                      <div style={{fontSize:11,color:"#666",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.action}</div>
-                    </div>
-                    <div style={{fontSize:11,color:NEON_GREEN,fontWeight:600,flexShrink:0}}>+{item.pts}</div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
             </div>
           </div>
 
@@ -616,7 +575,7 @@ export default function App(){
                 <div style={{fontSize:18,fontWeight:700,marginBottom:8}}>право<span style={{color:PL}}>(спорт)</span></div>
                 <div style={{fontSize:13,color:"#333",lineHeight:1.7,maxWidth:240}}>Корпоративная спортивная платформа право(тех)</div>
               </div>
-              {[{t:"Платформа",l:["Челленджи","Рейтинг","Анонсы","Архив"]},{t:"Участие",l:["Как участвовать","Мерчики","Призы"]},{t:"Связь",l:["#pravo_sport","HR-команда"]}].map(col=>(
+              {[{t:"Платформа",l:["Челленджи","Рейтинг","Архив"]},{t:"Участие",l:["Как участвовать","Мерчики","Призы"]},{t:"Связь",l:["#pravo_sport","HR-команда"]}].map(col=>(
                 <div key={col.t}>
                   <div style={{fontSize:10,color:"#444",fontWeight:600,letterSpacing:".08em",textTransform:"uppercase",marginBottom:12}}>{col.t}</div>
                   {col.l.map(link=>(
