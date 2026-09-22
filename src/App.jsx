@@ -47,10 +47,10 @@ const IMG1=BASE+"1.jpeg";
 const IMG2=BASE+"1408_385_resized.jpg";
 const IMG3=BASE+"IMG_6064.JPG";
 const IMG4=BASE+"IMG_6068.JPG";
-const LIGHT_SWIM="https://images.unsplash.com/photo-1731812864631-2edce7f288be?auto=format&fit=crop&w=1800&q=88";
-const LIGHT_SURF="https://images.unsplash.com/photo-1661006133878-06a61cce2b6c?auto=format&fit=crop&w=1800&q=88";
-const LIGHT_RUN="https://images.unsplash.com/photo-1774178290349-6ca5ea0db428?auto=format&fit=crop&w=1800&q=88";
-const LIGHT_CYCLE="https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1800&q=88";
+const LIGHT_SWIM="https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Swimmer_splashing_water_%28Unsplash%29.jpg/960px-Swimmer_splashing_water_%28Unsplash%29.jpg";
+const LIGHT_SURF="https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Surfer_carrying_his_board_%28Unsplash%29.jpg/960px-Surfer_carrying_his_board_%28Unsplash%29.jpg";
+const LIGHT_RUN=LIGHT_SURF;
+const LIGHT_CYCLE=LIGHT_SWIM;
 const PHOTO_SCENES=[
   {label:"Серфинг",    sub:"Командный дух",  img:IMG1, emoji:"🏄",bg:"linear-gradient(160deg,#0a3d5c,#0e6b8a)",shapes:[]},
   {label:"Плавание",   sub:"Открытая вода",  img:IMG2, emoji:"🏊",bg:"linear-gradient(180deg,#c8dde8,#2a6b8a)",shapes:[]},
