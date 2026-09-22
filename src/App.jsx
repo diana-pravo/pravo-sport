@@ -361,12 +361,8 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
             <h1 style={{fontSize:"clamp(58px,6.1vw,92px)",lineHeight:.94,letterSpacing:"-5px",margin:"0 0 28px",fontWeight:800,maxWidth:600}}>
               Движение<br/>делает нас<br/><span style={{color:"#8D27EE"}}>сильнее</span>
             </h1>
-            <p style={{fontSize:20,lineHeight:1.55,color:"#716A7E",maxWidth:610,margin:"0 0 30px"}}>
-              Командные челленджи для энергии, поддержки коллег и привычки двигаться каждый день.
-            </p>
             <div style={{display:"flex",alignItems:"center",gap:24}}>
               <button onClick={participate} style={{border:0,borderRadius:28,background:"#8D27EE",color:"#fff",fontSize:16,fontWeight:800,padding:"15px 27px",cursor:"pointer"}}>Начать участвовать&nbsp;&nbsp;→</button>
-              <button onClick={()=>document.getElementById("how")?.scrollIntoView({behavior:"smooth"})} style={{border:0,background:"transparent",color:"#10052F",fontSize:16,fontWeight:800,cursor:"pointer"}}>Как это работает&nbsp;&nbsp;▷</button>
             </div>
           </div>
           <div style={{position:"relative",height:530}}>
@@ -529,7 +525,7 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
 
 function AdminPanel({setPage,challenges,events,news,onAddChallenge,onAddEvent,onAddNews}){
   const [tab,setTab]=useState("challenge");
-  const [form,setForm]=useState({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",image:""});
+  const [form,setForm]=useState({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",file:""});
   const change=(k,v)=>setForm(p=>({...p,[k]:v}));
   const submit=e=>{
     e.preventDefault();
@@ -537,7 +533,7 @@ function AdminPanel({setPage,challenges,events,news,onAddChallenge,onAddEvent,on
     if(tab==="challenge")onAddChallenge(form);
     if(tab==="event")onAddEvent(form);
     if(tab==="news")onAddNews(form);
-    setForm({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",image:""});
+    setForm({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",file:""});
   };
   return(
     <div className="light-shell" style={{background:"radial-gradient(circle at 0% 8%,#F0DEFF 0,transparent 25%),radial-gradient(circle at 100% 42%,#FFE8EF 0,transparent 24%),linear-gradient(180deg,#FAF7FF 0%,#FBF9FF 100%)",color:BD,minHeight:"100vh",fontFamily:"'Open Sans',Arial,sans-serif"}}>
@@ -556,7 +552,11 @@ function AdminPanel({setPage,challenges,events,news,onAddChallenge,onAddEvent,on
             <h2>{tab==="challenge"?"Запустить новый челлендж":tab==="event"?"Добавить событие":"Опубликовать новость"}</h2>
             <label>Название<input value={form.title} onChange={e=>change("title",e.target.value)} required/></label>
             {tab!=="news"&&<><label>Описание<textarea value={form.desc} onChange={e=>change("desc",e.target.value)}/></label><div className="form-row"><label>Дата<input type="date" value={form.date} onChange={e=>change("date",e.target.value)}/></label><label>Место / ссылка<input value={form.place} onChange={e=>change("place",e.target.value)} placeholder="Zoom или адрес"/></label></div></>}
-            {tab==="news"&&<><label>Текст<textarea value={form.text} onChange={e=>change("text",e.target.value)}/></label><label>Фото<input type="file" accept="image/*" onChange={e=>change("image",e.target.files?.[0]?.name||"")}/></label></>}
+            {tab==="news"&&<label>Текст<textarea value={form.text} onChange={e=>change("text",e.target.value)}/></label>}
+            <label>Фото / файл
+              <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" onChange={e=>change("file",e.target.files?.[0]?.name||"")}/>
+              {form.file&&<span style={{fontSize:11,color:"#756f7e",fontWeight:600}}>Прикреплено: {form.file}</span>}
+            </label>
             <button className="primary-btn" type="submit">{tab==="news"?"Опубликовать":"Сохранить и запустить"}</button>
           </form>
           <aside className="admin-list"><h2>Последние изменения</h2>{[...news.slice(0,3).map(x=>({e:x.emoji||"📢",t:x.title,s:"Публикация"})),...challenges.slice(0,3).map(x=>({e:x.emoji,t:x.title,s:x.statusLabel}))].slice(0,6).map((x,i)=><div key={i} className="admin-list-row"><span>{x.e}</span><div><b>{x.t}</b><small>{x.s}</small></div></div>)}</aside>
@@ -834,9 +834,9 @@ export default function App(){
   const login=role=>{setSignedIn(true);setIsAdmin(role==="admin");setShowLogin(false);setPage(role==="admin"?"admin":"cabinet-light");};
   const addResult=result=>{setResults(p=>[...p,result]);notify("Результат сохранён, прогресс обновлён");};
   const toggleEvent=id=>setRegisteredEvents(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);
-  const adminAddChallenge=form=>{setAppChallenges(p=>[{id:`c${Date.now()}`,emoji:form.emoji||"🏃",title:form.title,desc:form.desc||"Новый корпоративный челлендж",participants:0,status:"active",statusLabel:"Активный",color:BP,daysLeft:30,type:"steps",bg:"linear-gradient(135deg,#EDE1FB,#D9E8FB)"},...p]);notify("Челлендж запущен");};
-  const adminAddEvent=form=>{const d=form.date?new Date(`${form.date}T12:00:00`):new Date();setEvents(p=>[{id:`e${Date.now()}`,date:String(d.getDate()).padStart(2,"0"),day:d.toLocaleDateString("ru-RU",{weekday:"short"}).toUpperCase(),title:form.title,place:form.place||"Онлайн",kind:form.kind||"Событие"},...p]);notify("Событие добавлено");};
-  const adminAddNews=form=>{setNews(p=>[{id:Date.now(),title:form.title,cat:"Анонс",date:new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}),text:form.text||"Новая публикация",emoji:form.emoji||"📢",imageName:form.image,bg:"linear-gradient(160deg,#F3EEFA,#E9F6EF)"},...p]);notify("Публикация добавлена");};
+  const adminAddChallenge=form=>{setAppChallenges(p=>[{id:`c${Date.now()}`,emoji:form.emoji||"🏃",title:form.title,desc:form.desc||"Новый корпоративный челлендж",participants:0,status:"active",statusLabel:"Активный",color:BP,daysLeft:30,type:"steps",attachmentName:form.file||"",bg:"linear-gradient(135deg,#EDE1FB,#D9E8FB)"},...p]);notify("Челлендж запущен");};
+  const adminAddEvent=form=>{const d=form.date?new Date(`${form.date}T12:00:00`):new Date();setEvents(p=>[{id:`e${Date.now()}`,date:String(d.getDate()).padStart(2,"0"),day:d.toLocaleDateString("ru-RU",{weekday:"short"}).toUpperCase(),title:form.title,place:form.place||"Онлайн",kind:form.kind||"Событие",attachmentName:form.file||""},...p]);notify("Событие добавлено");};
+  const adminAddNews=form=>{setNews(p=>[{id:Date.now(),title:form.title,cat:"Анонс",date:new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}),text:form.text||"Новая публикация",emoji:form.emoji||"📢",imageName:form.file||"",bg:"linear-gradient(160deg,#F3EEFA,#E9F6EF)"},...p]);notify("Публикация добавлена");};
 
   const fadeStyle=id=>({opacity:visible[id]?1:0,transform:visible[id]?"translateY(0)":"translateY(24px)",transition:"opacity .7s ease, transform .7s ease"});
 
