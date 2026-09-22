@@ -47,6 +47,8 @@ const IMG1=BASE+"1.jpeg";
 const IMG2=BASE+"1408_385_resized.jpg";
 const IMG3=BASE+"IMG_6064.JPG";
 const IMG4=BASE+"IMG_6068.JPG";
+const LIGHT_SWIM="https://images.unsplash.com/photo-1687904652212-355305e0bf13?auto=format&fit=crop&w=1800&q=85";
+const LIGHT_SURF="https://images.unsplash.com/photo-1661006133878-06a61cce2b6c?auto=format&fit=crop&w=1800&q=85";
 const PHOTO_SCENES=[
   {label:"Серфинг",    sub:"Командный дух",  img:IMG1, emoji:"🏄",bg:"linear-gradient(160deg,#0a3d5c,#0e6b8a)",shapes:[]},
   {label:"Плавание",   sub:"Открытая вода",  img:IMG2, emoji:"🏊",bg:"linear-gradient(180deg,#c8dde8,#2a6b8a)",shapes:[]},
@@ -299,10 +301,15 @@ const MagButton=({children,onClick,primary,style})=>{
 
 
 
+
 function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false}){
   const go=id=>{
     setPage("light");
-    setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"}),30);
+    setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"}),40);
+  };
+  const account=()=>{
+    if(!signedIn){onLogin?.();return;}
+    setPage(isAdmin?"admin":"cabinet-light");
   };
   return(
     <div style={{position:"relative",zIndex:50,padding:"18px 42px 0"}}>
@@ -311,30 +318,57 @@ function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false}){
           право<span style={{color:"#8D27EE"}}>(спорт)</span>
         </button>
         <div style={{display:"flex",alignItems:"center",gap:24,fontSize:14,fontWeight:700,color:"#686174"}}>
-          <button onClick={()=>go("challenges")} style={{border:0,background:"transparent",font: "inherit",color:"#10052F",cursor:"pointer"}}>Челленджи</button>
+          <button onClick={()=>setPage("challenges")} style={{border:0,background:"transparent",font:"inherit",color:"#10052F",cursor:"pointer"}}>Челленджи</button>
           <button onClick={()=>go("company-progress")} style={{border:0,background:"transparent",font:"inherit",color:"inherit",cursor:"pointer"}}>Рейтинг</button>
           <button onClick={()=>go("rewards")} style={{border:0,background:"transparent",font:"inherit",color:"inherit",cursor:"pointer"}}>Награды</button>
-          <button onClick={()=>go("news")} style={{border:0,background:"transparent",font:"inherit",color:"inherit",cursor:"pointer"}}>Новости</button>
+          <button onClick={()=>setPage("news")} style={{border:0,background:"transparent",font:"inherit",color:"inherit",cursor:"pointer"}}>Новости</button>
         </div>
-        <button onClick={isAdmin?()=>setPage("admin"):()=>setPage("cabinet-light")} title={isAdmin?"Панель администратора":"Личный кабинет"} style={{width:43,height:43,borderRadius:"50%",border:0,background:"#F5EDFC",color:"#8D27EE",fontWeight:900,fontSize:16,cursor:"pointer",marginLeft:30}}>•</button>
+        <button onClick={account} title={signedIn?(isAdmin?"Панель администратора":"Личный кабинет"):"Войти"} style={{width:43,height:43,borderRadius:"50%",border:0,background:"#F5EDFC",color:"#8D27EE",fontWeight:900,fontSize:16,cursor:"pointer",marginLeft:30}}>•</button>
         <button onClick={()=>signedIn?setPage("cabinet-light"):onLogin?.()} style={{height:50,border:0,borderRadius:28,background:"#10052F",color:"#fff",fontWeight:800,fontSize:15,padding:"0 26px",cursor:"pointer",marginLeft:12}}>
           Участвовать&nbsp;&nbsp;↗
         </button>
         {signedIn
-          ? <button onClick={()=>setPage(isAdmin?"admin":"cabinet-light")} style={{width:48,height:48,borderRadius:"50%",border:0,background:"#D90A78",color:"#fff",fontWeight:900,fontSize:19,cursor:"pointer",marginLeft:12}}>Д</button>
+          ? <button onClick={account} style={{width:48,height:48,borderRadius:"50%",border:0,background:"#D90A78",color:"#fff",fontWeight:900,fontSize:19,cursor:"pointer",marginLeft:12}}>Д</button>
           : <button onClick={onLogin} style={{width:48,height:48,borderRadius:"50%",border:"1px solid #E9DDF3",background:"#fff",color:"#8D27EE",fontWeight:800,fontSize:12,cursor:"pointer",marginLeft:12}}>Войти</button>}
       </div>
     </div>
   );
 }
 
+const lightPageBg="radial-gradient(circle at 0% 8%,#F0DEFF 0,transparent 25%),radial-gradient(circle at 100% 42%,#FFE8EF 0,transparent 24%),linear-gradient(180deg,#FAF7FF 0%,#FBF9FF 100%)";
+
+function LightChallengeCard({c,i,onOpen}){
+  const photo=c.attachmentData&&String(c.attachmentType||"").startsWith("image/")?c.attachmentData:(i===0?LIGHT_SWIM:i===1?LIGHT_SURF:null);
+  const soon=c.status!=="active";
+  return(
+    <article onClick={onOpen} style={{borderRadius:28,overflow:"hidden",background:"#fff",border:"1px solid #E9E1EF",minHeight:470,cursor:"pointer",boxShadow:"0 8px 24px rgba(50,25,80,.04)"}}>
+      <div style={{height:290,position:"relative",background:photo?"#DDEBF0":"#E9FF1F",overflow:"hidden"}}>
+        {photo
+          ? <img src={photo} alt={c.title||"Спортивный челлендж"} onError={e=>{e.currentTarget.style.display="none";}} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+          : <div style={{height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,color:"#10052F"}}><div style={{fontSize:118,lineHeight:.8}}>15<span style={{fontSize:21,display:"inline-block",lineHeight:1.05}}> МИНУТ<br/> В ДЕНЬ</span></div></div>}
+        <span style={{position:"absolute",top:18,left:18,background:soon?"#E9FF1F":"#8D27EE",color:soon?"#10052F":"#fff",borderRadius:20,padding:"8px 14px",fontSize:12,fontWeight:800}}>{soon?"Скоро":"Идёт сейчас"}</span>
+        <span style={{position:"absolute",top:18,right:18,background:"#fff",borderRadius:20,padding:"8px 14px",fontSize:12,fontWeight:800}}>{c.daysLeft?((soon?"через ":"ещё ")+c.daysLeft+" дн."):(i===2?"15 минут":"сезон")}</span>
+      </div>
+      <div style={{padding:"25px 25px 28px",position:"relative"}}>
+        <div style={{fontSize:12,fontWeight:800,letterSpacing:"1.4px",color:"#8D27EE",marginBottom:9}}>{c.type==="steps"?"КОМАНДНЫЙ МАРАФОН":c.type==="run"?"ВЫНОСЛИВОСТЬ":c.type==="bike"?"ДВИЖЕНИЕ":"ЗДОРОВАЯ ПРИВЫЧКА"}</div>
+        <h3 style={{fontSize:27,letterSpacing:"-1.2px",margin:"0 0 8px",fontWeight:800}}>{c.title}</h3>
+        <p style={{fontSize:14,color:"#746D7E",margin:0,maxWidth:"82%"}}>{c.desc}</p>
+        {c.attachmentName&&<div style={{fontSize:11,color:"#8D27EE",marginTop:10}}>📎 {c.attachmentName}</div>}
+        <button type="button" style={{position:"absolute",right:20,top:22,width:46,height:46,border:0,borderRadius:"50%",background:"#F5EDFC",color:"#8D27EE",fontSize:25,cursor:"pointer"}}>{i===1?"≈":"↗"}</button>
+      </div>
+    </article>
+  );
+}
+
 function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,isAdmin=false,onLogin}){
+  const [challengeFilter,setChallengeFilter]=useState("all");
   const participate=()=>signedIn?setPage("cabinet-light"):onLogin?.();
   const challengeData=[
-    {id:"c1",status:"Идёт сейчас",date:"до 30 июня",kind:"КОМАНДНЫЙ МАРАФОН",title:"Шаг за шагом",desc:"Общая цель: 70 000 шагов",img:IMG2,mode:"photo"},
-    {id:"c2",status:"Скоро",date:"05–26 июля",kind:"ВЫНОСЛИВОСТЬ",title:"Километры лета",desc:"Бег, плавание и движение",img:IMG1,mode:"photo"},
-    {id:"c3",status:"Скоро",date:"15 минут",kind:"ЗДОРОВАЯ ПРИВЫЧКА",title:"Движение каждый день",desc:"15 минут активности ежедневно",mode:"graphic"}
+    {...CHALLENGES[0],title:"Шаг за шагом",desc:"Общая цель: 70 000 шагов",daysLeft:14},
+    {...CHALLENGES[1],title:"Километры лета",desc:"Бег, плавание и движение",daysLeft:30},
+    {...CHALLENGES[3],title:"Движение каждый день",desc:"15 минут активности ежедневно",daysLeft:44}
   ];
+  const filtered=challengeData.filter(c=>challengeFilter==="all"||(challengeFilter==="active"?c.status==="active":c.status!=="active"));
   const homeNews=[
     {type:"ИСТОРИЯ",title:"Как спорт помогает решать сложные задачи",text:"Коллеги рассказывают, почему короткая тренировка иногда полезнее ещё одной встречи.",mode:"split"},
     {type:"РЕЗУЛЬТАТЫ",date:"20 мая 2026",title:"Команда продукта первой прошла 500 км",mode:"white"},
@@ -353,20 +387,18 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
     {n:"04",icon:"⌁",title:"Получай награды",text:"Баллы, достижения и приятные спортивные бонусы."}
   ];
   return(
-    <div style={{minHeight:"100vh",background:"radial-gradient(circle at 0% 8%,#F0DEFF 0,transparent 25%),radial-gradient(circle at 100% 42%,#FFE8EF 0,transparent 24%),linear-gradient(180deg,#FAF7FF 0%,#FBF9FF 100%)",color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
+    <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
       <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
       <main style={{maxWidth:1450,margin:"0 auto",padding:"38px 42px 54px"}}>
         <section style={{display:"grid",gridTemplateColumns:"0.9fr 1.15fr",gap:34,alignItems:"center",minHeight:555}}>
           <div style={{padding:"20px 0 20px"}}>
-            <h1 style={{fontSize:"clamp(58px,6.1vw,92px)",lineHeight:.94,letterSpacing:"-5px",margin:"0 0 28px",fontWeight:800,maxWidth:600}}>
+            <h1 style={{fontSize:"clamp(58px,6.1vw,92px)",lineHeight:.94,letterSpacing:"-5px",margin:"0 0 34px",fontWeight:800,maxWidth:600}}>
               Движение<br/>делает нас<br/><span style={{color:"#8D27EE"}}>сильнее</span>
             </h1>
-            <div style={{display:"flex",alignItems:"center",gap:24}}>
-              <button onClick={participate} style={{border:0,borderRadius:28,background:"#8D27EE",color:"#fff",fontSize:16,fontWeight:800,padding:"15px 27px",cursor:"pointer"}}>Начать участвовать&nbsp;&nbsp;→</button>
-            </div>
+            <button onClick={participate} style={{border:0,borderRadius:28,background:"#8D27EE",color:"#fff",fontSize:16,fontWeight:800,padding:"15px 27px",cursor:"pointer"}}>Начать участвовать&nbsp;&nbsp;→</button>
           </div>
           <div style={{position:"relative",height:530}}>
-            <img src={IMG2} alt="Пловец на открытой воде" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 54%",borderRadius:"48% 13% 12% 13% / 22% 15% 15% 15%",display:"block"}}/>
+            <img src={LIGHT_SWIM} alt="Пловец на открытой воде" onError={e=>{e.currentTarget.style.display="none";}} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 54%",borderRadius:"48% 13% 12% 13% / 22% 15% 15% 15%",display:"block",background:"#DCECF2"}}/>
             <div style={{position:"absolute",right:-18,top:68,background:"#E9FF1F",borderRadius:22,padding:"22px 24px",fontSize:15,fontWeight:800,transform:"rotate(5deg)",boxShadow:"0 14px 30px rgba(72,45,110,.07)"}}>+ энергия<br/>на каждый день</div>
           </div>
         </section>
@@ -378,26 +410,13 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
             <button onClick={()=>setPage("challenges")} style={{border:0,background:"transparent",color:"#8D27EE",fontSize:16,fontWeight:800,cursor:"pointer"}}>Все челленджи ↗</button>
           </div>
           <div style={{display:"flex",gap:10,margin:"38px 0 18px"}}>
-            {["Все","Идут сейчас","Скоро"].map((x,i)=><button key={x} style={{border:i===0?0:"1px solid #DED6E6",background:i===0?"#10052F":"transparent",color:i===0?"#fff":"#10052F",borderRadius:24,padding:"11px 20px",fontSize:14,fontWeight:700}}>{x}</button>)}
+            {[["all","Все"],["active","Идут сейчас"],["soon","Скоро"]].map(([id,label])=>{
+              const active=challengeFilter===id;
+              return <button key={id} onClick={()=>setChallengeFilter(id)} type="button" style={{border:active?0:"1px solid #DED6E6",background:active?"#10052F":"transparent",color:active?"#fff":"#10052F",borderRadius:24,padding:"11px 20px",fontSize:14,fontWeight:700,cursor:"pointer"}}>{label}</button>;
+            })}
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}}>
-            {challengeData.map((c,i)=>(
-              <article key={c.id} onClick={()=>setPage("challenges")} style={{borderRadius:28,overflow:"hidden",background:"#fff",border:"1px solid #E9E1EF",minHeight:470,cursor:"pointer",boxShadow:"0 8px 24px rgba(50,25,80,.04)"}}>
-                <div style={{height:290,position:"relative",background:c.mode==="graphic"?"#E9FF1F":"#DDEBF0",overflow:"hidden"}}>
-                  {c.mode==="photo"
-                    ? <img src={c.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
-                    : <div style={{height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,color:"#10052F"}}><div style={{fontSize:118,lineHeight:.8}}>15<span style={{fontSize:21,display:"inline-block",lineHeight:1.05}}> МИНУТ<br/> В ДЕНЬ</span></div></div>}
-                  <span style={{position:"absolute",top:18,left:18,background:i===0?"#8D27EE":"#E9FF1F",color:i===0?"#fff":"#10052F",borderRadius:20,padding:"8px 14px",fontSize:12,fontWeight:800}}>{c.status}</span>
-                  {c.date&&<span style={{position:"absolute",top:18,right:18,background:"#fff",borderRadius:20,padding:"8px 14px",fontSize:12,fontWeight:800}}>{c.date}</span>}
-                </div>
-                <div style={{padding:"25px 25px 28px",position:"relative"}}>
-                  <div style={{fontSize:12,fontWeight:800,letterSpacing:"1.4px",color:"#8D27EE",marginBottom:9}}>{c.kind}</div>
-                  <h3 style={{fontSize:27,letterSpacing:"-1.2px",margin:"0 0 8px",fontWeight:800}}>{c.title}</h3>
-                  <p style={{fontSize:14,color:"#746D7E",margin:0}}>{c.desc}</p>
-                  <button style={{position:"absolute",right:20,top:22,width:46,height:46,border:0,borderRadius:"50%",background:"#F5EDFC",color:"#8D27EE",fontSize:25,cursor:"pointer"}}>{i===1?"≈":"↗"}</button>
-                </div>
-              </article>
-            ))}
+            {filtered.map((c,i)=><LightChallengeCard key={c.id} c={c} i={challengeData.indexOf(c)} onOpen={()=>setPage("challenges")}/>)}
           </div>
         </section>
 
@@ -441,7 +460,7 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
             <p style={{fontSize:17,lineHeight:1.55,color:"#716A7E",maxWidth:430,margin:0}}>Никаких сложных правил: выбирай активность и двигайся в своём темпе.</p>
           </div>
           <div>
-            {steps.map((s,i)=><div key={s.n} style={{display:"grid",gridTemplateColumns:"40px 58px 1fr",gap:18,alignItems:"center",padding:"20px 0",borderBottom:"1px solid #E8E4EA"}}>
+            {steps.map(s=><div key={s.n} style={{display:"grid",gridTemplateColumns:"40px 58px 1fr",gap:18,alignItems:"center",padding:"20px 0",borderBottom:"1px solid #E8E4EA"}}>
               <div style={{fontSize:12,color:"#8D27EE",fontWeight:800}}>{s.n}</div>
               <div style={{width:56,height:56,borderRadius:18,background:"#F5EDFC",display:"flex",alignItems:"center",justifyContent:"center",color:"#8D27EE",fontSize:24}}>{s.icon}</div>
               <div><h3 style={{fontSize:21,margin:"0 0 4px",fontWeight:800}}>{s.title}</h3><p style={{fontSize:14,color:"#7B7483",margin:0}}>{s.text}</p></div>
@@ -459,17 +478,81 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
             {homeNews.map((n,i)=>{
               if(n.mode==="split") return <article key={i} style={{height:350,borderRadius:28,overflow:"hidden",display:"grid",gridTemplateColumns:"1.03fr .97fr",background:"#10052F",color:"#fff"}}>
                 <div style={{padding:"32px",display:"flex",flexDirection:"column"}}><span style={{alignSelf:"flex-start",background:"#8D27EE",borderRadius:18,padding:"7px 12px",fontSize:11,fontWeight:800}}>{n.type}</span><h3 style={{fontSize:31,lineHeight:1.05,letterSpacing:"-1.3px",margin:"30px 0 14px",fontWeight:800}}>{n.title}</h3><p style={{fontSize:13,lineHeight:1.55,color:"#BDB5CC",margin:0}}>{n.text}</p><b style={{fontSize:15,marginTop:"auto"}}>Читать историю →</b></div>
-                <img src={IMG2} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                <img src={LIGHT_SWIM} alt="" onError={e=>{e.currentTarget.style.display="none";}} style={{width:"100%",height:"100%",objectFit:"cover",background:"#DCECF2"}}/>
               </article>;
               if(n.mode==="white") return <article key={i} style={{height:350,borderRadius:28,background:"#fff",border:"1px solid #DED8E3",padding:"30px",display:"flex",flexDirection:"column"}}>
-                <span style={{alignSelf:"flex-start",background:"#E9FF1F",borderRadius:18,padding:"7px 12px",fontSize:11,fontWeight:800}}>{n.type}</span><div style={{fontSize:12,color:"#81798B",marginTop:23}}>{n.date}</div><h3 style={{fontSize:25,lineHeight:1.08,letterSpacing:"-.9px",margin:"28px 0 0",fontWeight:800}}>{n.title}</h3><button style={{marginTop:"auto",width:48,height:48,borderRadius:"50%",border:0,background:"#10052F",color:"#fff",fontSize:24}}>↗</button>
+                <span style={{alignSelf:"flex-start",background:"#E9FF1F",borderRadius:18,padding:"7px 12px",fontSize:11,fontWeight:800}}>{n.type}</span><div style={{fontSize:12,color:"#81798B",marginTop:23}}>{n.date}</div><h3 style={{fontSize:25,lineHeight:1.08,letterSpacing:"-.9px",margin:"28px 0 0",fontWeight:800}}>{n.title}</h3><button type="button" onClick={()=>setPage("news")} style={{marginTop:"auto",width:48,height:48,borderRadius:"50%",border:0,background:"#10052F",color:"#fff",fontSize:24,cursor:"pointer"}}>↗</button>
               </article>;
               return <article key={i} style={{height:350,borderRadius:28,background:"#8D27EE",color:"#fff",padding:"30px",display:"flex",flexDirection:"column"}}>
-                <span style={{fontSize:11,fontWeight:800}}>{n.type}</span><div style={{fontSize:12,color:"#DCC5F8",marginTop:26}}>{n.date}</div><h3 style={{fontSize:25,lineHeight:1.08,letterSpacing:"-.9px",margin:"28px 0 0",fontWeight:800}}>{n.title}</h3><button style={{marginTop:"auto",width:48,height:48,borderRadius:"50%",border:0,background:"#E9FF1F",color:"#10052F",fontSize:24}}>↗</button>
+                <span style={{fontSize:11,fontWeight:800}}>{n.type}</span><div style={{fontSize:12,color:"#DCC5F8",marginTop:26}}>{n.date}</div><h3 style={{fontSize:25,lineHeight:1.08,letterSpacing:"-.9px",margin:"28px 0 0",fontWeight:800}}>{n.title}</h3><button type="button" onClick={()=>setPage("news")} style={{marginTop:"auto",width:48,height:48,borderRadius:"50%",border:0,background:"#E9FF1F",color:"#10052F",fontSize:24,cursor:"pointer"}}>↗</button>
               </article>;
             })}
           </div>
         </section>
+      </main>
+    </div>
+  );
+}
+
+function LightChallengesPage({setPage,challenges=CHALLENGES,signedIn=false,onLogin,isAdmin=false}){
+  const [filter,setFilter]=useState("all");
+  const visible=challenges.filter(c=>filter==="all"||(filter==="active"?c.status==="active":c.status!=="active"));
+  const openResult=()=>signedIn?setPage("cabinet-light"):onLogin?.();
+  return(
+    <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
+      <main style={{maxWidth:1450,margin:"0 auto",padding:"48px 42px 72px"}}>
+        <div style={{fontSize:13,fontWeight:800,letterSpacing:"2px",color:"#8D27EE",marginBottom:16}}>ВЫБИРАЙ СВОЙ ТЕМП</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:20}}>
+          <h1 style={{fontSize:68,lineHeight:1,letterSpacing:"-3.5px",margin:0,fontWeight:800}}>Активные челленджи</h1>
+          <button onClick={()=>setPage("light")} style={{border:0,background:"transparent",color:"#8D27EE",fontSize:16,fontWeight:800,cursor:"pointer"}}>На главную ↗</button>
+        </div>
+        <div style={{display:"flex",gap:10,margin:"38px 0 22px"}}>
+          {[["all","Все"],["active","Идут сейчас"],["soon","Скоро"]].map(([id,label])=>{
+            const active=filter===id;
+            return <button key={id} onClick={()=>setFilter(id)} type="button" style={{border:active?0:"1px solid #DED6E6",background:active?"#10052F":"transparent",color:active?"#fff":"#10052F",borderRadius:24,padding:"12px 22px",fontSize:14,fontWeight:700,cursor:"pointer"}}>{label}</button>;
+          })}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}}>
+          {visible.map((c,i)=><div key={c.id} style={{position:"relative"}}>
+            <LightChallengeCard c={c} i={challenges.indexOf(c)} onOpen={openResult}/>
+            <button onClick={openResult} type="button" style={{position:"absolute",left:24,bottom:22,border:0,borderRadius:22,background:c.status==="active"?"#8D27EE":"#F4EEF8",color:c.status==="active"?"#fff":"#756D7E",fontSize:12,fontWeight:800,padding:"9px 14px",cursor:"pointer"}}>
+              {c.status==="active"?"Внести результат":"Подробнее"}
+            </button>
+          </div>)}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function LightNewsPage({setPage,news=INIT_NEWS,signedIn=false,onLogin,isAdmin=false}){
+  return(
+    <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
+      <main style={{maxWidth:1450,margin:"0 auto",padding:"48px 42px 72px"}}>
+        <div style={{fontSize:13,fontWeight:800,letterSpacing:"2px",color:"#8D27EE",marginBottom:16}}>БУДЬ В КУРСЕ</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:20,marginBottom:34}}>
+          <h1 style={{fontSize:68,lineHeight:1,letterSpacing:"-3.5px",margin:0,fontWeight:800}}>Новости движения</h1>
+          <button onClick={()=>setPage("light")} style={{border:0,background:"transparent",color:"#8D27EE",fontSize:16,fontWeight:800,cursor:"pointer"}}>На главную ↗</button>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16}}>
+          {news.map((n,i)=>{
+            const hasImage=n.attachmentData&&String(n.attachmentType||"").startsWith("image/");
+            const visual=hasImage?n.attachmentData:(i===0?LIGHT_SWIM:i===3?LIGHT_SURF:null);
+            const mode=i%3;
+            if(visual) return <article key={n.id||i} style={{minHeight:330,borderRadius:28,overflow:"hidden",display:"grid",gridTemplateRows:"185px 1fr",background:"#fff",border:"1px solid #E4DDE9"}}>
+              <img src={visual} alt="" style={{width:"100%",height:"100%",objectFit:"cover",background:"#DCECF2"}}/>
+              <div style={{padding:"22px 24px 24px"}}><span style={{display:"inline-block",background:"#F5EDFC",color:"#8D27EE",borderRadius:18,padding:"6px 10px",fontSize:10,fontWeight:800}}>{n.cat||"Новость"}</span><div style={{fontSize:11,color:"#81798B",marginTop:13}}>{n.date}</div><h3 style={{fontSize:22,lineHeight:1.08,margin:"10px 0 7px",fontWeight:800}}>{n.title}</h3><p style={{fontSize:13,lineHeight:1.48,color:"#746D7E",margin:0}}>{n.text}</p>{n.imageName&&<div style={{fontSize:11,color:"#8D27EE",marginTop:10}}>📎 {n.imageName}</div>}</div>
+            </article>;
+            if(mode===1) return <article key={n.id||i} style={{minHeight:330,borderRadius:28,background:"#fff",border:"1px solid #DED8E3",padding:"28px",display:"flex",flexDirection:"column"}}>
+              <span style={{alignSelf:"flex-start",background:"#E9FF1F",borderRadius:18,padding:"7px 12px",fontSize:11,fontWeight:800}}>{n.cat||"РЕЗУЛЬТАТЫ"}</span><div style={{fontSize:12,color:"#81798B",marginTop:23}}>{n.date}</div><h3 style={{fontSize:25,lineHeight:1.08,letterSpacing:"-.8px",margin:"28px 0 10px",fontWeight:800}}>{n.title}</h3><p style={{fontSize:13,color:"#746D7E",lineHeight:1.5,margin:0}}>{n.text}</p>
+            </article>;
+            return <article key={n.id||i} style={{minHeight:330,borderRadius:28,background:"#8D27EE",color:"#fff",padding:"28px",display:"flex",flexDirection:"column"}}>
+              <span style={{fontSize:11,fontWeight:800}}>{n.cat||"АНОНС"}</span><div style={{fontSize:12,color:"#DCC5F8",marginTop:25}}>{n.date}</div><h3 style={{fontSize:25,lineHeight:1.08,letterSpacing:"-.8px",margin:"28px 0 10px",fontWeight:800}}>{n.title}</h3><p style={{fontSize:13,color:"#E7D7F8",lineHeight:1.5,margin:0}}>{n.text}</p>
+            </article>;
+          })}
+        </div>
       </main>
     </div>
   );
@@ -512,7 +595,7 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
             <section style={card}><div className="section-title">Последняя активность</div>{results.length===0?<div className="empty-state">После внесения результата здесь появится история активности.</div>:results.slice().reverse().slice(0,6).map(r=><div key={r.id} className="activity-row"><div className="activity-icon">✓</div><div style={{flex:1}}><b>{r.challengeTitle}</b><div className="muted" style={{fontSize:11}}>{r.date}{r.proofName?` · 📎 ${r.proofName}`:""}</div></div><strong style={{color:BP}}>{Number(r.value).toLocaleString("ru-RU")}</strong></div>)}</section>
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:20}}>
-            <section style={card}><div className="section-title">Ближайшие события</div>{events.map((e,i)=>{const joined=registeredEvents.includes(e.id);return <div key={e.id} className="event-row" style={{borderTop:i?"1px solid #ece4f5":"none"}}><div className="event-date"><small>{e.day}</small><b>{e.date}</b></div><div style={{flex:1}}><b>{e.title}</b><div className="muted" style={{fontSize:11}}>{e.place} · {e.kind||"Событие"}</div></div><button className={joined?"mini-btn active":"mini-btn"} onClick={()=>onToggleEvent(e.id)}>{joined?"Записана ✓":"Записаться"}</button></div>})}</section>
+            <section style={card}><div className="section-title">Ближайшие события</div>{events.map((e,i)=>{const joined=registeredEvents.includes(e.id);return <div key={e.id} className="event-row" style={{borderTop:i?"1px solid #ece4f5":"none"}}><div className="event-date"><small>{e.day}</small><b>{e.date}</b></div><div style={{flex:1}}><b>{e.title}</b><div className="muted" style={{fontSize:11}}>{e.place} · {e.kind||"Событие"}{e.attachmentName?" · 📎 "+e.attachmentName:""}</div></div><button className={joined?"mini-btn active":"mini-btn"} onClick={()=>onToggleEvent(e.id)}>{joined?"Записана ✓":"Записаться"}</button></div>})}</section>
             <section style={card}><div className="section-title">Достижения</div><div className="achievement-grid">{[{e:"🔥",l:"7 дней подряд"},{e:"🏊",l:"10 км плавания"},{e:"👟",l:"Первый результат"},{e:"🚴",l:"Велопрогулка"}].map((a,i)=><div key={i} className="achievement"><span>{a.e}</span><small>{a.l}</small></div>)}</div></section>
           </div>
         </div>
@@ -525,15 +608,27 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
 
 function AdminPanel({setPage,challenges,events,news,onAddChallenge,onAddEvent,onAddNews}){
   const [tab,setTab]=useState("challenge");
-  const [form,setForm]=useState({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",file:""});
+  const [form,setForm]=useState({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",fileName:"",fileType:"",fileData:""});
   const change=(k,v)=>setForm(p=>({...p,[k]:v}));
+  const handleFile=e=>{
+    const file=e.target.files?.[0];
+    if(!file){setForm(p=>({...p,fileName:"",fileType:"",fileData:""}));return;}
+    if(file.size>2*1024*1024){alert("Для демо выберите файл до 2 МБ.");e.target.value="";return;}
+    if(file.type.startsWith("image/")){
+      const reader=new FileReader();
+      reader.onload=()=>setForm(p=>({...p,fileName:file.name,fileType:file.type,fileData:String(reader.result||"")}));
+      reader.readAsDataURL(file);
+    }else{
+      setForm(p=>({...p,fileName:file.name,fileType:file.type||"application/octet-stream",fileData:""}));
+    }
+  };
   const submit=e=>{
     e.preventDefault();
     if(!form.title.trim())return;
     if(tab==="challenge")onAddChallenge(form);
     if(tab==="event")onAddEvent(form);
     if(tab==="news")onAddNews(form);
-    setForm({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",file:""});
+    setForm({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",fileName:"",fileType:"",fileData:""});
   };
   return(
     <div className="light-shell" style={{background:"radial-gradient(circle at 0% 8%,#F0DEFF 0,transparent 25%),radial-gradient(circle at 100% 42%,#FFE8EF 0,transparent 24%),linear-gradient(180deg,#FAF7FF 0%,#FBF9FF 100%)",color:BD,minHeight:"100vh",fontFamily:"'Open Sans',Arial,sans-serif"}}>
@@ -554,8 +649,9 @@ function AdminPanel({setPage,challenges,events,news,onAddChallenge,onAddEvent,on
             {tab!=="news"&&<><label>Описание<textarea value={form.desc} onChange={e=>change("desc",e.target.value)}/></label><div className="form-row"><label>Дата<input type="date" value={form.date} onChange={e=>change("date",e.target.value)}/></label><label>Место / ссылка<input value={form.place} onChange={e=>change("place",e.target.value)} placeholder="Zoom или адрес"/></label></div></>}
             {tab==="news"&&<label>Текст<textarea value={form.text} onChange={e=>change("text",e.target.value)}/></label>}
             <label>Фото / файл
-              <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" onChange={e=>change("file",e.target.files?.[0]?.name||"")}/>
-              {form.file&&<span style={{fontSize:11,color:"#756f7e",fontWeight:600}}>Прикреплено: {form.file}</span>}
+              <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" onChange={handleFile}/>
+              {form.fileName&&<span style={{fontSize:11,color:"#756f7e",fontWeight:600}}>Прикреплено: {form.fileName}</span>}
+              {form.fileData&&<img src={form.fileData} alt="Предпросмотр" style={{marginTop:6,width:"100%",maxHeight:180,objectFit:"cover",borderRadius:12,border:"1px solid #E7DDED"}}/>}
             </label>
             <button className="primary-btn" type="submit">{tab==="news"?"Опубликовать":"Сохранить и запустить"}</button>
           </form>
@@ -834,9 +930,9 @@ export default function App(){
   const login=role=>{setSignedIn(true);setIsAdmin(role==="admin");setShowLogin(false);setPage(role==="admin"?"admin":"cabinet-light");};
   const addResult=result=>{setResults(p=>[...p,result]);notify("Результат сохранён, прогресс обновлён");};
   const toggleEvent=id=>setRegisteredEvents(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);
-  const adminAddChallenge=form=>{setAppChallenges(p=>[{id:`c${Date.now()}`,emoji:form.emoji||"🏃",title:form.title,desc:form.desc||"Новый корпоративный челлендж",participants:0,status:"active",statusLabel:"Активный",color:BP,daysLeft:30,type:"steps",attachmentName:form.file||"",bg:"linear-gradient(135deg,#EDE1FB,#D9E8FB)"},...p]);notify("Челлендж запущен");};
-  const adminAddEvent=form=>{const d=form.date?new Date(`${form.date}T12:00:00`):new Date();setEvents(p=>[{id:`e${Date.now()}`,date:String(d.getDate()).padStart(2,"0"),day:d.toLocaleDateString("ru-RU",{weekday:"short"}).toUpperCase(),title:form.title,place:form.place||"Онлайн",kind:form.kind||"Событие",attachmentName:form.file||""},...p]);notify("Событие добавлено");};
-  const adminAddNews=form=>{setNews(p=>[{id:Date.now(),title:form.title,cat:"Анонс",date:new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}),text:form.text||"Новая публикация",emoji:form.emoji||"📢",imageName:form.file||"",bg:"linear-gradient(160deg,#F3EEFA,#E9F6EF)"},...p]);notify("Публикация добавлена");};
+  const adminAddChallenge=form=>{setAppChallenges(p=>[{id:`c${Date.now()}`,emoji:form.emoji||"🏃",title:form.title,desc:form.desc||"Новый корпоративный челлендж",participants:0,status:"active",statusLabel:"Активный",color:BP,daysLeft:30,type:"steps",attachmentName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||"",bg:"linear-gradient(135deg,#EDE1FB,#D9E8FB)"},...p]);notify("Челлендж запущен");};
+  const adminAddEvent=form=>{const d=form.date?new Date(`${form.date}T12:00:00`):new Date();setEvents(p=>[{id:`e${Date.now()}`,date:String(d.getDate()).padStart(2,"0"),day:d.toLocaleDateString("ru-RU",{weekday:"short"}).toUpperCase(),title:form.title,place:form.place||"Онлайн",kind:form.kind||"Событие",attachmentName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||""},...p]);notify("Событие добавлено");};
+  const adminAddNews=form=>{setNews(p=>[{id:Date.now(),title:form.title,cat:"Анонс",date:new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}),text:form.text||"Новая публикация",emoji:form.emoji||"📢",imageName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||"",bg:"linear-gradient(160deg,#F3EEFA,#E9F6EF)"},...p]);notify("Публикация добавлена");};
 
   const fadeStyle=id=>({opacity:visible[id]?1:0,transform:visible[id]?"translateY(0)":"translateY(24px)",transition:"opacity .7s ease, transform .7s ease"});
 
@@ -868,13 +964,13 @@ export default function App(){
       {toast&&<div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:999,background:"#D1FAE5",color:"#065F46",padding:"10px 20px",borderRadius:12,fontSize:13,fontWeight:600,boxShadow:"0 8px 24px rgba(0,0,0,0.4)",whiteSpace:"nowrap",border:"1px solid #6EE7B7",animation:"slideIn .3s ease"}}>✓ {toast}</div>}
 
       {/* NAV — прозрачная поверх hero (вариант 1), затемняется при скролле/на других страницах */}
-      {page!=="minimal"&&page!=="light"&&page!=="cabinet-light"&&page!=="admin"&&(
+      {page!=="minimal"&&page!=="light"&&page!=="cabinet-light"&&page!=="admin"&&page!=="challenges"&&page!=="news"&&(
       <nav style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 32px",position:"fixed",top:0,left:0,right:0,zIndex:50,
         background:(page==="home"&&!scrolled)?"transparent":"rgba(19,19,25,0.97)",
         borderBottom:(page==="home"&&!scrolled)?"1px solid transparent":"1px solid rgba(255,255,255,0.05)",
         backdropFilter:(page==="home"&&!scrolled)?"none":"blur(16px)",
         transition:"background .3s ease, border-color .3s ease, backdrop-filter .3s ease"}}>
-        <div style={{fontSize:20,fontWeight:700,letterSpacing:"-0.5px",cursor:"pointer"}} onClick={()=>setPage("home")}>
+        <div style={{fontSize:20,fontWeight:700,letterSpacing:"-0.5px",cursor:"pointer"}} onClick={()=>setPage("light")}>
           право<span style={{color:PL}}>(спорт)</span>
         </div>
         <div style={{display:"flex",gap:2}}>
@@ -904,6 +1000,8 @@ export default function App(){
 
       {/* ── СВЕТЛАЯ ВЕРСИЯ (продакшн-синтез референсов) ── */}
       {page==="light"&&<LightHome setPage={setPage} challenges={appChallenges} news={news} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
+      {page==="challenges"&&<LightChallengesPage setPage={setPage} challenges={appChallenges} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
+      {page==="news"&&<LightNewsPage setPage={setPage} news={news} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
       {page==="cabinet-light"&&<LightCabinet setPage={setPage} challenges={appChallenges} events={events} results={results} registeredEvents={registeredEvents} onSubmitResult={addResult} onToggleEvent={toggleEvent}/>}
       {page==="admin"&&<AdminPanel setPage={setPage} challenges={appChallenges} events={events} news={news} onAddChallenge={adminAddChallenge} onAddEvent={adminAddEvent} onAddNews={adminAddNews}/>}
 
@@ -1074,7 +1172,7 @@ export default function App(){
       )}
 
       {/* CHALLENGES PAGE */}
-      {page==="challenges"&&(
+      {page==="legacy-challenges"&&(
         <div style={{padding:"96px 32px 32px"}}>
           <h2 style={{fontSize:32,fontWeight:800,margin:"0 0 8px",letterSpacing:"-0.8px"}}>Челленджи</h2>
           <p style={{color:"#555",fontSize:14,margin:"0 0 32px"}}>Выбери активность и отправь результат</p>
@@ -1101,7 +1199,7 @@ export default function App(){
       )}
 
       {/* NEWS PAGE */}
-      {page==="news"&&(
+      {page==="legacy-news"&&(
         <div style={{padding:"96px 32px 32px"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:32}}>
             <div><h2 style={{fontSize:32,fontWeight:800,margin:"0 0 6px",letterSpacing:"-0.8px"}}>Новости</h2><p style={{color:"#555",fontSize:14,margin:0}}>Последние события</p></div>
