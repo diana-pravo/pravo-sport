@@ -314,6 +314,7 @@ function MinimalHome({setPage}){
 
 export default function App(){
   const [page,setPage]=useState("home");
+  const [scrolled,setScrolled]=useState(false);
   const [mouse,setMouse]=useState({x:0,y:0});
   const [news,setNews]=useState(INIT_NEWS);
   const [isAdmin,setIsAdmin]=useState(false);
@@ -359,6 +360,14 @@ export default function App(){
     return()=>obs.disconnect();
   },[page]);
 
+  // Навбар прозрачный поверх hero, затемняется при прокрутке
+  useEffect(()=>{
+    const h=()=>setScrolled(window.scrollY>72);
+    window.addEventListener("scroll",h,{passive:true});
+    h();
+    return()=>window.removeEventListener("scroll",h);
+  },[]);
+
   const notify=msg=>{setToast(msg);setTimeout(()=>setToast(null),3000);};
   const addNews=()=>{
     if(!newPost.title.trim())return;
@@ -395,16 +404,20 @@ export default function App(){
 
       {toast&&<div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:999,background:"#D1FAE5",color:"#065F46",padding:"10px 20px",borderRadius:12,fontSize:13,fontWeight:600,boxShadow:"0 8px 24px rgba(0,0,0,0.4)",whiteSpace:"nowrap",border:"1px solid #6EE7B7",animation:"slideIn .3s ease"}}>✓ {toast}</div>}
 
-      {/* NAV */}
+      {/* NAV — прозрачная поверх hero (вариант 1), затемняется при скролле/на других страницах */}
       {page!=="minimal"&&(
-      <nav style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 32px",borderBottom:"1px solid rgba(255,255,255,0.05)",position:"sticky",top:0,background:"rgba(19,19,25,0.97)",zIndex:10,backdropFilter:"blur(16px)"}}>
+      <nav style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 32px",position:"fixed",top:0,left:0,right:0,zIndex:50,
+        background:(page==="home"&&!scrolled)?"transparent":"rgba(19,19,25,0.97)",
+        borderBottom:(page==="home"&&!scrolled)?"1px solid transparent":"1px solid rgba(255,255,255,0.05)",
+        backdropFilter:(page==="home"&&!scrolled)?"none":"blur(16px)",
+        transition:"background .3s ease, border-color .3s ease, backdrop-filter .3s ease"}}>
         <div style={{fontSize:20,fontWeight:700,letterSpacing:"-0.5px",cursor:"pointer"}} onClick={()=>setPage("home")}>
           право<span style={{color:PL}}>(спорт)</span>
         </div>
         <div style={{display:"flex",gap:2}}>
           {navItems.map(item=>(
             <button key={item.id} onClick={()=>setPage(item.id)} className="hov-btn"
-              style={{background:page===item.id?"rgba(124,58,237,0.15)":"transparent",color:page===item.id?"#fff":"#555",border:page===item.id?`1px solid rgba(124,58,237,0.3)`:"1px solid transparent",borderRadius:8,padding:"6px 14px",fontSize:13,cursor:"pointer",fontWeight:page===item.id?500:400}}>
+              style={{background:page===item.id?"rgba(124,58,237,0.15)":"transparent",color:page===item.id?"#fff":((page==="home"&&!scrolled)?"rgba(255,255,255,0.7)":"#555"),border:page===item.id?`1px solid rgba(124,58,237,0.3)`:"1px solid transparent",borderRadius:8,padding:"6px 14px",fontSize:13,cursor:"pointer",fontWeight:page===item.id?500:400}}>
               {item.label}
             </button>
           ))}
@@ -463,12 +476,6 @@ export default function App(){
                     ? <img src={scene.img} alt={scene.label} style={{width:"100%",height:"100%",objectFit:"cover",transition:"transform .6s ease"}} className="photo-inner"/>
                     : <PhotoCard scene={scene} style={{width:"100%",height:"100%"}}><div className="photo-inner"/></PhotoCard>
                   }
-                  <div style={{position:"absolute",inset:0,background:"linear-gradient(0deg,rgba(0,0,0,0.7) 0%,transparent 60%)"}}/>
-                  <div style={{position:"absolute",bottom:20,left:20}}>
-                    <div style={{fontSize:28,marginBottom:4}}>{scene.emoji}</div>
-                    <div style={{fontSize:16,fontWeight:700}}>{scene.label}</div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>{scene.sub}</div>
-                  </div>
                   {i===stripIdx&&<div style={{position:"absolute",top:14,right:14,background:P,borderRadius:999,padding:"3px 10px",fontSize:10,fontWeight:600}}>Активно</div>}
                 </div>
               ))}
@@ -594,7 +601,7 @@ export default function App(){
 
       {/* CHALLENGES PAGE */}
       {page==="challenges"&&(
-        <div style={{padding:32}}>
+        <div style={{padding:"96px 32px 32px"}}>
           <h2 style={{fontSize:32,fontWeight:800,margin:"0 0 8px",letterSpacing:"-0.8px"}}>Челленджи</h2>
           <p style={{color:"#555",fontSize:14,margin:"0 0 32px"}}>Выбери активность и отправь результат</p>
           <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:16}}>
@@ -621,7 +628,7 @@ export default function App(){
 
       {/* NEWS PAGE */}
       {page==="news"&&(
-        <div style={{padding:32}}>
+        <div style={{padding:"96px 32px 32px"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:32}}>
             <div><h2 style={{fontSize:32,fontWeight:800,margin:"0 0 6px",letterSpacing:"-0.8px"}}>Новости</h2><p style={{color:"#555",fontSize:14,margin:0}}>Последние события</p></div>
             {isAdmin&&<button onClick={()=>setShowAddNews(!showAddNews)} className="hov-btn" style={{background:showAddNews?"rgba(124,58,237,0.15)":P,color:"#fff",border:showAddNews?`1px solid ${P}`:"none",borderRadius:10,padding:"10px 20px",fontSize:14,fontWeight:600,cursor:"pointer"}}>{showAddNews?"Отмена":"+ Написать"}</button>}
@@ -659,7 +666,7 @@ export default function App(){
 
       {/* LEADERBOARD */}
       {page==="leaderboard"&&(
-        <div style={{padding:32}}>
+        <div style={{padding:"96px 32px 32px"}}>
           <h2 style={{fontSize:32,fontWeight:800,margin:"0 0 8px",letterSpacing:"-0.8px"}}>Рейтинг сезона</h2>
           <p style={{color:"#555",fontSize:14,margin:"0 0 40px"}}>Мерчики за все челленджи 2025</p>
           <div style={{display:"flex",alignItems:"flex-end",justifyContent:"center",gap:10,marginBottom:40}}>
@@ -695,7 +702,7 @@ export default function App(){
 
       {/* ANNOUNCEMENTS */}
       {page==="announcements"&&(
-        <div style={{padding:32}}>
+        <div style={{padding:"96px 32px 32px"}}>
           <h2 style={{fontSize:32,fontWeight:800,margin:"0 0 8px",letterSpacing:"-0.8px"}}>Анонсы</h2>
           <p style={{color:"#555",fontSize:14,margin:"0 0 32px"}}>Предстоящие мероприятия</p>
           {[{month:"Июнь",items:[{emoji:"🏊",title:"Плавание / Вело / Бег — Этап 1",date:"1 июня",desc:"Три дисциплины, рейтинг по км",days:14,color:"#0891B2"},{emoji:"👟",title:"Шаговый июнь",date:"15 июня",desc:"Ежедневные шаги, формат нормы",days:25,color:"#7C3AED"}]},{month:"Июль",items:[{emoji:"🚴",title:"Корп. велогонка",date:"5 июля",desc:"Парк Горького → Воробьёвы горы",days:45,color:"#D97706"},{emoji:"❤️",title:"Благотворительный забег",date:"20 июля",desc:"Шаги в пользу доброго дела",days:60,color:"#DC2626"}]}].map(sec=>(
