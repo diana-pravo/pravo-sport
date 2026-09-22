@@ -297,7 +297,7 @@ const MagButton=({children,onClick,primary,style})=>{
   );
 };
 
-function LightHome({setPage}){
+function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,isAdmin=false,onLogin}){
   const [navSolid,setNavSolid]=useState(false);
   useEffect(()=>{const h=()=>setNavSolid(window.scrollY>40);window.addEventListener("scroll",h,{passive:true});h();return()=>window.removeEventListener("scroll",h);},[]);
   const heroPhoto=IMG4;
@@ -319,7 +319,9 @@ function LightHome({setPage}){
           <button onClick={()=>scrollTo("section-challenges")} style={{background:"transparent",border:"none",color:"#8a8494",fontWeight:500,fontSize:13,padding:"8px 14px",cursor:"pointer"}}>Челленджи</button>
           <button onClick={()=>scrollTo("section-news")} style={{background:"transparent",border:"none",color:"#8a8494",fontWeight:500,fontSize:13,padding:"8px 14px",cursor:"pointer"}}>Новости</button>
           <button onClick={()=>scrollTo("section-leaderboard")} style={{background:"transparent",border:"none",color:"#8a8494",fontWeight:500,fontSize:13,padding:"8px 14px",cursor:"pointer"}}>Рейтинг</button>
-          <div onClick={()=>setPage("cabinet-light")} title="Личный кабинет" style={{width:34,height:34,borderRadius:"50%",background:BP,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",marginLeft:6}}>Д</div>
+          {isAdmin&&<button onClick={()=>setPage("admin")} style={{background:"transparent",border:"none",color:BP,fontWeight:700,fontSize:12,padding:"8px 10px",cursor:"pointer"}}>Админ</button>}
+          {!signedIn&&<button onClick={onLogin} style={{background:"transparent",border:"1px solid #e6dcf2",borderRadius:999,color:BD,fontWeight:700,fontSize:12,padding:"8px 14px",cursor:"pointer"}}>Войти</button>}
+          {signedIn&&<div onClick={()=>setPage("cabinet-light")} title="Личный кабинет" style={{width:34,height:34,borderRadius:"50%",background:BP,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",marginLeft:6}}>Д</div>}
           <MagButton onClick={()=>scrollTo("section-challenges")} style={{background:BP,color:"#fff",border:"none",borderRadius:999,padding:"10px 20px",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:"0 6px 18px rgba(140,38,234,0.35)"}}>Участвовать →</MagButton>
         </div>
       </div>
@@ -385,7 +387,7 @@ function LightHome({setPage}){
           </h2>
         </RevealSection>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:18}}>
-          {CHALLENGES.slice(0,3).map((c,i)=>{
+          {challenges.slice(0,3).map((c,i)=>{
             const photo=[IMG1,IMG2,IMG3][i%3];
             return(
               <RevealSection key={c.id} y={30}>
@@ -498,7 +500,7 @@ function LightHome({setPage}){
           <h2 style={{fontSize:26,fontWeight:800,margin:0,letterSpacing:"-0.6px"}}>Новости</h2>
         </RevealSection>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:18}}>
-          {INIT_NEWS.slice(0,3).map(n=>(
+          {news.slice(0,3).map(n=>(
             <RevealSection key={n.id} y={30}>
               <div style={{...lg(0.9),borderRadius:18,padding:"20px 22px",height:"100%"}}>
                 <div style={{fontSize:11,color:BP,fontWeight:700,textTransform:"uppercase",letterSpacing:".06em",marginBottom:10}}>{n.cat} · {n.date}</div>
@@ -520,116 +522,60 @@ function LightHome({setPage}){
   );
 }
 
-// Светлый личный кабинет — доступен по клику на аватар/свою строку в рейтинге
-function LightCabinet({setPage}){
-  const me=LEADERBOARD.find(u=>u.uid==="me")||{name:"Диана",merchi:42};
-  const myRank=LEADERBOARD.slice().sort((a,b)=>b.merchi-a.merchi).findIndex(u=>u.uid==="me")+1;
-  const ring=(value,max,color,label,sub)=>{
-    const size=88,r=(size-10)/2,circ=2*Math.PI*r,pct=Math.min(value/max,1);
-    return(
-      <div style={{...lg(0.85),borderRadius:18,padding:"18px",display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#ece4f5" strokeWidth="7"/>
-          <motion.circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="7" strokeLinecap="round"
-            strokeDasharray={circ} transform={`rotate(-90 ${size/2} ${size/2})`}
-            initial={{strokeDashoffset:circ}} animate={{strokeDashoffset:circ*(1-pct)}} transition={{duration:1,ease:"easeOut"}}/>
-          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="central" fontSize="20" fontWeight="800" fill={BD}>{value}</text>
-        </svg>
-        <div style={{textAlign:"center"}}>
-          <div style={{fontSize:12,fontWeight:700}}>{label}</div>
-          <div style={{fontSize:10,color:"#8a8494"}}>{sub}</div>
-        </div>
-      </div>
-    );
+// Светлый личный кабинет: результаты, подтверждения, активность и записи на события.
+function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],registeredEvents=[],onSubmitResult,onToggleEvent}){
+  const [activeChallenge,setActiveChallenge]=useState(null);
+  const [value,setValue]=useState("");
+  const [comment,setComment]=useState("");
+  const [proof,setProof]=useState(null);
+  const totalSteps=results.filter(r=>r.type==="steps").reduce((sum,r)=>sum+Number(r.value||0),8100);
+  const totalPoints=42+results.reduce((sum,r)=>sum+Number(r.points||0),0);
+  const submit=e=>{
+    e.preventDefault();
+    if(!value||!activeChallenge)return;
+    onSubmitResult({id:Date.now(),challengeId:activeChallenge.id,challengeTitle:activeChallenge.title,type:activeChallenge.type,value:Number(value),comment,proofName:proof?.name||"",date:new Date().toLocaleString("ru-RU"),points:Math.max(1,Math.min(20,Number(value)/1000))});
+    setValue("");setComment("");setProof(null);setActiveChallenge(null);
   };
+  const card={...lg(0.88),borderRadius:20,padding:"22px 24px"};
   return(
-    <div style={{background:"#FCFAFF",color:BD,minHeight:"100vh",position:"relative",overflowX:"hidden",fontFamily:"'Open Sans',-apple-system,system-ui,sans-serif"}}>
-      <Blob top={-100} left={-100} size={380} color="#EDE1FB" delay={0}/>
-      <Blob top={700} right={-120} size={340} color="#E1F3FB" delay={2}/>
-
-      <div style={{position:"relative",zIndex:2,maxWidth:1000,margin:"0 auto",padding:"32px 32px 64px"}}>
-        <button onClick={()=>setPage("light")} style={{background:"transparent",border:"none",color:BP,fontWeight:700,fontSize:13,cursor:"pointer",marginBottom:24,padding:0}}>← На главную</button>
-
-        <RevealSection style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:16,marginBottom:28}}>
-          <div style={{display:"flex",alignItems:"center",gap:16}}>
-            <div style={{width:56,height:56,borderRadius:"50%",background:BP,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:22,fontWeight:800}}>Д</div>
-            <div>
-              <div style={{fontSize:22,fontWeight:800,letterSpacing:"-0.5px"}}>Добрый день, {me.name}! 👋</div>
-              <div style={{fontSize:13,color:"#6a6472",marginTop:2}}>Стабильность сегодня — большие победы завтра</div>
-            </div>
+    <div className="light-shell" style={{background:"#FCFAFF",color:BD,minHeight:"100vh",position:"relative",overflowX:"hidden",fontFamily:"'Open Sans',-apple-system,system-ui,sans-serif"}}>
+      <Blob top={-100} left={-100} size={380} color="#EDE1FB" delay={0}/><Blob top={700} right={-120} size={340} color="#E1F3FB" delay={2}/>
+      <div style={{position:"relative",zIndex:2,maxWidth:1120,margin:"0 auto",padding:"32px 32px 64px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:24}}>
+          <button onClick={()=>setPage("light")} className="plain-link">← На главную</button>
+          <button onClick={()=>setPage("admin")} className="plain-link">Панель администратора →</button>
+        </div>
+        <div className="profile-head" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,marginBottom:28}}>
+          <div style={{display:"flex",alignItems:"center",gap:16}}><div className="avatar">Д</div><div><h1 style={{fontSize:26,margin:0}}>Добрый день, Диана! 👋</h1><div className="muted">Стабильность сегодня — большие победы завтра</div></div></div>
+          <span className="role-pill">Сотрудник право(тех)</span>
+        </div>
+        <div className="metrics-grid">
+          {[{v:5,l:"дней подряд",c:BP},{v:4,l:"место в рейтинге",c:"#0891B2"},{v:Math.round(totalSteps/1000),l:"тыс. шагов",c:BP},{v:results.length+3,l:"активности",c:"#0891B2"}].map((m,i)=><div key={i} style={card}><div style={{fontSize:30,fontWeight:800,color:m.c}}>{m.v}</div><div className="muted">{m.l}</div></div>)}
+        </div>
+        <div className="cabinet-grid">
+          <div style={{display:"flex",flexDirection:"column",gap:20}}>
+            <section style={card}><div className="section-title"><span>Мои челленджи</span><span style={{color:BP,fontSize:13}}>⭐ {totalPoints.toFixed(1)}</span></div>
+              {challenges.slice(0,4).map((c,i)=>{const own=results.filter(r=>r.challengeId===c.id).reduce((s,r)=>s+Number(r.value||0),0);const base=[60,25,10,5][i]||0;const progress=Math.min(100,base+own/1000);return <div key={c.id} className="challenge-row"><div style={{display:"flex",justifyContent:"space-between",gap:12}}><b>{c.emoji} {c.title}</b><button className="mini-btn" onClick={()=>setActiveChallenge(c)}>+ Результат</button></div><div className="progress-track"><div style={{width:`${progress}%`}}/></div><div className="muted" style={{fontSize:11}}>{progress.toFixed(0)}% · внесено: {own.toLocaleString("ru-RU")}</div></div>})}
+            </section>
+            <section style={card}><div className="section-title">Последняя активность</div>{results.length===0?<div className="empty-state">После внесения результата здесь появится история активности.</div>:results.slice().reverse().slice(0,6).map(r=><div key={r.id} className="activity-row"><div className="activity-icon">✓</div><div style={{flex:1}}><b>{r.challengeTitle}</b><div className="muted" style={{fontSize:11}}>{r.date}{r.proofName?` · 📎 ${r.proofName}`:""}</div></div><strong style={{color:BP}}>{Number(r.value).toLocaleString("ru-RU")}</strong></div>)}</section>
           </div>
-          <span style={{...lg(0.8),borderRadius:999,padding:"7px 16px",fontSize:12,fontWeight:700,color:BP}}>Сотрудник право(тех)</span>
-        </RevealSection>
-
-        <RevealSection y={30} style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:28}}>
-          {ring(5,7,BP,"Дней подряд","стрик активности")}
-          {ring(myRank||4,LEADERBOARD.length,"#0891B2","Место","в общем рейтинге")}
-          {ring(8,12,BP,"Тыс. шагов","на этой неделе")}
-          {ring(3,5,"#0891B2","Активности","в этом месяце")}
-        </RevealSection>
-
-        <div style={{display:"grid",gridTemplateColumns:"1.3fr 1fr",gap:20}}>
-          <RevealSection y={30}>
-            <div style={{...lg(0.85),borderRadius:18,padding:"22px 24px"}}>
-              <div style={{fontSize:16,fontWeight:800,marginBottom:16}}>Мои челленджи</div>
-              {CHALLENGES.slice(0,3).map((c,i)=>{
-                const progress=[60,25,10][i];
-                return(
-                  <div key={c.id} style={{marginBottom:16}}>
-                    <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:6}}>
-                      <span style={{fontWeight:700}}>{c.emoji} {c.title}</span>
-                      <span style={{color:"#8a8494"}}>{progress}%</span>
-                    </div>
-                    <div style={{height:5,background:"#ece4f5",borderRadius:4}}>
-                      <div style={{height:5,width:`${progress}%`,background:BP,borderRadius:4,transition:"width 1s ease"}}/>
-                    </div>
-                  </div>
-                );
-              })}
-              <div style={{fontSize:16,fontWeight:800,margin:"24px 0 14px"}}>Достижения</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
-                {[{e:"🔥",l:"7 дней подряд",done:true},{e:"🏊",l:"10 км плавания",done:true},{e:"👟",l:"Первое место",done:false},{e:"🚴",l:"Велопрогулка",done:true}].map((a,i)=>(
-                  <div key={i} style={{textAlign:"center",padding:"14px 8px",borderRadius:12,background:a.done?"rgba(140,38,234,0.08)":"#f5f2fa",border:`1px solid ${a.done?"rgba(140,38,234,0.25)":"#ece4f5"}`,opacity:a.done?1:0.4}}>
-                    <div style={{fontSize:20,marginBottom:6}}>{a.e}</div>
-                    <div style={{fontSize:9.5,color:"#6a6472",lineHeight:1.3}}>{a.l}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </RevealSection>
-
-          <RevealSection y={30} style={{display:"flex",flexDirection:"column",gap:20}}>
-            <div style={{...lg(0.85),borderRadius:18,padding:"22px 24px"}}>
-              <div style={{fontSize:16,fontWeight:800,marginBottom:14}}>Рейтинг</div>
-              {LEADERBOARD.slice().sort((a,b)=>b.merchi-a.merchi).slice(0,5).map((u,i)=>(
-                <div key={u.uid} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 8px",borderRadius:8,background:u.uid==="me"?"rgba(140,38,234,0.08)":"transparent"}}>
-                  <span style={{fontSize:12,color:"#8a8494",width:14}}>{i+1}</span>
-                  <div style={{width:26,height:26,borderRadius:"50%",background:colFor(u.uid),display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#fff"}}>{ini(u.name)}</div>
-                  <span style={{flex:1,fontSize:13,fontWeight:u.uid==="me"?700:400,color:u.uid==="me"?BP:BD}}>{u.name}{u.uid==="me"&&" (вы)"}</span>
-                  <span style={{fontSize:12,color:"#8a8494",fontWeight:700}}>⭐ {u.merchi}</span>
-                </div>
-              ))}
-            </div>
-            <div style={{...lg(0.85),borderRadius:18,padding:"22px 24px"}}>
-              <div style={{fontSize:16,fontWeight:800,marginBottom:14}}>Ближайшие события</div>
-              {[{date:"17",day:"СБ",title:"Утренний забег",place:"Парк Горького",n:32},{date:"20",day:"ВТ",title:"Йога онлайн",place:"Zoom",n:45},{date:"24",day:"СБ",title:"Велопрогулка",place:"Воробьёвы горы",n:28}].map((e,i)=>(
-                <div key={i} style={{display:"flex",gap:12,alignItems:"center",padding:"9px 0",borderTop:i>0?"1px solid #ece4f5":"none"}}>
-                  <div style={{textAlign:"center",flexShrink:0,width:36}}>
-                    <div style={{fontSize:9,color:"#8a8494"}}>{e.day}</div>
-                    <div style={{fontSize:13,fontWeight:800}}>{e.date}</div>
-                  </div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:13,fontWeight:700}}>{e.title}</div>
-                    <div style={{fontSize:11,color:"#8a8494"}}>{e.place} · {e.n} участников</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </RevealSection>
+          <div style={{display:"flex",flexDirection:"column",gap:20}}>
+            <section style={card}><div className="section-title">Ближайшие события</div>{events.map((e,i)=>{const joined=registeredEvents.includes(e.id);return <div key={e.id} className="event-row" style={{borderTop:i?"1px solid #ece4f5":"none"}}><div className="event-date"><small>{e.day}</small><b>{e.date}</b></div><div style={{flex:1}}><b>{e.title}</b><div className="muted" style={{fontSize:11}}>{e.place} · {e.kind||"Событие"}</div></div><button className={joined?"mini-btn active":"mini-btn"} onClick={()=>onToggleEvent(e.id)}>{joined?"Записана ✓":"Записаться"}</button></div>})}</section>
+            <section style={card}><div className="section-title">Достижения</div><div className="achievement-grid">{[{e:"🔥",l:"7 дней подряд"},{e:"🏊",l:"10 км плавания"},{e:"👟",l:"Первый результат"},{e:"🚴",l:"Велопрогулка"}].map((a,i)=><div key={i} className="achievement"><span>{a.e}</span><small>{a.l}</small></div>)}</div></section>
+          </div>
         </div>
       </div>
+      {activeChallenge&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setActiveChallenge(null)}><form className="light-modal" onSubmit={submit}><button type="button" className="modal-close" onClick={()=>setActiveChallenge(null)}>×</button><h2>{activeChallenge.emoji} {activeChallenge.title}</h2><p className="muted">Внесите результат — прогресс и баллы пересчитаются автоматически.</p><label>Результат<input type="number" min="1" required value={value} onChange={e=>setValue(e.target.value)} placeholder="Например, 8500"/></label><label>Комментарий<textarea value={comment} onChange={e=>setComment(e.target.value)} placeholder="Как прошла активность?"/></label><label className="upload-box">📎 {proof?proof.name:"Прикрепить фото или файл"}<input type="file" accept="image/*,.pdf" onChange={e=>setProof(e.target.files?.[0]||null)}/></label><div className="points-preview">Будет начислено: +{Math.max(0,Math.min(20,Number(value||0)/1000)).toFixed(1)} ⭐</div><button className="primary-btn" type="submit">Сохранить результат</button></form></div>}
     </div>
   );
+}
+
+function AdminPanel({setPage,challenges,events,news,onAddChallenge,onAddEvent,onAddNews}){
+  const [tab,setTab]=useState("challenge");
+  const [form,setForm]=useState({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",image:""});
+  const change=(k,v)=>setForm(p=>({...p,[k]:v}));
+  const submit=e=>{e.preventDefault();if(!form.title.trim())return;if(tab==="challenge")onAddChallenge(form);if(tab==="event")onAddEvent(form);if(tab==="news")onAddNews(form);setForm({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",image:""});};
+  return <div className="light-shell" style={{background:"#F8F5FC",color:BD,minHeight:"100vh",padding:"32px",fontFamily:"'Open Sans',system-ui,sans-serif"}}><div style={{maxWidth:1120,margin:"0 auto"}}><div className="admin-head"><div><button onClick={()=>setPage("light")} className="plain-link">← На главную</button><h1>Панель администратора</h1><p className="muted">Управление контентом и спортивной программой</p></div><div className="role-pill">Администратор</div></div><div className="admin-stats">{[{v:challenges.length,l:"челленджей"},{v:events.length,l:"событий"},{v:news.length,l:"публикаций"},{v:"200+",l:"участников"}].map((s,i)=><div key={i} className="stat-card"><strong>{s.v}</strong><span>{s.l}</span></div>)}</div><div className="admin-grid"><form className="admin-form" onSubmit={submit}><div className="admin-tabs">{[["challenge","Челлендж"],["event","Событие"],["news","Новость / анонс"]].map(([id,l])=><button type="button" key={id} onClick={()=>setTab(id)} className={tab===id?"active":""}>{l}</button>)}</div><h2>{tab==="challenge"?"Запустить новый челлендж":tab==="event"?"Добавить событие":"Опубликовать новость"}</h2><label>Название<input value={form.title} onChange={e=>change("title",e.target.value)} required/></label>{tab!=="news"&&<><label>Описание<textarea value={form.desc} onChange={e=>change("desc",e.target.value)}/></label><div className="form-row"><label>Дата<input type="date" value={form.date} onChange={e=>change("date",e.target.value)}/></label><label>Место / ссылка<input value={form.place} onChange={e=>change("place",e.target.value)} placeholder="Zoom или адрес"/></label></div></>}{tab==="news"&&<><label>Текст<textarea value={form.text} onChange={e=>change("text",e.target.value)}/></label><label>Фото<input type="file" accept="image/*" onChange={e=>change("image",e.target.files?.[0]?.name||"")}/></label></>}<button className="primary-btn" type="submit">{tab==="news"?"Опубликовать":"Сохранить и запустить"}</button></form><aside className="admin-list"><h2>Последние изменения</h2>{[...news.slice(0,3).map(x=>({e:x.emoji||"📢",t:x.title,s:"Публикация"})),...challenges.slice(0,3).map(x=>({e:x.emoji,t:x.title,s:x.statusLabel}))].slice(0,6).map((x,i)=><div key={i} className="admin-list-row"><span>{x.e}</span><div><b>{x.t}</b><small>{x.s}</small></div></div>)}</aside></div></div></div>;
 }
 
 
@@ -815,7 +761,18 @@ export default function App(){
   const [page,setPage]=useState("light");
   const [scrolled,setScrolled]=useState(false);
   const [mouse,setMouse]=useState({x:0,y:0});
-  const [news,setNews]=useState(INIT_NEWS);
+  const load=(key,fallback)=>{try{const saved=localStorage.getItem(key);return saved?JSON.parse(saved):fallback;}catch{return fallback;}};
+  const [news,setNews]=useState(()=>load("pravo-sport-news",INIT_NEWS));
+  const [appChallenges,setAppChallenges]=useState(()=>load("pravo-sport-challenges",CHALLENGES));
+  const [events,setEvents]=useState(()=>load("pravo-sport-events",[
+    {id:"e1",date:"17",day:"СБ",title:"Утренний забег",place:"Парк Горького",kind:"Офлайн"},
+    {id:"e2",date:"20",day:"ВТ",title:"Йога онлайн",place:"Zoom",kind:"Видеовстреча"},
+    {id:"e3",date:"24",day:"СБ",title:"Велопрогулка",place:"Воробьёвы горы",kind:"Челлендж"},
+  ]));
+  const [results,setResults]=useState(()=>load("pravo-sport-results",[]));
+  const [registeredEvents,setRegisteredEvents]=useState(()=>load("pravo-sport-registered",["e1","e2"]));
+  const [signedIn,setSignedIn]=useState(()=>load("pravo-sport-signed",false));
+  const [showLogin,setShowLogin]=useState(false);
   const [isAdmin,setIsAdmin]=useState(false);
   const [showAddNews,setShowAddNews]=useState(false);
   const [newPost,setNewPost]=useState({title:"",cat:"Анонс",text:"",emoji:"📢"});
@@ -830,6 +787,13 @@ export default function App(){
   const [liveFeed,setLiveFeed]=useState(LIVE_FEED);
   const observerRefs=useRef({});
   const stripRef=useRef();
+
+  useEffect(()=>{localStorage.setItem("pravo-sport-news",JSON.stringify(news));},[news]);
+  useEffect(()=>{localStorage.setItem("pravo-sport-challenges",JSON.stringify(appChallenges));},[appChallenges]);
+  useEffect(()=>{localStorage.setItem("pravo-sport-events",JSON.stringify(events));},[events]);
+  useEffect(()=>{localStorage.setItem("pravo-sport-results",JSON.stringify(results));},[results]);
+  useEffect(()=>{localStorage.setItem("pravo-sport-registered",JSON.stringify(registeredEvents));},[registeredEvents]);
+  useEffect(()=>{localStorage.setItem("pravo-sport-signed",JSON.stringify(signedIn));},[signedIn]);
 
   // Симуляция живой ленты — новые события "вталкивают" старые сверху
   useEffect(()=>{
@@ -879,6 +843,12 @@ export default function App(){
     setSubmitted(true);notify(`+${Math.min(+(submitVal||0)/1000,20).toFixed(1)||5} мерчей ⭐`);
     setTimeout(()=>{setSubmitChal(null);setSubmitVal("");setSubmitText("");setSubmitted(false);},2000);
   };
+  const login=role=>{setSignedIn(true);setIsAdmin(role==="admin");setShowLogin(false);setPage(role==="admin"?"admin":"cabinet-light");};
+  const addResult=result=>{setResults(p=>[...p,result]);notify("Результат сохранён, прогресс обновлён");};
+  const toggleEvent=id=>setRegisteredEvents(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);
+  const adminAddChallenge=form=>{setAppChallenges(p=>[{id:`c${Date.now()}`,emoji:form.emoji||"🏃",title:form.title,desc:form.desc||"Новый корпоративный челлендж",participants:0,status:"active",statusLabel:"Активный",color:BP,daysLeft:30,type:"steps",bg:"linear-gradient(135deg,#EDE1FB,#D9E8FB)"},...p]);notify("Челлендж запущен");};
+  const adminAddEvent=form=>{const d=form.date?new Date(`${form.date}T12:00:00`):new Date();setEvents(p=>[{id:`e${Date.now()}`,date:String(d.getDate()).padStart(2,"0"),day:d.toLocaleDateString("ru-RU",{weekday:"short"}).toUpperCase(),title:form.title,place:form.place||"Онлайн",kind:form.kind||"Событие"},...p]);notify("Событие добавлено");};
+  const adminAddNews=form=>{setNews(p=>[{id:Date.now(),title:form.title,cat:"Анонс",date:new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}),text:form.text||"Новая публикация",emoji:form.emoji||"📢",imageName:form.image,bg:"linear-gradient(160deg,#F3EEFA,#E9F6EF)"},...p]);notify("Публикация добавлена");};
 
   const fadeStyle=id=>({opacity:visible[id]?1:0,transform:visible[id]?"translateY(0)":"translateY(24px)",transition:"opacity .7s ease, transform .7s ease"});
 
@@ -899,6 +869,11 @@ export default function App(){
         .photo-hover{transition:transform .6s ease;}
         .photo-hover:hover .photo-inner{transform:scale(1.06);}
         .photo-inner{transition:transform .6s ease;width:100%;height:100%;}
+        .light-shell *{box-sizing:border-box}.plain-link{background:none;border:0;padding:0;color:#8C26EA;font-weight:700;cursor:pointer}.muted{color:#756f7e;margin-top:4px}.avatar{width:58px;height:58px;border-radius:50%;background:#8C26EA;color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800}.role-pill{background:#fff;border:1px solid #eadff5;border-radius:999px;padding:8px 16px;color:#8C26EA;font-size:12px;font-weight:800;box-shadow:0 8px 22px rgba(76,29,149,.08)}
+        .metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}.cabinet-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px}.section-title{display:flex;justify-content:space-between;align-items:center;font-size:17px;font-weight:800;margin-bottom:16px}.challenge-row{padding:13px 0;border-top:1px solid #eee7f5}.challenge-row:first-of-type{border-top:0}.progress-track{height:6px;background:#eee7f5;border-radius:99px;margin:9px 0 6px;overflow:hidden}.progress-track>div{height:100%;background:linear-gradient(90deg,#8C26EA,#A78BFA);border-radius:99px}.mini-btn{border:1px solid #e4d5f1;background:#fff;color:#8C26EA;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer}.mini-btn.active{background:#8C26EA;color:#fff}.activity-row,.event-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid #eee7f5}.activity-icon{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e9f8ef;color:#08783f;font-weight:900}.event-date{width:38px;text-align:center;display:flex;flex-direction:column}.event-date small{color:#8a8494}.achievement-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.achievement{background:#f5edfc;border:1px solid #e4cff7;border-radius:12px;padding:12px 6px;text-align:center}.achievement span{display:block;font-size:20px}.achievement small{font-size:9px;color:#6a6472}.empty-state{padding:20px;border:1px dashed #d8cae6;border-radius:14px;color:#8a8494;font-size:13px;text-align:center}
+        .modal-backdrop{position:fixed;inset:0;background:rgba(13,6,40,.48);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(7px)}.light-modal{position:relative;width:min(480px,100%);background:#fff;border-radius:24px;padding:28px;box-shadow:0 30px 90px rgba(13,6,40,.25);display:flex;flex-direction:column;gap:14px}.light-modal h2{margin:0}.light-modal label,.admin-form label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700}.light-modal input,.light-modal textarea,.admin-form input,.admin-form textarea{width:100%;border:1px solid #e3d9ed;border-radius:11px;padding:11px 12px;font:inherit;outline:none}.light-modal textarea,.admin-form textarea{min-height:86px;resize:vertical}.modal-close{position:absolute;top:14px;right:16px;border:0;background:none;font-size:25px;cursor:pointer;color:#817989}.upload-box{border:1px dashed #cdb8df!important;border-radius:12px;padding:13px;color:#8C26EA;cursor:pointer}.upload-box input{display:none}.points-preview{background:#f5edfc;border-radius:10px;padding:10px;color:#8C26EA;font-size:12px;font-weight:700}.primary-btn{border:0;border-radius:12px;background:#8C26EA;color:#fff;padding:12px 18px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px rgba(140,38,234,.25)}
+        .admin-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}.admin-head h1{margin:18px 0 4px;font-size:32px}.admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}.stat-card,.admin-form,.admin-list{background:#fff;border:1px solid #eadff5;border-radius:20px;padding:22px;box-shadow:0 10px 35px rgba(76,29,149,.06)}.stat-card strong{display:block;color:#8C26EA;font-size:29px}.stat-card span{font-size:12px;color:#756f7e}.admin-grid{display:grid;grid-template-columns:1.4fr .8fr;gap:20px}.admin-form{display:flex;flex-direction:column;gap:14px}.admin-form h2,.admin-list h2{margin:4px 0 8px}.admin-tabs{display:flex;gap:6px;flex-wrap:wrap}.admin-tabs button{border:0;border-radius:999px;padding:8px 12px;background:#f3eef8;color:#6d6476;font-weight:700;cursor:pointer}.admin-tabs button.active{background:#8C26EA;color:#fff}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-list-row{display:flex;gap:12px;padding:12px 0;border-top:1px solid #eee7f5}.admin-list-row>span{font-size:23px}.admin-list-row b,.admin-list-row small{display:block}.admin-list-row small{margin-top:3px;color:#8a8494}.login-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.login-choice{border:1px solid #e3d9ed;border-radius:16px;background:#fff;padding:18px;text-align:left;cursor:pointer}.login-choice b{display:block;margin-bottom:5px}.login-choice span{font-size:12px;color:#756f7e}
+        @media(max-width:820px){.metrics-grid,.admin-stats{grid-template-columns:repeat(2,1fr)}.cabinet-grid,.admin-grid{grid-template-columns:1fr}.profile-head,.admin-head{align-items:flex-start;flex-direction:column}.achievement-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}.login-actions{grid-template-columns:1fr}}
       `}</style>
 
       {toast&&<div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:999,background:"#D1FAE5",color:"#065F46",padding:"10px 20px",borderRadius:12,fontSize:13,fontWeight:600,boxShadow:"0 8px 24px rgba(0,0,0,0.4)",whiteSpace:"nowrap",border:"1px solid #6EE7B7",animation:"slideIn .3s ease"}}>✓ {toast}</div>}
@@ -939,8 +914,9 @@ export default function App(){
       {page==="cabinet"&&<CabinetHome setPage={setPage}/>}
 
       {/* ── СВЕТЛАЯ ВЕРСИЯ (продакшн-синтез референсов) ── */}
-      {page==="light"&&<LightHome setPage={setPage}/>}
-      {page==="cabinet-light"&&<LightCabinet setPage={setPage}/>}
+      {page==="light"&&<LightHome setPage={setPage} challenges={appChallenges} news={news} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
+      {page==="cabinet-light"&&<LightCabinet setPage={setPage} challenges={appChallenges} events={events} results={results} registeredEvents={registeredEvents} onSubmitResult={addResult} onToggleEvent={toggleEvent}/>}
+      {page==="admin"&&<AdminPanel setPage={setPage} challenges={appChallenges} events={events} news={news} onAddChallenge={adminAddChallenge} onAddEvent={adminAddEvent} onAddNews={adminAddNews}/>}
 
       {/* ── HOME ── */}
       {page==="home"&&(
@@ -1274,6 +1250,7 @@ export default function App(){
           </div>
         </div>
       )}
+      {showLogin&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setShowLogin(false)}><div className="light-modal"><button className="modal-close" onClick={()=>setShowLogin(false)}>×</button><h2>Вход в право(спорт)</h2><p className="muted">Выберите роль для демонстрации интерфейса.</p><div className="login-actions"><button className="login-choice" onClick={()=>login("employee")}><b>👤 Сотрудник</b><span>Челленджи, результаты и события</span></button><button className="login-choice" onClick={()=>login("admin")}><b>⚙️ Администратор</b><span>Контент и запуск активностей</span></button></div></div></div>}
     </div>
   );
 }
