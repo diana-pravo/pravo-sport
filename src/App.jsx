@@ -47,8 +47,10 @@ const IMG1=BASE+"1.jpeg";
 const IMG2=BASE+"1408_385_resized.jpg";
 const IMG3=BASE+"IMG_6064.JPG";
 const IMG4=BASE+"IMG_6068.JPG";
-const LIGHT_SWIM="https://images.unsplash.com/photo-1687904652212-355305e0bf13?auto=format&fit=crop&w=1800&q=85";
-const LIGHT_SURF="https://images.unsplash.com/photo-1661006133878-06a61cce2b6c?auto=format&fit=crop&w=1800&q=85";
+const LIGHT_SWIM="https://images.unsplash.com/photo-1731812864631-2edce7f288be?auto=format&fit=crop&w=1800&q=88";
+const LIGHT_SURF="https://images.unsplash.com/photo-1661006133878-06a61cce2b6c?auto=format&fit=crop&w=1800&q=88";
+const LIGHT_RUN="https://images.unsplash.com/photo-1774178290349-6ca5ea0db428?auto=format&fit=crop&w=1800&q=88";
+const LIGHT_CYCLE="https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1800&q=88";
 const PHOTO_SCENES=[
   {label:"Серфинг",    sub:"Командный дух",  img:IMG1, emoji:"🏄",bg:"linear-gradient(160deg,#0a3d5c,#0e6b8a)",shapes:[]},
   {label:"Плавание",   sub:"Открытая вода",  img:IMG2, emoji:"🏊",bg:"linear-gradient(180deg,#c8dde8,#2a6b8a)",shapes:[]},
@@ -338,7 +340,8 @@ function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false}){
 const lightPageBg="radial-gradient(circle at 0% 8%,#F0DEFF 0,transparent 25%),radial-gradient(circle at 100% 42%,#FFE8EF 0,transparent 24%),linear-gradient(180deg,#FAF7FF 0%,#FBF9FF 100%)";
 
 function LightChallengeCard({c,i,onOpen}){
-  const photo=c.attachmentData&&String(c.attachmentType||"").startsWith("image/")?c.attachmentData:(i===0?LIGHT_SWIM:i===1?LIGHT_SURF:null);
+  const fallbackPhoto=c.type==="steps"?LIGHT_RUN:c.type==="run"?LIGHT_SURF:c.type==="bike"?LIGHT_CYCLE:c.type==="swim"?LIGHT_SWIM:null;
+  const photo=c.attachmentData&&String(c.attachmentType||"").startsWith("image/")?c.attachmentData:(i===2?null:fallbackPhoto);
   const soon=c.status!=="active";
   return(
     <article onClick={onOpen} style={{borderRadius:28,overflow:"hidden",background:"#fff",border:"1px solid #E9E1EF",minHeight:470,cursor:"pointer",boxShadow:"0 8px 24px rgba(50,25,80,.04)"}}>
@@ -398,7 +401,7 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
             <button onClick={participate} style={{border:0,borderRadius:28,background:"#8D27EE",color:"#fff",fontSize:16,fontWeight:800,padding:"15px 27px",cursor:"pointer"}}>Начать участвовать&nbsp;&nbsp;→</button>
           </div>
           <div style={{position:"relative",height:530}}>
-            <img src={LIGHT_SWIM} alt="Пловец на открытой воде" onError={e=>{e.currentTarget.style.display="none";}} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 54%",borderRadius:"48% 13% 12% 13% / 22% 15% 15% 15%",display:"block",background:"#DCECF2"}}/>
+            <img src={LIGHT_SWIM} alt="Пловец в открытой воде" onError={e=>{e.currentTarget.src=LIGHT_SURF;}} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 54%",borderRadius:"48% 13% 12% 13% / 22% 15% 15% 15%",display:"block",background:"#DCECF2"}}/>
             <div style={{position:"absolute",right:-18,top:68,background:"#E9FF1F",borderRadius:22,padding:"22px 24px",fontSize:15,fontWeight:800,transform:"rotate(5deg)",boxShadow:"0 14px 30px rgba(72,45,110,.07)"}}>+ энергия<br/>на каждый день</div>
           </div>
         </section>
@@ -478,7 +481,7 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
             {homeNews.map((n,i)=>{
               if(n.mode==="split") return <article key={i} style={{height:350,borderRadius:28,overflow:"hidden",display:"grid",gridTemplateColumns:"1.03fr .97fr",background:"#10052F",color:"#fff"}}>
                 <div style={{padding:"32px",display:"flex",flexDirection:"column"}}><span style={{alignSelf:"flex-start",background:"#8D27EE",borderRadius:18,padding:"7px 12px",fontSize:11,fontWeight:800}}>{n.type}</span><h3 style={{fontSize:31,lineHeight:1.05,letterSpacing:"-1.3px",margin:"30px 0 14px",fontWeight:800}}>{n.title}</h3><p style={{fontSize:13,lineHeight:1.55,color:"#BDB5CC",margin:0}}>{n.text}</p><b style={{fontSize:15,marginTop:"auto"}}>Читать историю →</b></div>
-                <img src={LIGHT_SWIM} alt="" onError={e=>{e.currentTarget.style.display="none";}} style={{width:"100%",height:"100%",objectFit:"cover",background:"#DCECF2"}}/>
+                <img src={LIGHT_SWIM} alt="Спортивная история" onError={e=>{e.currentTarget.src=LIGHT_RUN;}} style={{width:"100%",height:"100%",objectFit:"cover",background:"#DCECF2"}}/>
               </article>;
               if(n.mode==="white") return <article key={i} style={{height:350,borderRadius:28,background:"#fff",border:"1px solid #DED8E3",padding:"30px",display:"flex",flexDirection:"column"}}>
                 <span style={{alignSelf:"flex-start",background:"#E9FF1F",borderRadius:18,padding:"7px 12px",fontSize:11,fontWeight:800}}>{n.type}</span><div style={{fontSize:12,color:"#81798B",marginTop:23}}>{n.date}</div><h3 style={{fontSize:25,lineHeight:1.08,letterSpacing:"-.9px",margin:"28px 0 0",fontWeight:800}}>{n.title}</h3><button type="button" onClick={()=>setPage("news")} style={{marginTop:"auto",width:48,height:48,borderRadius:"50%",border:0,background:"#10052F",color:"#fff",fontSize:24,cursor:"pointer"}}>↗</button>
@@ -539,7 +542,7 @@ function LightNewsPage({setPage,news=INIT_NEWS,signedIn=false,onLogin,isAdmin=fa
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16}}>
           {news.map((n,i)=>{
             const hasImage=n.attachmentData&&String(n.attachmentType||"").startsWith("image/");
-            const visual=hasImage?n.attachmentData:(i===0?LIGHT_SWIM:i===3?LIGHT_SURF:null);
+            const visual=hasImage?n.attachmentData:(i===0?LIGHT_SWIM:i===2?LIGHT_RUN:i===3?LIGHT_SURF:i===5?LIGHT_CYCLE:null);
             const mode=i%3;
             if(visual) return <article key={n.id||i} style={{minHeight:330,borderRadius:28,overflow:"hidden",display:"grid",gridTemplateRows:"185px 1fr",background:"#fff",border:"1px solid #E4DDE9"}}>
               <img src={visual} alt="" style={{width:"100%",height:"100%",objectFit:"cover",background:"#DCECF2"}}/>
