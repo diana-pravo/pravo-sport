@@ -51,6 +51,10 @@ const LIGHT_SWIM="https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Swim
 const LIGHT_SURF="https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Surfer_carrying_his_board_%28Unsplash%29.jpg/960px-Surfer_carrying_his_board_%28Unsplash%29.jpg";
 const LIGHT_RUN=LIGHT_SURF;
 const LIGHT_CYCLE=LIGHT_SWIM;
+const MVP_HERO="/assets/hero-swimmer.webp";
+const MVP_ICE="/assets/challenge-ice.webp";
+const MVP_SURF="/assets/team-surf.webp";
+const MVP_SPLASH="/assets/news-splash.webp";
 const PHOTO_SCENES=[
   {label:"Серфинг",    sub:"Командный дух",  img:IMG1, emoji:"🏄",bg:"linear-gradient(160deg,#0a3d5c,#0e6b8a)",shapes:[]},
   {label:"Плавание",   sub:"Открытая вода",  img:IMG2, emoji:"🏊",bg:"linear-gradient(180deg,#c8dde8,#2a6b8a)",shapes:[]},
@@ -340,8 +344,15 @@ function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false}){
 const lightPageBg="radial-gradient(circle at 0% 8%,#F0DEFF 0,transparent 25%),radial-gradient(circle at 100% 42%,#FFE8EF 0,transparent 24%),linear-gradient(180deg,#FAF7FF 0%,#FBF9FF 100%)";
 
 function LightChallengeCard({c,i,onOpen}){
-  const fallbackPhoto=c.type==="steps"?LIGHT_RUN:c.type==="run"?LIGHT_SURF:c.type==="bike"?LIGHT_CYCLE:c.type==="swim"?LIGHT_SWIM:null;
-  const photo=c.attachmentData&&String(c.attachmentType||"").startsWith("image/")?c.attachmentData:(i===2?null:fallbackPhoto);
+  const isDaily=c.title==="Движение каждый день";
+  const fallbackPhoto=
+    c.title==="Километры лета"?MVP_ICE:
+    c.title==="Шаг за шагом"?MVP_SURF:
+    c.type==="steps"?MVP_SURF:
+    c.type==="run"?MVP_SPLASH:
+    c.type==="bike"?LIGHT_CYCLE:
+    c.type==="swim"?MVP_SPLASH:null;
+  const photo=c.attachmentData&&String(c.attachmentType||"").startsWith("image/")?c.attachmentData:(isDaily?null:fallbackPhoto);
   const soon=c.status!=="active";
   return(
     <article onClick={onOpen} style={{borderRadius:28,overflow:"hidden",background:"#fff",border:"1px solid #E9E1EF",minHeight:470,cursor:"pointer",boxShadow:"0 8px 24px rgba(50,25,80,.04)"}}>
@@ -401,8 +412,7 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
             <button onClick={participate} style={{border:0,borderRadius:28,background:"#8D27EE",color:"#fff",fontSize:16,fontWeight:800,padding:"15px 27px",cursor:"pointer"}}>Начать участвовать&nbsp;&nbsp;→</button>
           </div>
           <div style={{position:"relative",height:530}}>
-            <img src={LIGHT_SWIM} alt="Пловец в открытой воде" onError={e=>{e.currentTarget.src=LIGHT_SURF;}} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 54%",borderRadius:"48% 13% 12% 13% / 22% 15% 15% 15%",display:"block",background:"#DCECF2"}}/>
-            <div style={{position:"absolute",right:-18,top:68,background:"#E9FF1F",borderRadius:22,padding:"22px 24px",fontSize:15,fontWeight:800,transform:"rotate(5deg)",boxShadow:"0 14px 30px rgba(72,45,110,.07)"}}>+ энергия<br/>на каждый день</div>
+            <img src={MVP_HERO} alt="Пловец в открытой воде" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 48%",borderRadius:"48% 13% 12% 13% / 22% 15% 15% 15%",display:"block",background:"#DCECF2"}}/>
           </div>
         </section>
 
@@ -481,7 +491,7 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
             {homeNews.map((n,i)=>{
               if(n.mode==="split") return <article key={i} style={{height:350,borderRadius:28,overflow:"hidden",display:"grid",gridTemplateColumns:"1.03fr .97fr",background:"#10052F",color:"#fff"}}>
                 <div style={{padding:"32px",display:"flex",flexDirection:"column"}}><span style={{alignSelf:"flex-start",background:"#8D27EE",borderRadius:18,padding:"7px 12px",fontSize:11,fontWeight:800}}>{n.type}</span><h3 style={{fontSize:31,lineHeight:1.05,letterSpacing:"-1.3px",margin:"30px 0 14px",fontWeight:800}}>{n.title}</h3><p style={{fontSize:13,lineHeight:1.55,color:"#BDB5CC",margin:0}}>{n.text}</p><b style={{fontSize:15,marginTop:"auto"}}>Читать историю →</b></div>
-                <img src={LIGHT_SWIM} alt="Спортивная история" onError={e=>{e.currentTarget.src=LIGHT_RUN;}} style={{width:"100%",height:"100%",objectFit:"cover",background:"#DCECF2"}}/>
+                <img src={MVP_SPLASH} alt="Спортивная история" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 48%",background:"#DCECF2"}}/>
               </article>;
               if(n.mode==="white") return <article key={i} style={{height:350,borderRadius:28,background:"#fff",border:"1px solid #DED8E3",padding:"30px",display:"flex",flexDirection:"column"}}>
                 <span style={{alignSelf:"flex-start",background:"#E9FF1F",borderRadius:18,padding:"7px 12px",fontSize:11,fontWeight:800}}>{n.type}</span><div style={{fontSize:12,color:"#81798B",marginTop:23}}>{n.date}</div><h3 style={{fontSize:25,lineHeight:1.08,letterSpacing:"-.9px",margin:"28px 0 0",fontWeight:800}}>{n.title}</h3><button type="button" onClick={()=>setPage("news")} style={{marginTop:"auto",width:48,height:48,borderRadius:"50%",border:0,background:"#10052F",color:"#fff",fontSize:24,cursor:"pointer"}}>↗</button>
@@ -542,7 +552,7 @@ function LightNewsPage({setPage,news=INIT_NEWS,signedIn=false,onLogin,isAdmin=fa
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16}}>
           {news.map((n,i)=>{
             const hasImage=n.attachmentData&&String(n.attachmentType||"").startsWith("image/");
-            const visual=hasImage?n.attachmentData:(i===0?LIGHT_SWIM:i===2?LIGHT_RUN:i===3?LIGHT_SURF:i===5?LIGHT_CYCLE:null);
+            const visual=hasImage?n.attachmentData:(i===0?MVP_SPLASH:i===2?MVP_SURF:i===3?MVP_ICE:i===5?MVP_SPLASH:null);
             const mode=i%3;
             if(visual) return <article key={n.id||i} style={{minHeight:330,borderRadius:28,overflow:"hidden",display:"grid",gridTemplateRows:"185px 1fr",background:"#fff",border:"1px solid #E4DDE9"}}>
               <img src={visual} alt="" style={{width:"100%",height:"100%",objectFit:"cover",background:"#DCECF2"}}/>
