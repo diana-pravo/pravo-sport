@@ -133,6 +133,185 @@ const RouteMap=({progress=0.62})=>{
   );
 };
 
+// ============ MINIMAL VARIANT (editorial redesign) ============
+// Данные о фото для этого варианта — единый конфиг, чтобы фото менялись без правки вёрстки.
+const MIN_PHOTOS=[
+  {id:"hero",src:IMG4,alt:"Сотрудник плывёт баттерфляем на закате",focalPoint:"center 35%",consent:true,credit:""},
+  {id:"surf",src:IMG1,alt:"Сотрудники на сёрф-сессии в команде",focalPoint:"center 50%",consent:true,credit:""},
+  {id:"finish",src:IMG3,alt:"Финиш забега сотрудника",focalPoint:"center 40%",consent:true,credit:""},
+];
+const reduceMotion=typeof window!=="undefined"&&window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const useReveal=()=>{
+  const [seen,setSeen]=useState({});
+  useEffect(()=>{
+    if(reduceMotion){ // сразу всё видимо, без анимации
+      const all={}; document.querySelectorAll("[data-mreveal]").forEach(el=>all[el.dataset.mreveal]=true); setSeen(all); return;
+    }
+    const obs=new IntersectionObserver(entries=>{
+      entries.forEach(e=>{ if(e.isIntersecting) setSeen(p=>({...p,[e.target.dataset.mreveal]:true})); });
+    },{threshold:0.15});
+    document.querySelectorAll("[data-mreveal]").forEach(el=>obs.observe(el));
+    return()=>obs.disconnect();
+  },[]);
+  return {
+    style:id=>({
+      opacity:seen[id]?1:0,
+      transform:seen[id]?"translateY(0)":"translateY(14px)",
+      transition:reduceMotion?"none":"opacity .5s ease-out, transform .5s ease-out",
+    }),
+    seen,
+  };
+};
+
+// Счётчик — анимируется от 0 один раз при появлении во вьюпорте
+const CountUp=({to,seen,suffix=""}) =>{
+  const [val,setVal]=useState(reduceMotion?to:0);
+  const started=useRef(false);
+  useEffect(()=>{
+    if(!seen||started.current||reduceMotion)return;
+    started.current=true;
+    const dur=900,start=performance.now();
+    const step=now=>{
+      const t=Math.min(1,(now-start)/dur);
+      setVal(Math.floor(to*(1-Math.pow(1-t,3))));
+      if(t<1) requestAnimationFrame(step);
+      else setVal(to);
+    };
+    requestAnimationFrame(step);
+  },[seen,to]);
+  return <span style={{fontVariantNumeric:"tabular-nums"}}>{val.toLocaleString("ru")}{suffix}</span>;
+};
+
+function MinimalHome({setPage}){
+  const {style:reveal,seen}=useReveal();
+  const accent="#7C3AED";
+  const CHAL=[
+    {title:"Шаговый май",period:"10 дней · до 31 мая",progress:60,participants:24},
+    {title:"Бег — Этап 1",period:"июнь",progress:20,participants:18},
+    {title:"Корп. велогонка",period:"июль",progress:5,participants:12},
+  ];
+  const RATING=[
+    {rank:1,name:"Алексей Ковалёв",team:"Backend",result:"87 000 шагов"},
+    {rank:2,name:"Мария Петрова",team:"HR",result:"74 000 шагов"},
+    {rank:3,name:"Иван Сидоров",team:"Frontend",result:"68 000 шагов"},
+    {rank:4,name:"Диана",team:"HR",result:"42 000 шагов"},
+    {rank:5,name:"Ольга Смирнова",team:"Design",result:"38 000 шагов"},
+  ];
+  const STEPS=[
+    {n:"01",t:"Выбери челлендж",d:"В разделе «Челленджи» — активные или ближайшие."},
+    {n:"02",t:"Фиксируй результат",d:"Загружай шаги, километры или фото каждый день."},
+    {n:"03",t:"Смотри рейтинг",d:"Прогресс и место в общем зачёте — на странице «Рейтинг»."},
+  ];
+  return(
+    <div style={{"--bg":"#FAFAF8","--fg":"#111111","--muted":"#6b6b6b","--accent":accent,background:"var(--bg)",color:"var(--fg)",fontFamily:"'Inter',-apple-system,'Segoe UI',system-ui,sans-serif",minHeight:"100vh"}}>
+      <style>{`
+        .m-link{color:var(--fg);text-decoration:none;border-bottom:1px solid transparent;transition:${reduceMotion?"none":"border-color .2s ease"};}
+        .m-link:hover{border-color:var(--accent);}
+        .m-btn{display:inline-block;color:var(--fg);text-decoration:none;font-size:14px;letter-spacing:.02em;border-bottom:1px solid var(--fg);padding-bottom:2px;transition:${reduceMotion?"none":"opacity .2s ease"};cursor:pointer;background:none;border-top:none;border-left:none;border-right:none;}
+        .m-btn:hover{opacity:.55;}
+        @media (max-width:640px){ .m-hero-metric{font-size:clamp(2.2rem,11vw,3.4rem)!important;} }
+      `}</style>
+
+      {/* header — минимальный, ссылка назад */}
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"20px 32px",fontSize:13}}>
+        <span style={{fontWeight:600,letterSpacing:"-0.3px"}}>право(спорт)</span>
+        <button onClick={()=>setPage("home")} className="m-btn">← Обычная версия</button>
+      </div>
+
+      {/* HERO — фото 100vh (90vh моб.), одна метрика */}
+      <div style={{position:"relative",height:"90vh",minHeight:520}}>
+        <img src={MIN_PHOTOS[0].src} alt={MIN_PHOTOS[0].alt} loading="eager" width={1920} height={1080}
+          style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",objectPosition:MIN_PHOTOS[0].focalPoint}}/>
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(180deg,transparent 45%,rgba(0,0,0,0.72) 100%)"}}/>
+        <div style={{position:"absolute",bottom:0,left:0,right:0,padding:"0 32px 56px"}}>
+          <div className="m-hero-metric" style={{fontSize:"clamp(2.5rem,7vw,7rem)",fontWeight:700,lineHeight:0.98,letterSpacing:"-2px",color:"#fff"}}>
+            1 240 000 <span style={{color:accent}}>шагов</span>
+          </div>
+          <p style={{fontSize:14,color:"rgba(255,255,255,0.7)",margin:"14px 0 20px",maxWidth:480,lineHeight:1.6}}>
+            Столько прошла компания за май — командой, шаг за шагом.
+          </p>
+          <button onClick={()=>setPage("challenges")} style={{background:"none",border:"none",color:"#fff",fontSize:14,letterSpacing:".02em",borderBottom:"1px solid #fff",paddingBottom:2,cursor:"pointer"}}>Смотреть челленджи →</button>
+        </div>
+      </div>
+
+      {/* ЧЕЛЛЕНДЖИ — плотный блок данных, тонкая линия прогресса */}
+      <div data-mreveal="chal" style={{...reveal("chal"),maxWidth:920,margin:"0 auto",padding:"96px 32px"}}>
+        <div style={{fontSize:12,color:"var(--muted)",letterSpacing:".12em",textTransform:"uppercase",marginBottom:36}}>Активные челленджи</div>
+        {CHAL.map((c,i)=>(
+          <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",padding:"22px 0",borderTop:i===0?"1px solid #e4e2dc":"1px solid #e4e2dc"}}>
+            <div>
+              <div style={{fontSize:22,fontWeight:600,letterSpacing:"-0.3px",marginBottom:4}}>{c.title}</div>
+              <div style={{fontSize:13,color:"var(--muted)"}}>{c.period}</div>
+            </div>
+            <div style={{flex:1,margin:"0 32px",maxWidth:260}}>
+              <div style={{height:1,background:"#e4e2dc",position:"relative"}}>
+                <div style={{position:"absolute",left:0,top:0,height:1,width:`${c.progress}%`,background:accent}}/>
+              </div>
+            </div>
+            <div style={{fontSize:13,color:"var(--muted)",fontVariantNumeric:"tabular-nums",whiteSpace:"nowrap"}}>{c.participants} участников</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ФОТО — на всю ширину, минимальная подпись */}
+      <div data-mreveal="photo1" style={{...reveal("photo1"),position:"relative",height:"70vh",minHeight:380}}>
+        <img src={MIN_PHOTOS[1].src} alt={MIN_PHOTOS[1].alt} loading="lazy" width={1920} height={1080}
+          style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:MIN_PHOTOS[1].focalPoint,filter:"saturate(0.85)"}}/>
+        <div style={{position:"absolute",bottom:24,left:32,fontSize:12,color:"rgba(255,255,255,0.75)",background:"rgba(0,0,0,0.35)",padding:"4px 10px",borderRadius:2}}>Серфинг · командный дух</div>
+      </div>
+
+      {/* РЕЙТИНГ — типографская таблица */}
+      <div data-mreveal="rating" style={{...reveal("rating"),maxWidth:920,margin:"0 auto",padding:"96px 32px"}}>
+        <div style={{fontSize:12,color:"var(--muted)",letterSpacing:".12em",textTransform:"uppercase",marginBottom:36}}>Рейтинг сезона</div>
+        {RATING.map(r=>(
+          <div key={r.rank} style={{display:"grid",gridTemplateColumns:"32px 40px 1fr 120px 140px",gap:16,alignItems:"center",padding:"14px 0",borderTop:"1px solid #e4e2dc"}}>
+            <div style={{fontSize:14,fontVariantNumeric:"tabular-nums",fontWeight:r.rank<=3?700:400,color:r.rank<=3?"var(--fg)":"var(--muted)"}}>{r.rank}</div>
+            <div style={{width:32,height:32,borderRadius:4,background:"#111",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:600}}>{ini(r.name)}</div>
+            <div style={{fontSize:15,fontWeight:r.rank<=3?700:400}}>{r.name}</div>
+            <div style={{fontSize:13,color:"var(--muted)"}}>{r.team}</div>
+            <div style={{fontSize:13,fontVariantNumeric:"tabular-nums",textAlign:"right"}}>{r.result}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ЛИЧНЫЙ ПРОГРЕСС — крупные цифры в ряд */}
+      <div data-mreveal="personal" style={{...reveal("personal"),maxWidth:920,margin:"0 auto",padding:"64px 32px 96px",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:24,borderTop:"1px solid #e4e2dc"}}>
+        {[{v:42,l:"мерчей набрано"},{v:5,l:"дней подряд"},{v:8100,l:"шагов сегодня"},{v:4,l:"место в рейтинге"}].map((s,i)=>(
+          <div key={i}>
+            <div style={{fontSize:"clamp(1.8rem,4vw,2.6rem)",fontWeight:700,letterSpacing:"-1px"}}><CountUp to={s.v} seen={!!seen.personal}/></div>
+            <div style={{fontSize:11,color:"var(--muted)",letterSpacing:".05em",textTransform:"uppercase",marginTop:6}}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ФОТО 2 */}
+      <div data-mreveal="photo2" style={{...reveal("photo2"),position:"relative",height:"70vh",minHeight:380}}>
+        <img src={MIN_PHOTOS[2].src} alt={MIN_PHOTOS[2].alt} loading="lazy" width={1920} height={1080}
+          style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:MIN_PHOTOS[2].focalPoint,filter:"saturate(0.85)"}}/>
+        <div style={{position:"absolute",bottom:24,left:32,fontSize:12,color:"rgba(255,255,255,0.75)",background:"rgba(0,0,0,0.35)",padding:"4px 10px",borderRadius:2}}>Финиш · каждый день</div>
+      </div>
+
+      {/* КАК УЧАСТВОВАТЬ */}
+      <div data-mreveal="steps" style={{...reveal("steps"),maxWidth:920,margin:"0 auto",padding:"96px 32px",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:32}}>
+        {STEPS.map(s=>(
+          <div key={s.n}>
+            <div style={{fontSize:32,fontWeight:700,color:accent,letterSpacing:"-1px",marginBottom:12}}>{s.n}</div>
+            <div style={{fontSize:16,fontWeight:600,marginBottom:8}}>{s.t}</div>
+            <div style={{fontSize:13,color:"var(--muted)",lineHeight:1.6}}>{s.d}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* FOOTER */}
+      <div style={{borderTop:"1px solid #e4e2dc",padding:"32px",display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:12,fontSize:12,color:"var(--muted)"}}>
+        <span>Вопросы и предложения — канал <a href="#" className="m-link">#pravo_sport</a> в Mattermost, организатор: HR-команда</span>
+        <span>© 2025 право(тех). Только для сотрудников PravoTech.</span>
+      </div>
+    </div>
+  );
+}
+
 export default function App(){
   const [page,setPage]=useState("home");
   const [mouse,setMouse]=useState({x:0,y:0});
@@ -147,16 +326,10 @@ export default function App(){
   const [toast,setToast]=useState(null);
   const [visible,setVisible]=useState({});
   const [stripIdx,setStripIdx]=useState(0);
-  const [heroWordIdx,setHeroWordIdx]=useState(0);
+  const [heroWordIdx]=useState(0); // оставлено для совместимости, больше не меняется
   const [liveFeed,setLiveFeed]=useState(LIVE_FEED);
   const observerRefs=useRef({});
   const stripRef=useRef();
-
-  // Смена ключевого слова в заголовке — тайпрайтер/fade
-  useEffect(()=>{
-    const t=setInterval(()=>setHeroWordIdx(i=>(i+1)%HERO_WORDS.length),2400);
-    return()=>clearInterval(t);
-  },[]);
 
   // Симуляция живой ленты — новые события "вталкивают" старые сверху
   useEffect(()=>{
@@ -202,7 +375,7 @@ export default function App(){
   const fadeStyle=id=>({opacity:visible[id]?1:0,transform:visible[id]?"translateY(0)":"translateY(24px)",transition:"opacity .7s ease, transform .7s ease"});
 
   return(
-    <div style={{background:"radial-gradient(ellipse 1200px 800px at 15% 0%,rgba(124,58,237,0.10),transparent 60%),radial-gradient(ellipse 1000px 700px at 90% 30%,rgba(57,255,136,0.06),transparent 55%),#0B0B0F",color:"#fff",fontFamily:"system-ui,-apple-system,sans-serif",minHeight:"100%",overflowY:"auto"}}>
+    <div style={{background:"radial-gradient(ellipse 1200px 800px at 15% 0%,rgba(124,58,237,0.14),transparent 60%),radial-gradient(ellipse 1000px 700px at 90% 30%,rgba(57,255,136,0.08),transparent 55%),#131319",color:"#fff",fontFamily:"system-ui,-apple-system,sans-serif",minHeight:"100%",overflowY:"auto"}}>
       <style>{`
         @keyframes kenBurns{0%{transform:scale(1) translate(0,0)}50%{transform:scale(1.07) translate(-1%,-1%)}100%{transform:scale(1.03) translate(1%,0.5%)}}
         @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
@@ -223,7 +396,8 @@ export default function App(){
       {toast&&<div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:999,background:"#D1FAE5",color:"#065F46",padding:"10px 20px",borderRadius:12,fontSize:13,fontWeight:600,boxShadow:"0 8px 24px rgba(0,0,0,0.4)",whiteSpace:"nowrap",border:"1px solid #6EE7B7",animation:"slideIn .3s ease"}}>✓ {toast}</div>}
 
       {/* NAV */}
-      <nav style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 32px",borderBottom:"1px solid rgba(255,255,255,0.05)",position:"sticky",top:0,background:"rgba(9,9,15,0.97)",zIndex:10,backdropFilter:"blur(16px)"}}>
+      {page!=="minimal"&&(
+      <nav style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 32px",borderBottom:"1px solid rgba(255,255,255,0.05)",position:"sticky",top:0,background:"rgba(19,19,25,0.97)",zIndex:10,backdropFilter:"blur(16px)"}}>
         <div style={{fontSize:20,fontWeight:700,letterSpacing:"-0.5px",cursor:"pointer"}} onClick={()=>setPage("home")}>
           право<span style={{color:PL}}>(спорт)</span>
         </div>
@@ -236,10 +410,15 @@ export default function App(){
           ))}
         </div>
         <div style={{display:"flex",gap:8}}>
+          <button onClick={()=>setPage("minimal")} className="hov-btn" style={{background:"transparent",color:"#666",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"6px 12px",fontSize:12,cursor:"pointer"}}>Минимал-версия</button>
           <button onClick={()=>setIsAdmin(!isAdmin)} className="hov-btn" style={{background:"transparent",color:isAdmin?"#A78BFA":"#444",border:`1px solid ${isAdmin?"rgba(124,58,237,0.3)":"rgba(255,255,255,0.07)"}`,borderRadius:8,padding:"6px 12px",fontSize:12,cursor:"pointer"}}>{isAdmin?"✓ Автор":"Режим автора"}</button>
           <button onClick={()=>setPage("challenges")} className="hov-btn" style={{background:P,color:"#fff",border:"none",borderRadius:8,padding:"8px 18px",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:`0 4px 14px ${P}50`}}>Участвовать →</button>
         </div>
       </nav>
+      )}
+
+      {/* ── MINIMAL VARIANT — редакционный минимализм, для сравнения ── */}
+      {page==="minimal"&&<MinimalHome setPage={setPage}/>}
 
       {/* ── HOME ── */}
       {page==="home"&&(
@@ -248,20 +427,13 @@ export default function App(){
           <div style={{position:"relative",minHeight:560,overflow:"hidden",borderRadius:"0 0 24px 24px"}}>
             <div style={{position:"absolute",inset:0,animation:"kenBurns 18s ease-in-out infinite alternate",transformOrigin:"center center"}}>
               <img src={IMG4} alt="hero" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 38%",display:"block"}}/>
-              <div style={{position:"absolute",inset:0,background:"linear-gradient(100deg,rgba(5,2,15,0.92) 0%,rgba(5,2,15,0.55) 45%,rgba(5,2,15,0.25) 100%)"}}/>
+              <div style={{position:"absolute",inset:0,background:"linear-gradient(100deg,rgba(19,19,25,0.9) 0%,rgba(19,19,25,0.5) 45%,rgba(19,19,25,0.2) 100%)"}}/>
             </div>
 
             <div style={{position:"relative",zIndex:2,padding:"56px 40px",display:"flex",justifyContent:"space-between",gap:32,alignItems:"flex-start",flexWrap:"wrap"}}>
-              <div style={{maxWidth:560,paddingTop:28}}>
-                <div style={{fontSize:11,color:PL,fontWeight:700,letterSpacing:".14em",textTransform:"uppercase",marginBottom:16}}>Корпоративная спортивная платформа право(тех)</div>
+              <div style={{maxWidth:560}}>
                 <h1 style={{fontSize:52,fontWeight:800,lineHeight:1.08,margin:"0 0 18px",letterSpacing:"-1.5px"}}>
-                  Движение делает нас <span style={{display:"inline-block",color:"transparent",backgroundClip:"text",WebkitBackgroundClip:"text",backgroundImage:"linear-gradient(135deg,#A78BFA,#7C3AED,#c084fc)"}}>
-                    <AnimatePresence mode="wait">
-                      <motion.span key={heroWordIdx} initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-14}} transition={{duration:.5,ease:"easeOut"}} style={{display:"inline-block"}}>
-                        {HERO_WORDS[heroWordIdx]}
-                      </motion.span>
-                    </AnimatePresence>
-                  </span>
+                  Движение делает нас <span style={{background:"linear-gradient(135deg,#A78BFA,#7C3AED,#c084fc)",WebkitBackgroundClip:"text",backgroundClip:"text",color:"transparent"}}>сильнее</span>
                 </h1>
                 <p style={{fontSize:15,color:"rgba(255,255,255,0.55)",margin:"0 0 28px",lineHeight:1.7,maxWidth:440}}>
                   Участвуй в корпоративных челленджах, соревнуйся с коллегами и становись лидером сезона
@@ -358,17 +530,17 @@ export default function App(){
                 <span style={{width:5,height:5,borderRadius:"50%",background:"#EF4444",animation:"pulse 1.5s ease-in-out infinite",display:"inline-block"}}/>LIVE
               </span>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
+            <div style={{display:"flex",gap:10,overflow:"hidden"}}>
               <AnimatePresence initial={false}>
                 {liveFeed.slice(0,4).map((item)=>(
-                  <motion.div key={item.id||item.name+item.ago} layout
+                  <motion.div key={item.id||item.name+item.ago}
                     initial={{opacity:0,y:-16,scale:.95}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,scale:.9}}
                     transition={{type:"spring",stiffness:340,damping:26}}
-                    style={{...glass(P,0.03),borderRadius:12,padding:"10px 12px",display:"flex",gap:8,alignItems:"center"}}>
+                    style={{...glass(P,0.03),borderRadius:12,padding:"10px 12px",display:"flex",gap:8,alignItems:"center",flex:"1 1 0",minWidth:0}}>
                     <Av uid={item.uid} size={26}/>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:11,fontWeight:600,color:"#ccc",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.name}</div>
-                      <div style={{fontSize:11,color:"#666"}}>{item.action}</div>
+                      <div style={{fontSize:11,color:"#666",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.action}</div>
                     </div>
                     <div style={{fontSize:11,color:NEON_GREEN,fontWeight:600,flexShrink:0}}>+{item.pts}</div>
                   </motion.div>
@@ -379,8 +551,8 @@ export default function App(){
 
           {/* ROUTE BANNER — горизонтальный баннер с реальным фото и светящимся маршрутом (по референсу) */}
           <div data-id="banner" style={{...fadeStyle("banner"),margin:"40px 32px 0",borderRadius:20,overflow:"hidden",position:"relative",minHeight:220,display:"flex",alignItems:"center"}}>
-            <img src={IMG3} alt="route" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",filter:"brightness(0.5)"}}/>
-            <div style={{position:"absolute",inset:0,background:"linear-gradient(100deg,rgba(5,2,15,0.85) 0%,rgba(5,2,15,0.4) 60%,rgba(5,2,15,0.7) 100%)"}}/>
+            <img src={IMG3} alt="Сотрудники на финише забега" width={1600} height={500} style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover",filter:"brightness(0.5)"}}/>
+            <div style={{position:"absolute",inset:0,background:"linear-gradient(100deg,rgba(19,19,25,0.8) 0%,rgba(19,19,25,0.35) 60%,rgba(19,19,25,0.65) 100%)"}}/>
             <div style={{position:"relative",zIndex:2,display:"flex",width:"100%",alignItems:"center",justifyContent:"space-between",padding:"32px 40px",gap:24,flexWrap:"wrap"}}>
               <div style={{maxWidth:280}}>
                 <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontWeight:600,letterSpacing:".1em",textTransform:"uppercase",marginBottom:8}}>Сезон 2025</div>
