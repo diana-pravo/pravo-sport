@@ -313,11 +313,13 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
   };
   const participate=()=>signedIn?setPage("cabinet-light"):onLogin();
 
-  const challengeCards=[
-    {id:"c1",tag:"Идёт сейчас",emoji:"👟",kind:"КОМАНДНЫЙ МАРАФОН",title:"Шаг за шагом",goal:"Общая цель: 70 000 шагов",people:"24 участника",img:IMG3,tone:"#8C26EA"},
-    {id:"c2",tag:"Идёт сейчас",emoji:"🏃",kind:"ЛИЧНЫЙ ЗАЧЁТ",title:"Бег — этап 1",goal:"Общая цель: 25 км",people:"18 участников",img:IMG1,tone:"#D8FF37"},
-    {id:"c3",tag:"Скоро",emoji:"🚴",kind:"ЛИЧНЫЙ ЗАЧЁТ",title:"Осенняя велогонка",goal:"Общая цель: 120 км",people:"12 участников",img:IMG4,tone:"#FF9BCB"}
-  ];
+  const challengeImages=[IMG3,IMG1,IMG2,IMG4];
+  const challengeCards=(challenges?.length?challenges:CHALLENGES).slice(0,4).map((c,i)=>({
+    ...c,
+    img:challengeImages[i%challengeImages.length],
+    tag:c.status==="active"?"Активный":c.statusLabel||"Скоро",
+    tone:[BP,"#D9FF35","#FFC24A","#FF8FC8"][i%4]
+  }));
 
   const steps=[
     {n:"01",title:"Выберите челлендж",text:"Личный или командный — в своём темпе."},
@@ -326,15 +328,18 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
     {n:"04",title:"Приходите на события",text:"Забеги, тренировки и видео-встречи."}
   ];
 
-  const homeNews=[
-    {tag:"20 сентября",title:"Новый спортивный сезон начался",text:"Выбирайте первый челлендж и присоединяйтесь к коллегам.",accent:"#F1E6FF"},
-    {tag:"Анонс",title:"Осенняя велогонка",text:"Регистрация откроется совсем скоро.",accent:"#F1FF9E"}
-  ];
+  const homeNews=(news?.length?news:INIT_NEWS).slice(0,3).map((n,i)=>({
+    ...n,
+    accent:["#F0E3FF","#F3FFB7","#E6DCF8"][i%3],
+    image:i===2?IMG3:null
+  }));
 
   return(
     <div id="top" className="ps-home">
       <style>{`
-        .ps-home{--ink:#12092f;--purple:#8c26ea;--purple2:#7620d3;--lime:#eaff37;--paper:#fffaf4;min-height:100vh;background:radial-gradient(circle at 3% 1%,rgba(189,206,255,.48),transparent 28%),radial-gradient(circle at 90% 9%,rgba(255,206,228,.43),transparent 26%),linear-gradient(180deg,#fffaf5 0%,#fffdfa 44%,#fbf8ff 100%);color:var(--ink);font-family:'Open Sans',system-ui,-apple-system,sans-serif;overflow-x:hidden}
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap');
+        .ps-home{--ink:#12092f;--purple:#8c26ea;--purple2:#7620d3;--lime:#eaff37;--paper:#fffaf4;min-height:100vh;background:radial-gradient(circle at 3% 1%,rgba(189,206,255,.48),transparent 28%),radial-gradient(circle at 90% 9%,rgba(255,206,228,.43),transparent 26%),linear-gradient(180deg,#fffaf5 0%,#fffdfa 44%,#fbf8ff 100%);color:var(--ink);font-family:'Open Sans',Arial,sans-serif;overflow-x:hidden}
+        .ps-home button,.ps-home input,.ps-home textarea,.ps-home select{font-family:'Open Sans',Arial,sans-serif}
         .ps-home *{box-sizing:border-box}.ps-wrap{width:min(1240px,calc(100% - 48px));margin:0 auto}
         .ps-nav-wrap{position:sticky;top:0;z-index:50;padding:14px 0;transition:.25s ease}.ps-nav-wrap.solid{background:rgba(255,250,245,.78);backdrop-filter:blur(18px)}
         .ps-nav{display:flex;align-items:center;gap:8px}.ps-logo{font-size:24px;font-weight:800;letter-spacing:-1px;margin-right:auto;white-space:nowrap;cursor:pointer}.ps-logo span{color:var(--purple)}
@@ -349,16 +354,16 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
         .ps-scribble{position:absolute;left:-52px;top:92px;color:#8c26ea;font-weight:800;font-size:26px;line-height:1.05;transform:rotate(-11deg);font-family:cursive;text-align:center}.ps-burst{position:absolute;left:-62px;top:22px;font-size:58px;color:#dfff42;transform:rotate(-18deg)}.ps-flower{position:absolute;left:-20px;bottom:20px;font-size:74px;color:#ff69ae;transform:rotate(12deg);line-height:1}
         .ps-result-card{position:absolute;right:-16px;bottom:30px;background:rgba(255,251,248,.93);backdrop-filter:blur(12px);border:1px solid rgba(140,38,234,.12);border-radius:22px;padding:17px 20px;box-shadow:0 14px 38px rgba(35,16,65,.13);min-width:190px}.ps-bars{display:flex;align-items:flex-end;gap:4px;height:30px;margin-bottom:8px}.ps-bars i{display:block;width:5px;border-radius:5px;background:var(--purple)}.ps-result-card small{color:#756e7f;font-size:10px}.ps-result-card b{display:block;font-size:13px;margin-top:2px}
         .ps-manifesto{display:grid;grid-template-columns:.72fr 1.28fr;gap:24px;align-items:center;padding:22px 26px;border-radius:28px;background:rgba(255,255,255,.64);border:1px solid #efe4f8;margin-bottom:62px}.ps-manifesto .label{font-size:11px;color:var(--purple);font-weight:900;letter-spacing:.12em}.ps-manifesto h2{font-size:36px;line-height:1;margin:6px 0 0;letter-spacing:-1.5px}.ps-manifesto p{font-size:18px;color:#625b6e;line-height:1.45;margin:0}.ps-manifesto p strong{color:var(--ink)}
-        .ps-section{padding:10px 0 62px;scroll-margin-top:88px}.ps-section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:20px}.ps-section-head h2{font-size:34px;letter-spacing:-1.4px;margin:0}.ps-section-head p{margin:7px 0 0;color:#7a7283;font-size:14px}.ps-text-link{border:0;background:transparent;color:var(--purple);font-weight:800;cursor:pointer}
-        .ps-challenges{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.ps-ch-card{position:relative;height:340px;border-radius:25px;overflow:hidden;box-shadow:0 10px 28px rgba(31,14,58,.08);cursor:pointer;background:#eee}.ps-ch-card img{width:100%;height:100%;object-fit:cover;transition:transform .55s ease}.ps-ch-card:hover img{transform:scale(1.04)}.ps-ch-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,7,32,.03) 25%,rgba(15,7,32,.82) 100%)}.ps-tag{position:absolute;top:16px;left:16px;background:#fff;border-radius:999px;padding:6px 11px;font-size:10px;font-weight:900}.ps-ch-content{position:absolute;left:18px;right:18px;bottom:17px;color:#fff}.ps-ch-kind{font-size:10px;font-weight:900;letter-spacing:.1em;opacity:.78;margin-bottom:6px}.ps-ch-content h3{font-size:25px;letter-spacing:-.8px;margin:0 0 6px}.ps-ch-content p{font-size:12px;margin:3px 0;color:rgba(255,255,255,.78)}.ps-ch-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:13px}.ps-round{width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.14);color:#fff;font-size:18px;cursor:pointer}
+        .ps-section{padding:10px 0 62px;scroll-margin-top:88px}.ps-section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:20px}.ps-section-head h2{font-size:31px;letter-spacing:-1.15px;margin:0;font-weight:800}.ps-section-head p{margin:7px 0 0;color:#7a7283;font-size:14px}.ps-text-link{border:0;background:transparent;color:var(--purple);font-weight:800;cursor:pointer}
+        .ps-challenges{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.ps-ch-card{position:relative;min-height:292px;border-radius:18px;overflow:hidden;box-shadow:0 8px 24px rgba(58,31,88,.07);cursor:pointer;background:#fff;border:1px solid rgba(140,38,234,.08);transition:transform .25s ease,box-shadow .25s ease}.ps-ch-card:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(58,31,88,.12)}.ps-ch-photo{position:relative;height:166px;overflow:hidden;background:#eee}.ps-ch-photo img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s ease}.ps-ch-card:hover .ps-ch-photo img{transform:scale(1.035)}.ps-tag{position:absolute;top:12px;left:12px;border-radius:999px;padding:6px 11px;font-size:10px;font-weight:800;z-index:2;box-shadow:0 3px 10px rgba(41,19,66,.08)}.ps-ch-body{position:relative;padding:14px 14px 13px;min-height:126px;background:linear-gradient(180deg,#fffafd 0%,#fff 100%)}.ps-ch-title{font-size:17px;font-weight:800;letter-spacing:-.35px;margin:0 42px 5px 0;color:var(--ink)}.ps-ch-desc{font-size:11px;color:#776f80;line-height:1.4;margin:0 42px 8px 0}.ps-ch-people{font-size:11px;font-weight:700;color:#665d72;margin:0}.ps-ch-people span{color:var(--purple)}.ps-round{position:absolute;right:12px;bottom:13px;width:34px;height:34px;border-radius:50%;border:1px solid #e5d8ef;background:#fff;color:var(--purple);font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 5px 14px rgba(80,42,118,.08)}
         .ps-season{position:relative;overflow:hidden;border-radius:30px;min-height:290px;padding:36px;background:#ece7ff;display:grid;grid-template-columns:.9fr 1.1fr;align-items:center;box-shadow:0 14px 40px rgba(53,30,91,.08)}.ps-season:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 88% 20%,rgba(255,255,255,.7),transparent 22%),linear-gradient(130deg,rgba(140,38,234,.08),rgba(223,255,66,.22));pointer-events:none}.ps-season-copy{position:relative;z-index:2}.ps-season-label{font-size:11px;font-weight:900;letter-spacing:.12em;color:#6d5d83;margin-bottom:8px}.ps-season h2{font-size:40px;line-height:1.02;letter-spacing:-1.6px;margin:0 0 12px}.ps-season h2 em{font-style:normal;color:var(--purple)}.ps-season p{font-size:14px;color:#625b6e;line-height:1.5;margin:0 0 18px;max-width:390px}
         .ps-route{position:relative;z-index:2;height:180px}.ps-route svg{width:100%;height:100%}.ps-route-note{position:absolute;right:12%;top:6px;background:#fff;border-radius:17px;padding:11px 16px;font-size:11px;font-weight:800;box-shadow:0 8px 24px rgba(61,32,104,.1)}
         .ps-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.ps-step{background:#fff;border:1px solid #eee4f6;border-radius:22px;padding:22px;min-height:180px;box-shadow:0 7px 22px rgba(51,24,87,.05)}.ps-step .num{font-size:38px;font-weight:900;color:var(--purple);letter-spacing:-2px}.ps-step h3{font-size:16px;margin:18px 0 7px}.ps-step p{font-size:13px;color:#756e7f;line-height:1.55;margin:0}
-        .ps-news{display:grid;grid-template-columns:1.25fr .75fr;gap:14px}.ps-news-card{border-radius:24px;padding:26px;min-height:205px;position:relative;overflow:hidden;border:1px solid #ece0f5;background:#fff}.ps-news-card:after{content:"";position:absolute;width:180px;height:180px;border-radius:50%;right:-50px;bottom:-80px;background:var(--bubble,#f1e6ff)}.ps-news-tag{font-size:10px;font-weight:900;color:#756e7f;text-transform:uppercase;letter-spacing:.08em}.ps-news-card h3{font-size:25px;max-width:440px;line-height:1.08;margin:25px 0 9px;letter-spacing:-.7px;position:relative;z-index:1}.ps-news-card p{font-size:13px;color:#716a79;max-width:430px;line-height:1.5;margin:0;position:relative;z-index:1}
+        .ps-news{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.ps-news-card{border-radius:17px;padding:17px 18px;min-height:178px;position:relative;overflow:hidden;border:1px solid rgba(140,38,234,.08);background:#fff;box-shadow:0 7px 20px rgba(55,29,84,.05)}.ps-news-card.has-image{color:#fff;background:#6d42a2}.ps-news-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.ps-news-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(44,20,74,.82) 0%,rgba(44,20,74,.46) 62%,rgba(44,20,74,.12) 100%)}.ps-news-tag{position:relative;z-index:2;display:inline-flex;border-radius:999px;padding:5px 9px;background:rgba(140,38,234,.10);color:#7a32c3;font-size:9px;font-weight:800;letter-spacing:.02em}.ps-news-card.has-image .ps-news-tag{background:rgba(121,42,218,.78);color:#fff}.ps-news-date{position:relative;z-index:2;margin-top:10px;font-size:9px;color:#8b8492}.ps-news-card.has-image .ps-news-date{color:rgba(255,255,255,.72)}.ps-news-card h3{position:relative;z-index:2;font-size:18px;max-width:78%;line-height:1.08;margin:5px 0 7px;letter-spacing:-.45px;font-weight:800}.ps-news-card p{position:relative;z-index:2;font-size:11px;color:#716a79;max-width:78%;line-height:1.45;margin:0}.ps-news-card.has-image p{color:rgba(255,255,255,.82)}.ps-news-arrow{position:absolute;z-index:3;right:14px;bottom:14px;width:32px;height:32px;border-radius:50%;border:1px solid #e6d7f0;background:rgba(255,255,255,.88);color:var(--purple);display:flex;align-items:center;justify-content:center;font-weight:900}.ps-news-icon{position:absolute;right:18px;top:18px;font-size:35px;z-index:2}
         .ps-cta{background:var(--lime);border-radius:28px;padding:32px 34px;display:flex;align-items:center;gap:25px;justify-content:space-between;margin:4px 0 42px;position:relative;overflow:hidden}.ps-cta h2{font-size:31px;letter-spacing:-1.2px;margin:0 0 4px}.ps-cta p{margin:0;color:#554f5b;font-size:13px}.ps-cta-doodle{font-size:34px;letter-spacing:8px;transform:rotate(-8deg);opacity:.75}
         .ps-footer{border-top:1px solid #eadff2;padding:25px 0 34px;display:grid;grid-template-columns:1.3fr 2fr auto;gap:30px;align-items:start;color:#837b8d;font-size:11px}.ps-footer .ps-logo{font-size:18px}.ps-footer-links{display:flex;gap:18px;flex-wrap:wrap}.ps-footer button{border:0;background:transparent;color:#837b8d;font-size:11px;cursor:pointer;padding:0}
-        @media(max-width:900px){.ps-wrap{width:min(100% - 28px,760px)}.ps-nav-links{display:none}.ps-nav .ps-login{display:none}.ps-hero{grid-template-columns:1fr;padding-top:28px}.ps-visual{min-height:430px}.ps-h1{font-size:58px}.ps-scribble,.ps-burst,.ps-flower{display:none}.ps-manifesto{grid-template-columns:1fr}.ps-challenges{grid-template-columns:1fr 1fr}.ps-ch-card:last-child{grid-column:1/-1}.ps-season{grid-template-columns:1fr}.ps-steps{grid-template-columns:1fr 1fr}.ps-news{grid-template-columns:1fr}.ps-footer{grid-template-columns:1fr}}
-        @media(max-width:600px){.ps-wrap{width:calc(100% - 24px)}.ps-nav-wrap{padding:9px 0}.ps-logo{font-size:20px}.ps-primary{padding:11px 15px;font-size:12px}.ps-hero{padding:28px 0 42px;gap:24px}.ps-h1{font-size:46px;letter-spacing:-2.6px}.ps-sub{font-size:14px}.ps-visual{min-height:330px}.ps-result-card{right:8px;bottom:10px;min-width:160px;padding:13px 15px}.ps-manifesto{padding:20px;margin-bottom:44px}.ps-manifesto h2{font-size:30px}.ps-manifesto p{font-size:15px}.ps-section{padding-bottom:46px}.ps-section-head h2{font-size:28px}.ps-section-head .ps-text-link{display:none}.ps-challenges{grid-template-columns:1fr}.ps-ch-card:last-child{grid-column:auto}.ps-ch-card{height:320px}.ps-season{padding:24px}.ps-season h2{font-size:32px}.ps-route{height:135px}.ps-steps{grid-template-columns:1fr}.ps-step{min-height:150px}.ps-news-card h3{font-size:21px}.ps-cta{align-items:flex-start;flex-direction:column}.ps-cta-doodle{display:none}.ps-footer{gap:18px}}
+        @media(max-width:900px){.ps-wrap{width:min(100% - 28px,760px)}.ps-nav-links{display:none}.ps-nav .ps-login{display:none}.ps-hero{grid-template-columns:1fr;padding-top:28px}.ps-visual{min-height:430px}.ps-h1{font-size:58px}.ps-scribble,.ps-burst,.ps-flower{display:none}.ps-manifesto{grid-template-columns:1fr}.ps-challenges{grid-template-columns:1fr 1fr}.ps-season{grid-template-columns:1fr}.ps-steps{grid-template-columns:1fr 1fr}.ps-news{grid-template-columns:1fr}.ps-footer{grid-template-columns:1fr}}
+        @media(max-width:600px){.ps-wrap{width:calc(100% - 24px)}.ps-nav-wrap{padding:9px 0}.ps-logo{font-size:20px}.ps-primary{padding:11px 15px;font-size:12px}.ps-hero{padding:28px 0 42px;gap:24px}.ps-h1{font-size:46px;letter-spacing:-2.6px}.ps-sub{font-size:14px}.ps-visual{min-height:330px}.ps-result-card{right:8px;bottom:10px;min-width:160px;padding:13px 15px}.ps-manifesto{padding:20px;margin-bottom:44px}.ps-manifesto h2{font-size:30px}.ps-manifesto p{font-size:15px}.ps-section{padding-bottom:46px}.ps-section-head h2{font-size:28px}.ps-section-head .ps-text-link{display:none}.ps-challenges{grid-template-columns:1fr}.ps-season{padding:24px}.ps-season h2{font-size:32px}.ps-route{height:135px}.ps-steps{grid-template-columns:1fr}.ps-step{min-height:150px}.ps-news-card h3{font-size:18px}.ps-cta{align-items:flex-start;flex-direction:column}.ps-cta-doodle{display:none}.ps-footer{gap:18px}}
       `}</style>
 
       <div className={"ps-nav-wrap"+(navSolid?" solid":"")}>
@@ -422,16 +427,17 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
             <button className="ps-text-link" onClick={()=>setPage("challenges")}>Все челленджи →</button>
           </div>
           <div className="ps-challenges">
-            {challengeCards.map(c=>(
-              <article className="ps-ch-card" key={c.id} onClick={()=>setPage("challenges")}>
-                <img src={c.img} alt={c.title}/>
-                <div className="ps-ch-overlay"/>
-                <div className="ps-tag" style={{color:c.tag==="Скоро"?"#5d5714":c.tone,background:c.tag==="Скоро"?"#efff86":"#fff"}}>{c.tag}</div>
-                <div className="ps-ch-content">
-                  <div className="ps-ch-kind">{c.emoji} {c.kind}</div>
-                  <h3>{c.title}</h3>
-                  <p>{c.goal}</p>
-                  <div className="ps-ch-bottom"><p>👥 {c.people}</p><button className="ps-round">→</button></div>
+            {challengeCards.map((c,i)=>(
+              <article className="ps-ch-card" key={c.id||i} onClick={()=>setPage("challenges")}>
+                <div className="ps-ch-photo">
+                  <img src={c.img} alt={c.title}/>
+                  <div className="ps-tag" style={{background:i===0?BP:i===1?"#E9FF68":i===2?"#FFD36A":"#FFB7DD",color:i===0?"#fff":"#3d3150"}}>{c.tag}</div>
+                </div>
+                <div className="ps-ch-body">
+                  <h3 className="ps-ch-title">{c.title}</h3>
+                  <p className="ps-ch-desc">{c.desc||"Корпоративный спортивный челлендж"}</p>
+                  <p className="ps-ch-people"><span>♟</span> {c.participants||0} участников</p>
+                  <button className="ps-round" aria-label="Открыть челлендж">→</button>
                 </div>
               </article>
             ))}
@@ -472,8 +478,14 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
             <button className="ps-text-link" onClick={()=>setPage("news")}>Все новости →</button>
           </div>
           <div className="ps-news">
-            {homeNews.map((n,i)=><article key={i} className="ps-news-card" style={{"--bubble":n.accent}}>
-              <div className="ps-news-tag">{n.tag}</div><h3>{n.title}</h3><p>{n.text}</p>
+            {homeNews.map((n,i)=><article key={n.id||i} className={"ps-news-card"+(n.image?" has-image":"")} style={{background:n.image?undefined:i===0?"linear-gradient(135deg,#F1E5FF,#F8F2FF)":i===1?"linear-gradient(135deg,#FBF5F0,#F3F7D3)":"#fff"}}>
+              {n.image&&<><img className="ps-news-image" src={n.image} alt=""/><div className="ps-news-shade"/></>}
+              {!n.image&&i===1&&<div className="ps-news-icon">🏆</div>}
+              <div className="ps-news-tag">{n.cat||n.tag||"Новость"}</div>
+              <div className="ps-news-date">{n.date||"Сегодня"}</div>
+              <h3>{n.title}</h3>
+              <p>{n.text}</p>
+              <div className="ps-news-arrow">→</div>
             </article>)}
           </div>
         </section>
