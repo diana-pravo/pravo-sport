@@ -264,6 +264,337 @@ function CabinetHome({setPage}){
   );
 }
 
+// ============ LIGHT (production) — синтез референсов, фирменные цвета, 2026-стиль ============
+const BP="#8C26EA", BL="#EEFF2D", BD="#0D0628";
+const lg=(op=0.7,border="rgba(140,38,234,0.14)")=>({
+  background:`rgba(255,255,255,${op})`,backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",
+  border:`1px solid ${border}`,boxShadow:"0 8px 32px rgba(140,38,234,0.08), 0 1px 2px rgba(13,6,40,0.04)",
+});
+
+const Blob=({top,left,right,bottom,size,color,delay=0})=>(
+  <motion.div style={{position:"absolute",top,left,right,bottom,width:size,height:size,borderRadius:"50%",
+    background:color,filter:"blur(60px)",opacity:0.55,zIndex:0,pointerEvents:"none"}}
+    animate={{y:[0,-18,0],x:[0,12,0]}} transition={{duration:9,repeat:Infinity,ease:"easeInOut",delay}}/>
+);
+
+const RevealSection=({children,style,className,y=24})=>(
+  <motion.div className={className} style={style} initial={{opacity:0,y}} whileInView={{opacity:1,y:0}}
+    viewport={{once:true,margin:"-80px"}} transition={{duration:.7,ease:[0.16,1,0.3,1]}}>
+    {children}
+  </motion.div>
+);
+
+const MagButton=({children,onClick,primary,style})=>{
+  const x=useMotionValue(0),y=useMotionValue(0);
+  const sx=useSpring(x,{stiffness:300,damping:20}),sy=useSpring(y,{stiffness:300,damping:20});
+  return(
+    <motion.button onClick={onClick} style={{...style,x:sx,y:sy}}
+      onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();x.set((e.clientX-r.left-r.width/2)*.25);y.set((e.clientY-r.top-r.height/2)*.4);}}
+      onMouseLeave={()=>{x.set(0);y.set(0);}}
+      whileTap={{scale:0.96}}>
+      {children}
+    </motion.button>
+  );
+};
+
+function LightHome({setPage}){
+  const [navSolid,setNavSolid]=useState(false);
+  useEffect(()=>{const h=()=>setNavSolid(window.scrollY>40);window.addEventListener("scroll",h,{passive:true});h();return()=>window.removeEventListener("scroll",h);},[]);
+  const heroPhoto=IMG4;
+  const scrollTo=id=>{const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:"smooth",block:"start"});};
+  return(
+    <div id="top" style={{background:"#FCFAFF",color:BD,minHeight:"100vh",position:"relative",overflowX:"hidden",fontFamily:"'Open Sans',-apple-system,system-ui,sans-serif"}}>
+      <Blob top={-120} left={-100} size={420} color="#D9E8FB" delay={0}/>
+      <Blob top={140} right={-140} size={380} color="#FBE1EC" delay={2}/>
+      <Blob top={900} left={-80} size={340} color="#E1F3FB" delay={1}/>
+      <Blob top={1500} right={-100} size={380} color="#F3E7FB" delay={3}/>
+
+      {/* NAV — плавающая капсула, реальная скролл-навигация */}
+      <div style={{position:"sticky",top:16,zIndex:40,display:"flex",justifyContent:"center",padding:"0 20px"}}>
+        <div style={{...lg(navSolid?0.85:0.6),borderRadius:999,padding:"10px 12px 10px 22px",display:"flex",alignItems:"center",gap:6,width:"100%",maxWidth:1080,transition:"background .3s ease"}}>
+          <div style={{fontSize:16,fontWeight:800,cursor:"pointer",marginRight:"auto"}} onClick={()=>scrollTo("top")}>
+            право<span style={{color:BP}}>(тех)</span>
+          </div>
+          <button onClick={()=>scrollTo("top")} style={{background:"transparent",border:"none",color:BD,fontWeight:700,fontSize:13,padding:"8px 14px",cursor:"pointer"}}>Главная</button>
+          <button onClick={()=>scrollTo("section-challenges")} style={{background:"transparent",border:"none",color:"#8a8494",fontWeight:500,fontSize:13,padding:"8px 14px",cursor:"pointer"}}>Челленджи</button>
+          <button onClick={()=>scrollTo("section-news")} style={{background:"transparent",border:"none",color:"#8a8494",fontWeight:500,fontSize:13,padding:"8px 14px",cursor:"pointer"}}>Новости</button>
+          <button onClick={()=>scrollTo("section-leaderboard")} style={{background:"transparent",border:"none",color:"#8a8494",fontWeight:500,fontSize:13,padding:"8px 14px",cursor:"pointer"}}>Рейтинг</button>
+          <div onClick={()=>setPage("cabinet-light")} title="Личный кабинет" style={{width:34,height:34,borderRadius:"50%",background:BP,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:13,fontWeight:700,cursor:"pointer",marginLeft:6}}>Д</div>
+          <MagButton onClick={()=>scrollTo("section-challenges")} style={{background:BP,color:"#fff",border:"none",borderRadius:999,padding:"10px 20px",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:"0 6px 18px rgba(140,38,234,0.35)"}}>Участвовать →</MagButton>
+        </div>
+      </div>
+
+      {/* HERO */}
+      <div style={{position:"relative",zIndex:2,maxWidth:1240,margin:"0 auto",padding:"64px 32px 40px",display:"grid",gridTemplateColumns:"1.1fr 1fr",gap:40,alignItems:"center"}}>
+        <RevealSection>
+          <div style={{...lg(0.7),display:"inline-flex",alignItems:"center",gap:8,borderRadius:999,padding:"7px 16px",marginBottom:22}}>
+            <span style={{width:7,height:7,borderRadius:"50%",background:BP,display:"inline-block"}}/>
+            <span style={{fontSize:12,fontWeight:700,color:BP}}>Сезон 2025 активен</span>
+          </div>
+          <h1 style={{fontSize:"clamp(2.2rem,4.2vw,3.2rem)",fontWeight:800,lineHeight:1.1,letterSpacing:"-1.2px",margin:"0 0 20px"}}>
+            Мы — <span style={{color:BP}}>движение</span>, которое вдохновляет
+          </h1>
+          <p style={{fontSize:15,color:"#6a6472",lineHeight:1.7,maxWidth:440,margin:"0 0 28px"}}>
+            Спортивное сообщество право(тех). Отражаем нашу энергию через результат.
+          </p>
+          <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+            <MagButton onClick={()=>scrollTo("section-challenges")} style={{background:BP,color:"#fff",border:"none",borderRadius:12,padding:"15px 28px",fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 10px 28px rgba(140,38,234,0.35)"}}>Начать участвовать →</MagButton>
+            <MagButton onClick={()=>scrollTo("section-leaderboard")} style={{background:"#fff",color:BD,border:"1px solid #e6dcf2",borderRadius:12,padding:"15px 28px",fontSize:14,fontWeight:700,cursor:"pointer"}}>Рейтинг сезона</MagButton>
+          </div>
+        </RevealSection>
+
+        <RevealSection y={40} style={{position:"relative"}}>
+          <motion.div style={{borderRadius:28,overflow:"hidden",boxShadow:"0 30px 60px -20px rgba(140,38,234,0.35)"}}
+            animate={{y:[0,-10,0]}} transition={{duration:6,repeat:Infinity,ease:"easeInOut"}}>
+            <img src={heroPhoto} alt="Сотрудники на тренировке" style={{width:"100%",height:340,objectFit:"cover",display:"block"}}/>
+          </motion.div>
+          <div style={{position:"absolute",bottom:-20,left:-20,...lg(0.85),borderRadius:16,padding:"14px 18px",display:"flex",gap:12,alignItems:"center"}}>
+            <div style={{width:38,height:38,borderRadius:"50%",background:BP,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🏆</div>
+            <div>
+              <div style={{fontSize:15,fontWeight:800}}>200+ сотрудников</div>
+              <div style={{fontSize:11,color:"#8a8494"}}>участвуют в сезоне</div>
+            </div>
+          </div>
+        </RevealSection>
+      </div>
+
+      {/* STATS — анимированный счётчик при появлении */}
+      <RevealSection style={{position:"relative",zIndex:2,maxWidth:1240,margin:"20px auto 0",padding:"32px",display:"flex",flexWrap:"wrap",gap:0}}>
+        {[{v:31722,l:"км пройдено вместе"},{v:200,l:"сотрудников участвует",suf:"+"},{v:7,l:"активных челленджей"},{v:930,l:"км Москва — СПб"}].map((s,i)=>(
+          <div key={i} style={{flex:"1 1 200px",padding:"0 24px",borderLeft:i>0?"1px solid #e6dcf2":"none"}}>
+            <div style={{fontSize:34,fontWeight:800,letterSpacing:"-1px"}}><CountUp to={s.v} seen={true} suffix={s.suf||""}/></div>
+            <div style={{fontSize:12,color:"#8a8494",marginTop:4}}>{s.l}</div>
+          </div>
+        ))}
+      </RevealSection>
+
+      {/* CHALLENGES — реальные фото, круглая стрелка, hover-lift, клик открывает форму отправки результата */}
+      <div id="section-challenges" style={{position:"relative",zIndex:2,maxWidth:1240,margin:"0 auto",padding:"64px 32px 0",scrollMarginTop:100}}>
+        <RevealSection style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
+          <h2 style={{fontSize:26,fontWeight:800,margin:0,letterSpacing:"-0.6px"}}>Активные челленджи</h2>
+        </RevealSection>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:18}}>
+          {CHALLENGES.map((c,i)=>{
+            const photo=[IMG1,IMG2,IMG3,IMG4][i%4];
+            return(
+              <RevealSection key={c.id} y={30}>
+                <motion.div whileHover={{y:-8}} transition={{type:"spring",stiffness:300,damping:22}}
+                  onClick={()=>c.status==="active"?setSubmitChal(c):notify("Скоро!")}
+                  style={{borderRadius:20,overflow:"hidden",cursor:"pointer",background:"#fff",boxShadow:"0 4px 20px rgba(13,6,40,0.06)",border:"1px solid #f0ebf7"}}>
+                  <div style={{position:"relative",height:160}}>
+                    <img src={photo} alt={c.title} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                    <span style={{position:"absolute",top:12,left:12,background:"rgba(255,255,255,0.92)",color:BP,fontSize:10,fontWeight:700,padding:"4px 10px",borderRadius:999}}>{c.statusLabel}</span>
+                    <div style={{position:"absolute",top:12,right:12,width:32,height:32,borderRadius:"50%",background:BP,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:700}}>→</div>
+                  </div>
+                  <div style={{padding:"16px 18px"}}>
+                    <div style={{fontSize:16,fontWeight:800,marginBottom:4}}>{c.emoji} {c.title}</div>
+                    <div style={{fontSize:12,color:"#8a8494"}}>{c.desc} · {c.participants} участников</div>
+                  </div>
+                </motion.div>
+              </RevealSection>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ROUTE — прогресс маршрута, светлая версия */}
+      <RevealSection style={{position:"relative",zIndex:2,maxWidth:1240,margin:"56px auto 0",padding:"0 32px"}}>
+        <div style={{...lg(0.75),borderRadius:24,padding:"36px 40px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:32,flexWrap:"wrap"}}>
+          <div style={{maxWidth:320}}>
+            <div style={{fontSize:11,color:"#8a8494",fontWeight:700,letterSpacing:".08em",textTransform:"uppercase",marginBottom:8}}>Сезон 2025</div>
+            <div style={{fontSize:26,fontWeight:800,lineHeight:1.2,marginBottom:8}}>Вместе мы прошли <span style={{color:BP}}>1 240 000 шагов</span></div>
+            <div style={{fontSize:13,color:"#6a6472"}}>Это около 930 км — от Москвы до Санкт-Петербурга и обратно</div>
+          </div>
+          <svg viewBox="0 0 400 140" style={{flex:1,minWidth:240,maxWidth:420,height:140}}>
+            <path d="M 20 110 C 80 40, 150 130, 220 60 S 340 20, 380 70" fill="none" stroke="#ECE3F7" strokeWidth="4" strokeLinecap="round"/>
+            <motion.path d="M 20 110 C 80 40, 150 130, 220 60 S 340 20, 380 70" fill="none" stroke={BP} strokeWidth="4" strokeLinecap="round"
+              initial={{pathLength:0}} whileInView={{pathLength:0.62}} viewport={{once:true}} transition={{duration:1.6,ease:"easeInOut"}}/>
+            <circle cx="20" cy="110" r="6" fill={BD}/>
+            <circle cx="380" cy="70" r="6" fill="#d8cce8"/>
+          </svg>
+          <MagButton onClick={()=>scrollTo("section-leaderboard")} style={{background:BD,color:"#fff",border:"none",borderRadius:12,padding:"14px 24px",fontSize:13,fontWeight:700,cursor:"pointer",flexShrink:0}}>Смотреть рейтинг →</MagButton>
+        </div>
+      </RevealSection>
+
+      {/* КАК ЭТО РАБОТАЕТ */}
+      <div id="section-steps" style={{position:"relative",zIndex:2,maxWidth:1240,margin:"0 auto",padding:"72px 32px 0",scrollMarginTop:100}}>
+        <RevealSection style={{marginBottom:32}}>
+          <h2 style={{fontSize:26,fontWeight:800,margin:0,letterSpacing:"-0.6px"}}>Как это работает</h2>
+        </RevealSection>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:32}}>
+          {[{n:"01",t:"Выбери челлендж",d:"В разделе «Челленджи» — активные или ближайшие."},
+            {n:"02",t:"Фиксируй результат",d:"Загружай шаги, километры или фото каждый день."},
+            {n:"03",t:"Смотри рейтинг",d:"Прогресс и место в общем зачёте — на странице «Рейтинг»."}].map((s,i)=>(
+            <RevealSection key={i} y={30}>
+              <div style={{fontSize:30,fontWeight:800,color:BP,marginBottom:10}}>{s.n}</div>
+              <div style={{fontSize:16,fontWeight:700,marginBottom:6}}>{s.t}</div>
+              <div style={{fontSize:13,color:"#6a6472",lineHeight:1.6}}>{s.d}</div>
+            </RevealSection>
+          ))}
+        </div>
+      </div>
+
+      {/* РЕЙТИНГ — топ участников, кликабельно ведёт в личный кабинет своей строкой */}
+      <div id="section-leaderboard" style={{position:"relative",zIndex:2,maxWidth:1240,margin:"0 auto",padding:"72px 32px 0",scrollMarginTop:100}}>
+        <RevealSection style={{marginBottom:24}}>
+          <h2 style={{fontSize:26,fontWeight:800,margin:0,letterSpacing:"-0.6px"}}>Рейтинг сезона</h2>
+        </RevealSection>
+        <RevealSection y={30}>
+          <div style={{...lg(0.85),borderRadius:20,padding:"12px 8px"}}>
+            {LEADERBOARD.slice().sort((a,b)=>b.merchi-a.merchi).map((u,i)=>(
+              <div key={u.uid} onClick={()=>u.uid==="me"&&setPage("cabinet-light")}
+                style={{display:"flex",alignItems:"center",gap:14,padding:"12px 16px",borderRadius:12,cursor:u.uid==="me"?"pointer":"default",
+                  background:u.uid==="me"?"rgba(140,38,234,0.08)":"transparent"}}>
+                <span style={{fontSize:13,color:i<3?BP:"#8a8494",fontWeight:700,width:20}}>{i+1}</span>
+                <div style={{width:32,height:32,borderRadius:"50%",background:colFor(u.uid),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#fff"}}>{ini(u.name)}</div>
+                <span style={{flex:1,fontSize:14,fontWeight:u.uid==="me"?700:500,color:u.uid==="me"?BP:BD}}>{u.name}{u.uid==="me"&&" (вы)"}</span>
+                <span style={{fontSize:13,color:"#8a8494",fontWeight:700}}>⭐ {u.merchi}</span>
+              </div>
+            ))}
+          </div>
+        </RevealSection>
+      </div>
+
+      {/* НОВОСТИ */}
+      <div id="section-news" style={{position:"relative",zIndex:2,maxWidth:1240,margin:"0 auto",padding:"72px 32px 0",scrollMarginTop:100}}>
+        <RevealSection style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
+          <h2 style={{fontSize:26,fontWeight:800,margin:0,letterSpacing:"-0.6px"}}>Новости</h2>
+        </RevealSection>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))",gap:18}}>
+          {INIT_NEWS.slice(0,3).map(n=>(
+            <RevealSection key={n.id} y={30}>
+              <div style={{...lg(0.9),borderRadius:18,padding:"20px 22px",height:"100%"}}>
+                <div style={{fontSize:11,color:BP,fontWeight:700,textTransform:"uppercase",letterSpacing:".06em",marginBottom:10}}>{n.cat} · {n.date}</div>
+                <div style={{fontSize:16,fontWeight:800,marginBottom:8}}>{n.emoji} {n.title}</div>
+                <div style={{fontSize:13,color:"#6a6472",lineHeight:1.6}}>{n.text}</div>
+              </div>
+            </RevealSection>
+          ))}
+        </div>
+      </div>
+
+      {/* FOOTER */}
+      <RevealSection style={{position:"relative",zIndex:2,maxWidth:1240,margin:"72px auto 0",padding:"32px",borderTop:"1px solid #ece4f5",display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:12,fontSize:12,color:"#8a8494"}}>
+        <span>право(спорт) — корпоративная спортивная платформа право(тех)</span>
+        <span>Канал <b style={{color:BP}}>#pravo_sport</b> в Mattermost · HR-команда</span>
+      </RevealSection>
+      <div style={{height:60}}/>
+    </div>
+  );
+}
+
+// Светлый личный кабинет — доступен по клику на аватар/свою строку в рейтинге
+function LightCabinet({setPage}){
+  const me=LEADERBOARD.find(u=>u.uid==="me")||{name:"Диана",merchi:42};
+  const myRank=LEADERBOARD.slice().sort((a,b)=>b.merchi-a.merchi).findIndex(u=>u.uid==="me")+1;
+  const ring=(value,max,color,label,sub)=>{
+    const size=88,r=(size-10)/2,circ=2*Math.PI*r,pct=Math.min(value/max,1);
+    return(
+      <div style={{...lg(0.85),borderRadius:18,padding:"18px",display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#ece4f5" strokeWidth="7"/>
+          <motion.circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="7" strokeLinecap="round"
+            strokeDasharray={circ} transform={`rotate(-90 ${size/2} ${size/2})`}
+            initial={{strokeDashoffset:circ}} animate={{strokeDashoffset:circ*(1-pct)}} transition={{duration:1,ease:"easeOut"}}/>
+          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="central" fontSize="20" fontWeight="800" fill={BD}>{value}</text>
+        </svg>
+        <div style={{textAlign:"center"}}>
+          <div style={{fontSize:12,fontWeight:700}}>{label}</div>
+          <div style={{fontSize:10,color:"#8a8494"}}>{sub}</div>
+        </div>
+      </div>
+    );
+  };
+  return(
+    <div style={{background:"#FCFAFF",color:BD,minHeight:"100vh",position:"relative",overflowX:"hidden",fontFamily:"'Open Sans',-apple-system,system-ui,sans-serif"}}>
+      <Blob top={-100} left={-100} size={380} color="#EDE1FB" delay={0}/>
+      <Blob top={700} right={-120} size={340} color="#E1F3FB" delay={2}/>
+
+      <div style={{position:"relative",zIndex:2,maxWidth:1000,margin:"0 auto",padding:"32px 32px 64px"}}>
+        <button onClick={()=>setPage("light")} style={{background:"transparent",border:"none",color:BP,fontWeight:700,fontSize:13,cursor:"pointer",marginBottom:24,padding:0}}>← На главную</button>
+
+        <RevealSection style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:16,marginBottom:28}}>
+          <div style={{display:"flex",alignItems:"center",gap:16}}>
+            <div style={{width:56,height:56,borderRadius:"50%",background:BP,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:22,fontWeight:800}}>Д</div>
+            <div>
+              <div style={{fontSize:22,fontWeight:800,letterSpacing:"-0.5px"}}>Добрый день, {me.name}! 👋</div>
+              <div style={{fontSize:13,color:"#6a6472",marginTop:2}}>Стабильность сегодня — большие победы завтра</div>
+            </div>
+          </div>
+          <span style={{...lg(0.8),borderRadius:999,padding:"7px 16px",fontSize:12,fontWeight:700,color:BP}}>Сотрудник право(тех)</span>
+        </RevealSection>
+
+        <RevealSection y={30} style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:28}}>
+          {ring(5,7,BP,"Дней подряд","стрик активности")}
+          {ring(myRank||4,LEADERBOARD.length,"#0891B2","Место","в общем рейтинге")}
+          {ring(8,12,BP,"Тыс. шагов","на этой неделе")}
+          {ring(3,5,"#0891B2","Активности","в этом месяце")}
+        </RevealSection>
+
+        <div style={{display:"grid",gridTemplateColumns:"1.3fr 1fr",gap:20}}>
+          <RevealSection y={30}>
+            <div style={{...lg(0.85),borderRadius:18,padding:"22px 24px"}}>
+              <div style={{fontSize:16,fontWeight:800,marginBottom:16}}>Мои челленджи</div>
+              {CHALLENGES.slice(0,3).map((c,i)=>{
+                const progress=[60,25,10][i];
+                return(
+                  <div key={c.id} style={{marginBottom:16}}>
+                    <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:6}}>
+                      <span style={{fontWeight:700}}>{c.emoji} {c.title}</span>
+                      <span style={{color:"#8a8494"}}>{progress}%</span>
+                    </div>
+                    <div style={{height:5,background:"#ece4f5",borderRadius:4}}>
+                      <div style={{height:5,width:`${progress}%`,background:BP,borderRadius:4,transition:"width 1s ease"}}/>
+                    </div>
+                  </div>
+                );
+              })}
+              <div style={{fontSize:16,fontWeight:800,margin:"24px 0 14px"}}>Достижения</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
+                {[{e:"🔥",l:"7 дней подряд",done:true},{e:"🏊",l:"10 км плавания",done:true},{e:"👟",l:"Первое место",done:false},{e:"🚴",l:"Велопрогулка",done:true}].map((a,i)=>(
+                  <div key={i} style={{textAlign:"center",padding:"14px 8px",borderRadius:12,background:a.done?"rgba(140,38,234,0.08)":"#f5f2fa",border:`1px solid ${a.done?"rgba(140,38,234,0.25)":"#ece4f5"}`,opacity:a.done?1:0.4}}>
+                    <div style={{fontSize:20,marginBottom:6}}>{a.e}</div>
+                    <div style={{fontSize:9.5,color:"#6a6472",lineHeight:1.3}}>{a.l}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </RevealSection>
+
+          <RevealSection y={30} style={{display:"flex",flexDirection:"column",gap:20}}>
+            <div style={{...lg(0.85),borderRadius:18,padding:"22px 24px"}}>
+              <div style={{fontSize:16,fontWeight:800,marginBottom:14}}>Рейтинг</div>
+              {LEADERBOARD.slice().sort((a,b)=>b.merchi-a.merchi).slice(0,5).map((u,i)=>(
+                <div key={u.uid} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 8px",borderRadius:8,background:u.uid==="me"?"rgba(140,38,234,0.08)":"transparent"}}>
+                  <span style={{fontSize:12,color:"#8a8494",width:14}}>{i+1}</span>
+                  <div style={{width:26,height:26,borderRadius:"50%",background:colFor(u.uid),display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"#fff"}}>{ini(u.name)}</div>
+                  <span style={{flex:1,fontSize:13,fontWeight:u.uid==="me"?700:400,color:u.uid==="me"?BP:BD}}>{u.name}{u.uid==="me"&&" (вы)"}</span>
+                  <span style={{fontSize:12,color:"#8a8494",fontWeight:700}}>⭐ {u.merchi}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{...lg(0.85),borderRadius:18,padding:"22px 24px"}}>
+              <div style={{fontSize:16,fontWeight:800,marginBottom:14}}>Ближайшие события</div>
+              {[{date:"17",day:"СБ",title:"Утренний забег",place:"Парк Горького",n:32},{date:"20",day:"ВТ",title:"Йога онлайн",place:"Zoom",n:45},{date:"24",day:"СБ",title:"Велопрогулка",place:"Воробьёвы горы",n:28}].map((e,i)=>(
+                <div key={i} style={{display:"flex",gap:12,alignItems:"center",padding:"9px 0",borderTop:i>0?"1px solid #ece4f5":"none"}}>
+                  <div style={{textAlign:"center",flexShrink:0,width:36}}>
+                    <div style={{fontSize:9,color:"#8a8494"}}>{e.day}</div>
+                    <div style={{fontSize:13,fontWeight:800}}>{e.date}</div>
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:700}}>{e.title}</div>
+                    <div style={{fontSize:11,color:"#8a8494"}}>{e.place} · {e.n} участников</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </RevealSection>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 // Данные о фото для этого варианта — единый конфиг, чтобы фото менялись без правки вёрстки.
 const MIN_PHOTOS=[
@@ -444,7 +775,7 @@ function MinimalHome({setPage}){
 }
 
 export default function App(){
-  const [page,setPage]=useState("home");
+  const [page,setPage]=useState("light");
   const [scrolled,setScrolled]=useState(false);
   const [mouse,setMouse]=useState({x:0,y:0});
   const [news,setNews]=useState(INIT_NEWS);
@@ -536,7 +867,7 @@ export default function App(){
       {toast&&<div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:999,background:"#D1FAE5",color:"#065F46",padding:"10px 20px",borderRadius:12,fontSize:13,fontWeight:600,boxShadow:"0 8px 24px rgba(0,0,0,0.4)",whiteSpace:"nowrap",border:"1px solid #6EE7B7",animation:"slideIn .3s ease"}}>✓ {toast}</div>}
 
       {/* NAV — прозрачная поверх hero (вариант 1), затемняется при скролле/на других страницах */}
-      {page!=="minimal"&&(
+      {page!=="minimal"&&page!=="light"&&page!=="cabinet-light"&&(
       <nav style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 32px",position:"fixed",top:0,left:0,right:0,zIndex:50,
         background:(page==="home"&&!scrolled)?"transparent":"rgba(19,19,25,0.97)",
         borderBottom:(page==="home"&&!scrolled)?"1px solid transparent":"1px solid rgba(255,255,255,0.05)",
@@ -555,6 +886,7 @@ export default function App(){
         </div>
         <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <button onClick={()=>setPage("minimal")} className="hov-btn" style={{background:"transparent",color:"#666",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"6px 12px",fontSize:12,cursor:"pointer"}}>Минимал-версия</button>
+          <button onClick={()=>setPage("light")} className="hov-btn" style={{background:"transparent",color:"#8C26EA",border:"1px solid rgba(140,38,234,0.3)",borderRadius:8,padding:"6px 12px",fontSize:12,cursor:"pointer"}}>Светлая версия</button>
           <button onClick={()=>setIsAdmin(!isAdmin)} className="hov-btn" style={{background:"transparent",color:isAdmin?"#A78BFA":"#444",border:`1px solid ${isAdmin?"rgba(124,58,237,0.3)":"rgba(255,255,255,0.07)"}`,borderRadius:8,padding:"6px 12px",fontSize:12,cursor:"pointer"}}>{isAdmin?"✓ Автор":"Режим автора"}</button>
           <button onClick={()=>setPage("challenges")} className="hov-btn" style={{background:P,color:"#fff",border:"none",borderRadius:8,padding:"8px 18px",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:`0 4px 14px ${P}50`}}>Участвовать →</button>
           <div onClick={()=>setPage("cabinet")} className="hov-btn" title="Личный кабинет"
@@ -568,6 +900,10 @@ export default function App(){
 
       {/* ── ЛИЧНЫЙ КАБИНЕТ ── */}
       {page==="cabinet"&&<CabinetHome setPage={setPage}/>}
+
+      {/* ── СВЕТЛАЯ ВЕРСИЯ (продакшн-синтез референсов) ── */}
+      {page==="light"&&<LightHome setPage={setPage}/>}
+      {page==="cabinet-light"&&<LightCabinet setPage={setPage}/>}
 
       {/* ── HOME ── */}
       {page==="home"&&(
