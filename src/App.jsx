@@ -298,214 +298,182 @@ const MagButton=({children,onClick,primary,style})=>{
 };
 
 
-function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,isAdmin=false,onLogin}){
-  const [navSolid,setNavSolid]=useState(false);
-  useEffect(()=>{
-    const h=()=>setNavSolid(window.scrollY>36);
-    window.addEventListener("scroll",h,{passive:true});
-    h();
-    return()=>window.removeEventListener("scroll",h);
-  },[]);
 
-  const scrollTo=id=>{
-    const el=document.getElementById(id);
-    if(el)el.scrollIntoView({behavior:"smooth",block:"start"});
+function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false}){
+  const go=id=>{
+    setPage("light");
+    setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"}),30);
   };
-  const participate=()=>signedIn?setPage("cabinet-light"):onLogin();
-
-  const challengeImages=[IMG3,IMG1,IMG2,IMG4];
-  const challengeCards=(challenges?.length?challenges:CHALLENGES).slice(0,4).map((c,i)=>({
-    ...c,
-    img:challengeImages[i%challengeImages.length],
-    tag:c.status==="active"?"Активный":c.statusLabel||"Скоро",
-    tone:[BP,"#D9FF35","#FFC24A","#FF8FC8"][i%4]
-  }));
-
-  const steps=[
-    {n:"01",title:"Выберите челлендж",text:"Личный или командный — в своём темпе."},
-    {n:"02",title:"Добавляйте результат",text:"Число, комментарий и подтверждающий файл."},
-    {n:"03",title:"Поддерживайте коллег",text:"Следите за прогрессом команды и рейтингом."},
-    {n:"04",title:"Приходите на события",text:"Забеги, тренировки и видео-встречи."}
-  ];
-
-  const homeNews=(news?.length?news:INIT_NEWS).slice(0,3).map((n,i)=>({
-    ...n,
-    accent:["#F0E3FF","#F3FFB7","#E6DCF8"][i%3],
-    image:i===2?IMG3:null
-  }));
-
   return(
-    <div id="top" className="ps-home">
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap');
-        .ps-home{--ink:#12092f;--purple:#8c26ea;--purple2:#7620d3;--lime:#eaff37;--paper:#fffaf4;min-height:100vh;background:radial-gradient(circle at 3% 1%,rgba(189,206,255,.48),transparent 28%),radial-gradient(circle at 90% 9%,rgba(255,206,228,.43),transparent 26%),linear-gradient(180deg,#fffaf5 0%,#fffdfa 44%,#fbf8ff 100%);color:var(--ink);font-family:'Open Sans',Arial,sans-serif;overflow-x:hidden}
-        .ps-home button,.ps-home input,.ps-home textarea,.ps-home select{font-family:'Open Sans',Arial,sans-serif}
-        .ps-home *{box-sizing:border-box}.ps-wrap{width:min(1240px,calc(100% - 48px));margin:0 auto}
-        .ps-nav-wrap{position:sticky;top:0;z-index:50;padding:14px 0;transition:.25s ease}.ps-nav-wrap.solid{background:rgba(255,250,245,.78);backdrop-filter:blur(18px)}
-        .ps-nav{display:flex;align-items:center;gap:8px}.ps-logo{font-size:24px;font-weight:800;letter-spacing:-1px;margin-right:auto;white-space:nowrap;cursor:pointer}.ps-logo span{color:var(--purple)}
-        .ps-nav-links{display:flex;align-items:center;gap:4px}.ps-nav button{font:inherit}.ps-link{border:0;background:transparent;color:#665f72;font-size:13px;font-weight:700;padding:10px 13px;border-radius:999px;cursor:pointer;transition:.2s}.ps-link:hover,.ps-link.active{background:#f4eaff;color:var(--purple)}
-        .ps-login{border:1px solid #e4d7ee;background:rgba(255,255,255,.75);color:var(--ink);font-size:12px;font-weight:800;padding:10px 16px;border-radius:999px;cursor:pointer}
-        .ps-primary{border:0;background:linear-gradient(135deg,var(--purple),#9e2cff);color:#fff;font-weight:800;border-radius:999px;padding:13px 22px;cursor:pointer;box-shadow:0 12px 30px rgba(140,38,234,.24);transition:.2s;white-space:nowrap}.ps-primary:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(140,38,234,.31)}
-        .ps-ghost{border:1px solid #dacbe7;background:rgba(255,255,255,.72);color:var(--ink);font-weight:800;border-radius:999px;padding:12px 18px;cursor:pointer}.ps-avatar{width:38px;height:38px;border-radius:50%;border:0;background:linear-gradient(135deg,#f0327f,#8c26ea);color:#fff;font-weight:900;cursor:pointer}
-        .ps-hero{display:grid;grid-template-columns:.8fr 1.25fr;gap:40px;align-items:center;padding:44px 0 62px}.ps-kicker{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--purple);margin-bottom:16px}
-        .ps-h1{font-size:clamp(48px,6.1vw,82px);line-height:.92;letter-spacing:-4px;margin:0 0 22px;font-weight:900}.ps-h1 em{font-style:normal;color:var(--purple)}.ps-sub{font-size:16px;line-height:1.55;color:#615a6d;max-width:480px;margin:0 0 26px}
-        .ps-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.ps-people{display:flex;align-items:center;gap:12px;margin-top:26px}.ps-faces{display:flex}.ps-face{width:35px;height:35px;border-radius:50%;border:3px solid #fff;margin-left:-8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:900}.ps-face:first-child{margin-left:0}.ps-people strong{font-size:13px}.ps-people small{display:block;color:#8a8393;font-size:11px;margin-top:2px}
-        .ps-visual{position:relative;min-height:470px}.ps-hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:42% 12% 39% 16% / 18% 28% 24% 32%;box-shadow:0 28px 70px rgba(43,20,82,.18)}.ps-hero-glow{position:absolute;inset:0;border-radius:42% 12% 39% 16% / 18% 28% 24% 32%;background:linear-gradient(130deg,rgba(139,38,234,.03),rgba(7,18,47,.12))}
-        .ps-scribble{position:absolute;left:-52px;top:92px;color:#8c26ea;font-weight:800;font-size:26px;line-height:1.05;transform:rotate(-11deg);font-family:cursive;text-align:center}.ps-burst{position:absolute;left:-62px;top:22px;font-size:58px;color:#dfff42;transform:rotate(-18deg)}.ps-flower{position:absolute;left:-20px;bottom:20px;font-size:74px;color:#ff69ae;transform:rotate(12deg);line-height:1}
-        .ps-result-card{position:absolute;right:-16px;bottom:30px;background:rgba(255,251,248,.93);backdrop-filter:blur(12px);border:1px solid rgba(140,38,234,.12);border-radius:22px;padding:17px 20px;box-shadow:0 14px 38px rgba(35,16,65,.13);min-width:190px}.ps-bars{display:flex;align-items:flex-end;gap:4px;height:30px;margin-bottom:8px}.ps-bars i{display:block;width:5px;border-radius:5px;background:var(--purple)}.ps-result-card small{color:#756e7f;font-size:10px}.ps-result-card b{display:block;font-size:13px;margin-top:2px}
-        .ps-manifesto{display:grid;grid-template-columns:.72fr 1.28fr;gap:24px;align-items:center;padding:22px 26px;border-radius:28px;background:rgba(255,255,255,.64);border:1px solid #efe4f8;margin-bottom:62px}.ps-manifesto .label{font-size:11px;color:var(--purple);font-weight:900;letter-spacing:.12em}.ps-manifesto h2{font-size:36px;line-height:1;margin:6px 0 0;letter-spacing:-1.5px}.ps-manifesto p{font-size:18px;color:#625b6e;line-height:1.45;margin:0}.ps-manifesto p strong{color:var(--ink)}
-        .ps-section{padding:10px 0 62px;scroll-margin-top:88px}.ps-section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:20px}.ps-section-head h2{font-size:31px;letter-spacing:-1.15px;margin:0;font-weight:800}.ps-section-head p{margin:7px 0 0;color:#7a7283;font-size:14px}.ps-text-link{border:0;background:transparent;color:var(--purple);font-weight:800;cursor:pointer}
-        .ps-challenges{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.ps-ch-card{position:relative;min-height:292px;border-radius:18px;overflow:hidden;box-shadow:0 8px 24px rgba(58,31,88,.07);cursor:pointer;background:#fff;border:1px solid rgba(140,38,234,.08);transition:transform .25s ease,box-shadow .25s ease}.ps-ch-card:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(58,31,88,.12)}.ps-ch-photo{position:relative;height:166px;overflow:hidden;background:#eee}.ps-ch-photo img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s ease}.ps-ch-card:hover .ps-ch-photo img{transform:scale(1.035)}.ps-tag{position:absolute;top:12px;left:12px;border-radius:999px;padding:6px 11px;font-size:10px;font-weight:800;z-index:2;box-shadow:0 3px 10px rgba(41,19,66,.08)}.ps-ch-body{position:relative;padding:14px 14px 13px;min-height:126px;background:linear-gradient(180deg,#fffafd 0%,#fff 100%)}.ps-ch-title{font-size:17px;font-weight:800;letter-spacing:-.35px;margin:0 42px 5px 0;color:var(--ink)}.ps-ch-desc{font-size:11px;color:#776f80;line-height:1.4;margin:0 42px 8px 0}.ps-ch-people{font-size:11px;font-weight:700;color:#665d72;margin:0}.ps-ch-people span{color:var(--purple)}.ps-round{position:absolute;right:12px;bottom:13px;width:34px;height:34px;border-radius:50%;border:1px solid #e5d8ef;background:#fff;color:var(--purple);font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 5px 14px rgba(80,42,118,.08)}
-        .ps-season{position:relative;overflow:hidden;border-radius:30px;min-height:290px;padding:36px;background:#ece7ff;display:grid;grid-template-columns:.9fr 1.1fr;align-items:center;box-shadow:0 14px 40px rgba(53,30,91,.08)}.ps-season:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 88% 20%,rgba(255,255,255,.7),transparent 22%),linear-gradient(130deg,rgba(140,38,234,.08),rgba(223,255,66,.22));pointer-events:none}.ps-season-copy{position:relative;z-index:2}.ps-season-label{font-size:11px;font-weight:900;letter-spacing:.12em;color:#6d5d83;margin-bottom:8px}.ps-season h2{font-size:40px;line-height:1.02;letter-spacing:-1.6px;margin:0 0 12px}.ps-season h2 em{font-style:normal;color:var(--purple)}.ps-season p{font-size:14px;color:#625b6e;line-height:1.5;margin:0 0 18px;max-width:390px}
-        .ps-route{position:relative;z-index:2;height:180px}.ps-route svg{width:100%;height:100%}.ps-route-note{position:absolute;right:12%;top:6px;background:#fff;border-radius:17px;padding:11px 16px;font-size:11px;font-weight:800;box-shadow:0 8px 24px rgba(61,32,104,.1)}
-        .ps-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.ps-step{background:#fff;border:1px solid #eee4f6;border-radius:22px;padding:22px;min-height:180px;box-shadow:0 7px 22px rgba(51,24,87,.05)}.ps-step .num{font-size:38px;font-weight:900;color:var(--purple);letter-spacing:-2px}.ps-step h3{font-size:16px;margin:18px 0 7px}.ps-step p{font-size:13px;color:#756e7f;line-height:1.55;margin:0}
-        .ps-news{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.ps-news-card{border-radius:17px;padding:17px 18px;min-height:178px;position:relative;overflow:hidden;border:1px solid rgba(140,38,234,.08);background:#fff;box-shadow:0 7px 20px rgba(55,29,84,.05)}.ps-news-card.has-image{color:#fff;background:#6d42a2}.ps-news-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.ps-news-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(44,20,74,.82) 0%,rgba(44,20,74,.46) 62%,rgba(44,20,74,.12) 100%)}.ps-news-tag{position:relative;z-index:2;display:inline-flex;border-radius:999px;padding:5px 9px;background:rgba(140,38,234,.10);color:#7a32c3;font-size:9px;font-weight:800;letter-spacing:.02em}.ps-news-card.has-image .ps-news-tag{background:rgba(121,42,218,.78);color:#fff}.ps-news-date{position:relative;z-index:2;margin-top:10px;font-size:9px;color:#8b8492}.ps-news-card.has-image .ps-news-date{color:rgba(255,255,255,.72)}.ps-news-card h3{position:relative;z-index:2;font-size:18px;max-width:78%;line-height:1.08;margin:5px 0 7px;letter-spacing:-.45px;font-weight:800}.ps-news-card p{position:relative;z-index:2;font-size:11px;color:#716a79;max-width:78%;line-height:1.45;margin:0}.ps-news-card.has-image p{color:rgba(255,255,255,.82)}.ps-news-arrow{position:absolute;z-index:3;right:14px;bottom:14px;width:32px;height:32px;border-radius:50%;border:1px solid #e6d7f0;background:rgba(255,255,255,.88);color:var(--purple);display:flex;align-items:center;justify-content:center;font-weight:900}.ps-news-icon{position:absolute;right:18px;top:18px;font-size:35px;z-index:2}
-        .ps-cta{background:var(--lime);border-radius:28px;padding:32px 34px;display:flex;align-items:center;gap:25px;justify-content:space-between;margin:4px 0 42px;position:relative;overflow:hidden}.ps-cta h2{font-size:31px;letter-spacing:-1.2px;margin:0 0 4px}.ps-cta p{margin:0;color:#554f5b;font-size:13px}.ps-cta-doodle{font-size:34px;letter-spacing:8px;transform:rotate(-8deg);opacity:.75}
-        .ps-footer{border-top:1px solid #eadff2;padding:25px 0 34px;display:grid;grid-template-columns:1.3fr 2fr auto;gap:30px;align-items:start;color:#837b8d;font-size:11px}.ps-footer .ps-logo{font-size:18px}.ps-footer-links{display:flex;gap:18px;flex-wrap:wrap}.ps-footer button{border:0;background:transparent;color:#837b8d;font-size:11px;cursor:pointer;padding:0}
-        @media(max-width:900px){.ps-wrap{width:min(100% - 28px,760px)}.ps-nav-links{display:none}.ps-nav .ps-login{display:none}.ps-hero{grid-template-columns:1fr;padding-top:28px}.ps-visual{min-height:430px}.ps-h1{font-size:58px}.ps-scribble,.ps-burst,.ps-flower{display:none}.ps-manifesto{grid-template-columns:1fr}.ps-challenges{grid-template-columns:1fr 1fr}.ps-season{grid-template-columns:1fr}.ps-steps{grid-template-columns:1fr 1fr}.ps-news{grid-template-columns:1fr}.ps-footer{grid-template-columns:1fr}}
-        @media(max-width:600px){.ps-wrap{width:calc(100% - 24px)}.ps-nav-wrap{padding:9px 0}.ps-logo{font-size:20px}.ps-primary{padding:11px 15px;font-size:12px}.ps-hero{padding:28px 0 42px;gap:24px}.ps-h1{font-size:46px;letter-spacing:-2.6px}.ps-sub{font-size:14px}.ps-visual{min-height:330px}.ps-result-card{right:8px;bottom:10px;min-width:160px;padding:13px 15px}.ps-manifesto{padding:20px;margin-bottom:44px}.ps-manifesto h2{font-size:30px}.ps-manifesto p{font-size:15px}.ps-section{padding-bottom:46px}.ps-section-head h2{font-size:28px}.ps-section-head .ps-text-link{display:none}.ps-challenges{grid-template-columns:1fr}.ps-season{padding:24px}.ps-season h2{font-size:32px}.ps-route{height:135px}.ps-steps{grid-template-columns:1fr}.ps-step{min-height:150px}.ps-news-card h3{font-size:18px}.ps-cta{align-items:flex-start;flex-direction:column}.ps-cta-doodle{display:none}.ps-footer{gap:18px}}
-      `}</style>
-
-      <div className={"ps-nav-wrap"+(navSolid?" solid":"")}>
-        <div className="ps-wrap ps-nav">
-          <div className="ps-logo" onClick={()=>scrollTo("top")}>право<span>(спорт)</span></div>
-          <div className="ps-nav-links">
-            <button className="ps-link active" onClick={()=>scrollTo("top")}>Главная</button>
-            <button className="ps-link" onClick={()=>scrollTo("challenges")}>Челленджи</button>
-            <button className="ps-link" onClick={()=>scrollTo("season")}>Рейтинг</button>
-            <button className="ps-link" onClick={()=>scrollTo("news")}>Новости</button>
-          </div>
-          {isAdmin&&<button className="ps-link" onClick={()=>setPage("admin")}>Админ</button>}
-          {!signedIn?<button className="ps-login" onClick={onLogin}>Войти</button>:<button className="ps-avatar" onClick={()=>setPage("cabinet-light")} title="Личный кабинет">Д</button>}
-          <button className="ps-primary" onClick={participate}>Участвовать →</button>
+    <div style={{position:"relative",zIndex:50,padding:"18px 42px 0"}}>
+      <div style={{height:82,maxWidth:1450,margin:"0 auto",background:"#fff",border:"1px solid rgba(29,15,58,.06)",borderRadius:38,display:"flex",alignItems:"center",padding:"0 20px 0 28px",boxShadow:"0 14px 42px rgba(55,25,92,.08)",fontFamily:"'Open Sans',Arial,sans-serif"}}>
+        <button onClick={()=>setPage("light")} style={{border:0,background:"transparent",fontSize:24,fontWeight:800,letterSpacing:"-1.2px",color:"#10052F",cursor:"pointer",marginRight:"auto"}}>
+          право<span style={{color:"#8D27EE"}}>(спорт)</span>
+        </button>
+        <div style={{display:"flex",alignItems:"center",gap:24,fontSize:14,fontWeight:700,color:"#686174"}}>
+          <button onClick={()=>go("challenges")} style={{border:0,background:"transparent",font: "inherit",color:"#10052F",cursor:"pointer"}}>Челленджи</button>
+          <button onClick={()=>go("company-progress")} style={{border:0,background:"transparent",font:"inherit",color:"inherit",cursor:"pointer"}}>Рейтинг</button>
+          <button onClick={()=>go("rewards")} style={{border:0,background:"transparent",font:"inherit",color:"inherit",cursor:"pointer"}}>Награды</button>
+          <button onClick={()=>go("news")} style={{border:0,background:"transparent",font:"inherit",color:"inherit",cursor:"pointer"}}>Новости</button>
         </div>
+        <button onClick={isAdmin?()=>setPage("admin"):()=>setPage("cabinet-light")} title={isAdmin?"Панель администратора":"Личный кабинет"} style={{width:43,height:43,borderRadius:"50%",border:0,background:"#F5EDFC",color:"#8D27EE",fontWeight:900,fontSize:16,cursor:"pointer",marginLeft:30}}>•</button>
+        <button onClick={()=>signedIn?setPage("cabinet-light"):onLogin?.()} style={{height:50,border:0,borderRadius:28,background:"#10052F",color:"#fff",fontWeight:800,fontSize:15,padding:"0 26px",cursor:"pointer",marginLeft:12}}>
+          Участвовать&nbsp;&nbsp;↗
+        </button>
+        {signedIn
+          ? <button onClick={()=>setPage(isAdmin?"admin":"cabinet-light")} style={{width:48,height:48,borderRadius:"50%",border:0,background:"#D90A78",color:"#fff",fontWeight:900,fontSize:19,cursor:"pointer",marginLeft:12}}>Д</button>
+          : <button onClick={onLogin} style={{width:48,height:48,borderRadius:"50%",border:"1px solid #E9DDF3",background:"#fff",color:"#8D27EE",fontWeight:800,fontSize:12,cursor:"pointer",marginLeft:12}}>Войти</button>}
       </div>
+    </div>
+  );
+}
 
-      <main className="ps-wrap">
-        <section className="ps-hero">
-          <div>
-            <div className="ps-kicker">право (спорт)</div>
-            <h1 className="ps-h1">Движение<br/>делает нас<br/><em>сильнее</em></h1>
-            <p className="ps-sub">Корпоративные челленджи, команда и поддержка коллег — для энергии в работе и жизни.</p>
-            <div className="ps-actions">
-              <button className="ps-primary" onClick={participate}>Начать участвовать →</button>
-              <button className="ps-ghost" onClick={()=>scrollTo("steps")}>Как это работает&nbsp; ▶</button>
-            </div>
-            <div className="ps-people">
-              <div className="ps-faces">
-                <span className="ps-face" style={{background:"#e82972"}}>АК</span>
-                <span className="ps-face" style={{background:"#169cb0"}}>МП</span>
-                <span className="ps-face" style={{background:"#7641d8"}}>ИС</span>
-                <span className="ps-face" style={{background:"#23143d"}}>+18</span>
-              </div>
-              <div><strong>1 240 участников</strong><small>Уже в движении с нами</small></div>
+function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,isAdmin=false,onLogin}){
+  const participate=()=>signedIn?setPage("cabinet-light"):onLogin?.();
+  const challengeData=[
+    {id:"c1",status:"Идёт сейчас",date:"до 30 июня",kind:"КОМАНДНЫЙ МАРАФОН",title:"Шаг за шагом",desc:"Общая цель: 70 000 шагов",img:IMG2,mode:"photo"},
+    {id:"c2",status:"Скоро",date:"05–26 июля",kind:"ВЫНОСЛИВОСТЬ",title:"Километры лета",desc:"Бег, плавание и движение",img:IMG1,mode:"photo"},
+    {id:"c3",status:"Скоро",date:"15 минут",kind:"ЗДОРОВАЯ ПРИВЫЧКА",title:"Движение каждый день",desc:"15 минут активности ежедневно",mode:"graphic"}
+  ];
+  const homeNews=[
+    {type:"ИСТОРИЯ",title:"Как спорт помогает решать сложные задачи",text:"Коллеги рассказывают, почему короткая тренировка иногда полезнее ещё одной встречи.",mode:"split"},
+    {type:"РЕЗУЛЬТАТЫ",date:"20 мая 2026",title:"Команда продукта первой прошла 500 км",mode:"white"},
+    {type:"АНОНС",date:"18 мая 2026",title:"Открываем регистрацию на летний заплыв",mode:"purple"}
+  ];
+  const rewards=[
+    {n:"01",emoji:"🏆",title:"Лидер сезона",text:"Сертификат 5 000 ₽ и фирменный мерч",bg:"#11052F",fg:"#fff"},
+    {n:"02",emoji:"⚡",title:"Серия 14 дней",text:"Эксклюзивный дроп право(спорт)",bg:"#8D27EE",fg:"#fff"},
+    {n:"03",emoji:"♥",title:"Командный игрок",text:"Бонусные баллы за поддержку коллег",bg:"#E9FF1F",fg:"#10052F"},
+    {n:"+",emoji:"↗",title:"Новые награды",text:"Открывай достижения в каждом челлендже",bg:"#fff",fg:"#10052F"}
+  ];
+  const steps=[
+    {n:"01",icon:"◎",title:"Выбери челлендж",text:"Личный или командный — какой подходит сейчас."},
+    {n:"02",icon:"↗",title:"Фиксируй результат",text:"Добавляй активность и следи за прогрессом."},
+    {n:"03",icon:"✦",title:"Поддерживай своих",text:"Реакции коллег помогают не останавливаться."},
+    {n:"04",icon:"⌁",title:"Получай награды",text:"Баллы, достижения и приятные спортивные бонусы."}
+  ];
+  return(
+    <div style={{minHeight:"100vh",background:"radial-gradient(circle at 0% 8%,#F0DEFF 0,transparent 25%),radial-gradient(circle at 100% 42%,#FFE8EF 0,transparent 24%),linear-gradient(180deg,#FAF7FF 0%,#FBF9FF 100%)",color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
+      <main style={{maxWidth:1450,margin:"0 auto",padding:"38px 42px 54px"}}>
+        <section style={{display:"grid",gridTemplateColumns:"0.9fr 1.15fr",gap:34,alignItems:"center",minHeight:555}}>
+          <div style={{padding:"20px 0 20px"}}>
+            <h1 style={{fontSize:"clamp(58px,6.1vw,92px)",lineHeight:.94,letterSpacing:"-5px",margin:"0 0 28px",fontWeight:800,maxWidth:600}}>
+              Движение<br/>делает нас<br/><span style={{color:"#8D27EE"}}>сильнее</span>
+            </h1>
+            <p style={{fontSize:20,lineHeight:1.55,color:"#716A7E",maxWidth:610,margin:"0 0 30px"}}>
+              Командные челленджи для энергии, поддержки коллег и привычки двигаться каждый день.
+            </p>
+            <div style={{display:"flex",alignItems:"center",gap:24}}>
+              <button onClick={participate} style={{border:0,borderRadius:28,background:"#8D27EE",color:"#fff",fontSize:16,fontWeight:800,padding:"15px 27px",cursor:"pointer"}}>Начать участвовать&nbsp;&nbsp;→</button>
+              <button onClick={()=>document.getElementById("how")?.scrollIntoView({behavior:"smooth"})} style={{border:0,background:"transparent",color:"#10052F",fontSize:16,fontWeight:800,cursor:"pointer"}}>Как это работает&nbsp;&nbsp;▷</button>
             </div>
           </div>
-
-          <div className="ps-visual">
-            <img className="ps-hero-img" src={IMG2} alt="Пловец на открытой воде"/>
-            <div className="ps-hero-glow"/>
-            <div className="ps-burst">✦</div>
-            <div className="ps-scribble">Больше<br/>энергии<br/>для любимых<br/>дел ♡</div>
-            <div className="ps-flower">✣</div>
-            <div className="ps-result-card">
-              <div className="ps-bars"><i style={{height:10}}/><i style={{height:17}}/><i style={{height:25}}/><i style={{height:30}}/></div>
-              <small>Маленькие шаги</small>
-              <b>Большие результаты</b>
-            </div>
+          <div style={{position:"relative",height:530}}>
+            <img src={IMG2} alt="Пловец на открытой воде" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 54%",borderRadius:"48% 13% 12% 13% / 22% 15% 15% 15%",display:"block"}}/>
+            <div style={{position:"absolute",right:-18,top:68,background:"#E9FF1F",borderRadius:22,padding:"22px 24px",fontSize:15,fontWeight:800,transform:"rotate(5deg)",boxShadow:"0 14px 30px rgba(72,45,110,.07)"}}>+ энергия<br/>на каждый день</div>
           </div>
         </section>
 
-        <section className="ps-manifesto">
-          <div><div className="label">КОРПОРАТИВНЫЙ СПОРТ</div><h2>Вместе — дальше</h2></div>
-          <p><strong>Больше энергии</strong> для любимых дел, поддержки друг друга и привычки двигаться каждый день. ♡</p>
-        </section>
-
-        <section id="challenges" className="ps-section">
-          <div className="ps-section-head">
-            <div><div className="ps-kicker" style={{marginBottom:7}}>ВЫБИРАЙ СВОЙ ТЕМП</div><h2>Активные челленджи</h2><p>Личные и командные активности — присоединяйтесь в любой момент.</p></div>
-            <button className="ps-text-link" onClick={()=>setPage("challenges")}>Все челленджи →</button>
+        <section id="challenges" style={{padding:"42px 0 76px",scrollMarginTop:110}}>
+          <div style={{fontSize:13,fontWeight:800,letterSpacing:"2px",color:"#8D27EE",marginBottom:16}}>ВЫБИРАЙ СВОЙ ТЕМП</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:20}}>
+            <h2 style={{fontSize:66,lineHeight:1,letterSpacing:"-3.5px",margin:0,fontWeight:800}}>Активные челленджи</h2>
+            <button onClick={()=>setPage("challenges")} style={{border:0,background:"transparent",color:"#8D27EE",fontSize:16,fontWeight:800,cursor:"pointer"}}>Все челленджи ↗</button>
           </div>
-          <div className="ps-challenges">
-            {challengeCards.map((c,i)=>(
-              <article className="ps-ch-card" key={c.id||i} onClick={()=>setPage("challenges")}>
-                <div className="ps-ch-photo">
-                  <img src={c.img} alt={c.title}/>
-                  <div className="ps-tag" style={{background:i===0?BP:i===1?"#E9FF68":i===2?"#FFD36A":"#FFB7DD",color:i===0?"#fff":"#3d3150"}}>{c.tag}</div>
+          <div style={{display:"flex",gap:10,margin:"38px 0 18px"}}>
+            {["Все","Идут сейчас","Скоро"].map((x,i)=><button key={x} style={{border:i===0?0:"1px solid #DED6E6",background:i===0?"#10052F":"transparent",color:i===0?"#fff":"#10052F",borderRadius:24,padding:"11px 20px",fontSize:14,fontWeight:700}}>{x}</button>)}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}}>
+            {challengeData.map((c,i)=>(
+              <article key={c.id} onClick={()=>setPage("challenges")} style={{borderRadius:28,overflow:"hidden",background:"#fff",border:"1px solid #E9E1EF",minHeight:470,cursor:"pointer",boxShadow:"0 8px 24px rgba(50,25,80,.04)"}}>
+                <div style={{height:290,position:"relative",background:c.mode==="graphic"?"#E9FF1F":"#DDEBF0",overflow:"hidden"}}>
+                  {c.mode==="photo"
+                    ? <img src={c.img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+                    : <div style={{height:"100%",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,color:"#10052F"}}><div style={{fontSize:118,lineHeight:.8}}>15<span style={{fontSize:21,display:"inline-block",lineHeight:1.05}}> МИНУТ<br/> В ДЕНЬ</span></div></div>}
+                  <span style={{position:"absolute",top:18,left:18,background:i===0?"#8D27EE":"#E9FF1F",color:i===0?"#fff":"#10052F",borderRadius:20,padding:"8px 14px",fontSize:12,fontWeight:800}}>{c.status}</span>
+                  {c.date&&<span style={{position:"absolute",top:18,right:18,background:"#fff",borderRadius:20,padding:"8px 14px",fontSize:12,fontWeight:800}}>{c.date}</span>}
                 </div>
-                <div className="ps-ch-body">
-                  <h3 className="ps-ch-title">{c.title}</h3>
-                  <p className="ps-ch-desc">{c.desc||"Корпоративный спортивный челлендж"}</p>
-                  <p className="ps-ch-people"><span>♟</span> {c.participants||0} участников</p>
-                  <button className="ps-round" aria-label="Открыть челлендж">→</button>
+                <div style={{padding:"25px 25px 28px",position:"relative"}}>
+                  <div style={{fontSize:12,fontWeight:800,letterSpacing:"1.4px",color:"#8D27EE",marginBottom:9}}>{c.kind}</div>
+                  <h3 style={{fontSize:27,letterSpacing:"-1.2px",margin:"0 0 8px",fontWeight:800}}>{c.title}</h3>
+                  <p style={{fontSize:14,color:"#746D7E",margin:0}}>{c.desc}</p>
+                  <button style={{position:"absolute",right:20,top:22,width:46,height:46,border:0,borderRadius:"50%",background:"#F5EDFC",color:"#8D27EE",fontSize:25,cursor:"pointer"}}>{i===1?"≈":"↗"}</button>
                 </div>
               </article>
             ))}
           </div>
         </section>
 
-        <section id="season" className="ps-section">
-          <div className="ps-season">
-            <div className="ps-season-copy">
-              <div className="ps-season-label">СЕЗОН 2026</div>
-              <h2>Вместе мы прошли<br/><em>1 240 000 шагов</em></h2>
-              <p>Это около 930 км — от Москвы до Санкт-Петербурга и обратно.</p>
-              <button className="ps-primary" onClick={()=>setPage("leaderboard")}>Смотреть рейтинг →</button>
+        <section id="company-progress" style={{padding:"0 0 76px",scrollMarginTop:110}}>
+          <div style={{background:"#fff",border:"1px solid #E9E1EF",borderRadius:28,padding:"30px 34px",display:"grid",gridTemplateColumns:"1fr 1.15fr",gap:30,alignItems:"center",boxShadow:"0 8px 24px rgba(50,25,80,.04)"}}>
+            <div>
+              <div style={{fontSize:12,fontWeight:800,letterSpacing:"1.7px",color:"#8D27EE",marginBottom:8}}>ОБЩИЙ РЕЗУЛЬТАТ</div>
+              <h2 style={{fontSize:42,lineHeight:1.05,letterSpacing:"-2px",margin:"0 0 10px",fontWeight:800}}>Вместе мы прошли <span style={{color:"#8D27EE"}}>1 240 000 шагов</span></h2>
+              <p style={{fontSize:14,color:"#746D7E",margin:0}}>Это около 930 км — от Москвы до Санкт-Петербурга и обратно.</p>
             </div>
-            <div className="ps-route">
-              <div className="ps-route-note">930 км<br/><span style={{fontWeight:500,color:"#746c7e"}}>уже позади!</span></div>
-              <svg viewBox="0 0 520 180" role="img" aria-label="Маршрут Москва — Санкт-Петербург">
-                <path d="M30 142 C95 75 155 148 215 102 S325 48 392 72 S452 45 490 32" fill="none" stroke="#8C26EA" strokeWidth="4" strokeLinecap="round"/>
-                <circle cx="30" cy="142" r="8" fill="#eaff37" stroke="#8C26EA" strokeWidth="4"/>
-                <circle cx="490" cy="32" r="8" fill="#fff" stroke="#8C26EA" strokeWidth="4"/>
-                <text x="18" y="170" fontSize="12" fill="#5f5770">Москва</text>
-                <text x="454" y="20" fontSize="12" fill="#5f5770">СПб</text>
+            <div style={{position:"relative",height:150}}>
+              <svg viewBox="0 0 600 150" style={{width:"100%",height:"100%"}}>
+                <path d="M30 112 C120 35 205 125 290 78 S435 25 565 58" fill="none" stroke="#8D27EE" strokeWidth="5" strokeLinecap="round"/>
+                <circle cx="30" cy="112" r="8" fill="#E9FF1F" stroke="#8D27EE" strokeWidth="4"/>
+                <circle cx="565" cy="58" r="8" fill="#fff" stroke="#8D27EE" strokeWidth="4"/>
+                <text x="20" y="140" fontSize="12" fill="#6F687A">Москва</text>
+                <text x="535" y="42" fontSize="12" fill="#6F687A">СПб</text>
               </svg>
             </div>
           </div>
         </section>
 
-        <section id="steps" className="ps-section">
-          <div className="ps-section-head"><div><div className="ps-kicker" style={{marginBottom:7}}>ВСЁ ПРОСТО</div><h2>От первого шага до общей победы</h2></div></div>
-          <div className="ps-steps">
-            {steps.map(s=><div className="ps-step" key={s.n}><div className="num">{s.n}</div><h3>{s.title}</h3><p>{s.text}</p></div>)}
+        <section id="rewards" style={{padding:"0 0 78px",scrollMarginTop:110}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 330px",alignItems:"end",gap:30,marginBottom:32}}>
+            <div><div style={{fontSize:13,fontWeight:800,letterSpacing:"2px",color:"#8D27EE",marginBottom:12}}>НЕ ТОЛЬКО МЕДАЛИ</div><h2 style={{fontSize:64,lineHeight:1,letterSpacing:"-3.5px",margin:0,fontWeight:800}}>Двигайся. Копи. Выбирай.</h2></div>
+            <p style={{fontSize:16,lineHeight:1.55,color:"#716A7E",margin:0}}>Баллы начисляются за регулярность, результат и поддержку команды.</p>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+            {rewards.map((r,i)=><div key={r.n} style={{height:350,borderRadius:28,background:r.bg,color:r.fg,border:r.bg==="#fff"?"1px solid #DED8E3":"none",padding:"27px",display:"flex",flexDirection:"column"}}>
+              <div style={{fontSize:12,fontWeight:800}}>{r.n}</div>
+              <div style={{fontSize:i===3?64:50,textAlign:"center",margin:"65px 0 0"}}>{r.emoji}</div>
+              <div style={{marginTop:"auto"}}><h3 style={{fontSize:23,margin:"0 0 8px",fontWeight:800}}>{r.title}</h3><p style={{fontSize:13,lineHeight:1.45,opacity:.75,margin:0}}>{r.text}</p></div>
+            </div>)}
           </div>
         </section>
 
-        <section id="news" className="ps-section">
-          <div className="ps-section-head">
-            <div><div className="ps-kicker" style={{marginBottom:7}}>НОВОСТИ ДВИЖЕНИЯ</div><h2>Что происходит</h2></div>
-            <button className="ps-text-link" onClick={()=>setPage("news")}>Все новости →</button>
+        <section id="how" style={{background:"#fff",borderRadius:32,padding:"64px 74px",display:"grid",gridTemplateColumns:"0.78fr 1.22fr",gap:80,marginBottom:78,boxShadow:"0 10px 30px rgba(50,25,80,.035)"}}>
+          <div>
+            <div style={{fontSize:13,fontWeight:800,letterSpacing:"2px",color:"#8D27EE",marginBottom:14}}>ВСЁ ПРОСТО</div>
+            <h2 style={{fontSize:66,lineHeight:1.06,letterSpacing:"-3.5px",margin:"0 0 16px",fontWeight:800}}>От идеи до<br/><span style={{color:"#8D27EE"}}>общего<br/>результата</span></h2>
+            <p style={{fontSize:17,lineHeight:1.55,color:"#716A7E",maxWidth:430,margin:0}}>Никаких сложных правил: выбирай активность и двигайся в своём темпе.</p>
           </div>
-          <div className="ps-news">
-            {homeNews.map((n,i)=><article key={n.id||i} className={"ps-news-card"+(n.image?" has-image":"")} style={{background:n.image?undefined:i===0?"linear-gradient(135deg,#F1E5FF,#F8F2FF)":i===1?"linear-gradient(135deg,#FBF5F0,#F3F7D3)":"#fff"}}>
-              {n.image&&<><img className="ps-news-image" src={n.image} alt=""/><div className="ps-news-shade"/></>}
-              {!n.image&&i===1&&<div className="ps-news-icon">🏆</div>}
-              <div className="ps-news-tag">{n.cat||n.tag||"Новость"}</div>
-              <div className="ps-news-date">{n.date||"Сегодня"}</div>
-              <h3>{n.title}</h3>
-              <p>{n.text}</p>
-              <div className="ps-news-arrow">→</div>
-            </article>)}
+          <div>
+            {steps.map((s,i)=><div key={s.n} style={{display:"grid",gridTemplateColumns:"40px 58px 1fr",gap:18,alignItems:"center",padding:"20px 0",borderBottom:"1px solid #E8E4EA"}}>
+              <div style={{fontSize:12,color:"#8D27EE",fontWeight:800}}>{s.n}</div>
+              <div style={{width:56,height:56,borderRadius:18,background:"#F5EDFC",display:"flex",alignItems:"center",justifyContent:"center",color:"#8D27EE",fontSize:24}}>{s.icon}</div>
+              <div><h3 style={{fontSize:21,margin:"0 0 4px",fontWeight:800}}>{s.title}</h3><p style={{fontSize:14,color:"#7B7483",margin:0}}>{s.text}</p></div>
+            </div>)}
           </div>
         </section>
 
-        <section className="ps-cta">
-          <div><h2>Готовы к новому челленджу?</h2><p>Присоединяйтесь и найдите свою команду.</p></div>
-          <div className="ps-cta-doodle">👟 ♡ ☺</div>
-          <button className="ps-primary" onClick={participate}>Участвовать →</button>
-        </section>
-
-        <footer className="ps-footer">
-          <div><div className="ps-logo">право<span>(спорт)</span></div><div style={{marginTop:8}}>Корпоративная спортивная платформа право(тех)</div></div>
-          <div className="ps-footer-links">
-            <button onClick={()=>scrollTo("challenges")}>Челленджи</button>
-            <button onClick={()=>scrollTo("news")}>Новости</button>
-            <button onClick={()=>scrollTo("season")}>Рейтинг</button>
-            <button onClick={()=>scrollTo("steps")}>О платформе</button>
+        <section id="news" style={{padding:"0 0 58px",scrollMarginTop:110}}>
+          <div style={{fontSize:13,fontWeight:800,letterSpacing:"2px",color:"#8D27EE",marginBottom:15}}>БУДЬ В КУРСЕ</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:36}}>
+            <h2 style={{fontSize:66,lineHeight:1,letterSpacing:"-3.5px",margin:0,fontWeight:800}}>Новости движения</h2>
+            <button onClick={()=>setPage("news")} style={{border:0,background:"transparent",color:"#8D27EE",fontSize:16,fontWeight:800,cursor:"pointer"}}>Все новости ↗</button>
           </div>
-          <div>#pravo_sport · HR-команда</div>
-        </footer>
+          <div style={{display:"grid",gridTemplateColumns:"1.45fr .78fr .78fr",gap:16}}>
+            {homeNews.map((n,i)=>{
+              if(n.mode==="split") return <article key={i} style={{height:350,borderRadius:28,overflow:"hidden",display:"grid",gridTemplateColumns:"1.03fr .97fr",background:"#10052F",color:"#fff"}}>
+                <div style={{padding:"32px",display:"flex",flexDirection:"column"}}><span style={{alignSelf:"flex-start",background:"#8D27EE",borderRadius:18,padding:"7px 12px",fontSize:11,fontWeight:800}}>{n.type}</span><h3 style={{fontSize:31,lineHeight:1.05,letterSpacing:"-1.3px",margin:"30px 0 14px",fontWeight:800}}>{n.title}</h3><p style={{fontSize:13,lineHeight:1.55,color:"#BDB5CC",margin:0}}>{n.text}</p><b style={{fontSize:15,marginTop:"auto"}}>Читать историю →</b></div>
+                <img src={IMG2} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              </article>;
+              if(n.mode==="white") return <article key={i} style={{height:350,borderRadius:28,background:"#fff",border:"1px solid #DED8E3",padding:"30px",display:"flex",flexDirection:"column"}}>
+                <span style={{alignSelf:"flex-start",background:"#E9FF1F",borderRadius:18,padding:"7px 12px",fontSize:11,fontWeight:800}}>{n.type}</span><div style={{fontSize:12,color:"#81798B",marginTop:23}}>{n.date}</div><h3 style={{fontSize:25,lineHeight:1.08,letterSpacing:"-.9px",margin:"28px 0 0",fontWeight:800}}>{n.title}</h3><button style={{marginTop:"auto",width:48,height:48,borderRadius:"50%",border:0,background:"#10052F",color:"#fff",fontSize:24}}>↗</button>
+              </article>;
+              return <article key={i} style={{height:350,borderRadius:28,background:"#8D27EE",color:"#fff",padding:"30px",display:"flex",flexDirection:"column"}}>
+                <span style={{fontSize:11,fontWeight:800}}>{n.type}</span><div style={{fontSize:12,color:"#DCC5F8",marginTop:26}}>{n.date}</div><h3 style={{fontSize:25,lineHeight:1.08,letterSpacing:"-.9px",margin:"28px 0 0",fontWeight:800}}>{n.title}</h3><button style={{marginTop:"auto",width:48,height:48,borderRadius:"50%",border:0,background:"#E9FF1F",color:"#10052F",fontSize:24}}>↗</button>
+              </article>;
+            })}
+          </div>
+        </section>
       </main>
     </div>
   );
@@ -527,11 +495,10 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
   };
   const card={...lg(0.88),borderRadius:20,padding:"22px 24px"};
   return(
-    <div className="light-shell" style={{background:"#FCFAFF",color:BD,minHeight:"100vh",position:"relative",overflowX:"hidden",fontFamily:"'Open Sans',-apple-system,system-ui,sans-serif"}}>
-      <Blob top={-100} left={-100} size={380} color="#EDE1FB" delay={0}/><Blob top={700} right={-120} size={340} color="#E1F3FB" delay={2}/>
-      <div style={{position:"relative",zIndex:2,maxWidth:1120,margin:"0 auto",padding:"32px 32px 64px"}}>
-        <div style={{display:"flex",justifyContent:"space-between",marginBottom:24}}>
-          <button onClick={()=>setPage("light")} className="plain-link">← На главную</button>
+    <div className="light-shell" style={{background:"radial-gradient(circle at 0% 8%,#F0DEFF 0,transparent 25%),radial-gradient(circle at 100% 42%,#FFE8EF 0,transparent 24%),linear-gradient(180deg,#FAF7FF 0%,#FBF9FF 100%)",color:BD,minHeight:"100vh",position:"relative",overflowX:"hidden",fontFamily:"'Open Sans',Arial,sans-serif"}}>
+      <PravoHeader setPage={setPage} signedIn={true}/>
+      <div style={{position:"relative",zIndex:2,maxWidth:1220,margin:"0 auto",padding:"34px 32px 64px"}}>
+        <div style={{display:"flex",justifyContent:"flex-end",marginBottom:24}}>
           <button onClick={()=>setPage("admin")} className="plain-link">Панель администратора →</button>
         </div>
         <div className="profile-head" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,marginBottom:28}}>
@@ -559,12 +526,44 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
   );
 }
 
+
 function AdminPanel({setPage,challenges,events,news,onAddChallenge,onAddEvent,onAddNews}){
   const [tab,setTab]=useState("challenge");
   const [form,setForm]=useState({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",image:""});
   const change=(k,v)=>setForm(p=>({...p,[k]:v}));
-  const submit=e=>{e.preventDefault();if(!form.title.trim())return;if(tab==="challenge")onAddChallenge(form);if(tab==="event")onAddEvent(form);if(tab==="news")onAddNews(form);setForm({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",image:""});};
-  return <div className="light-shell" style={{background:"#F8F5FC",color:BD,minHeight:"100vh",padding:"32px",fontFamily:"'Open Sans',system-ui,sans-serif"}}><div style={{maxWidth:1120,margin:"0 auto"}}><div className="admin-head"><div><button onClick={()=>setPage("light")} className="plain-link">← На главную</button><h1>Панель администратора</h1><p className="muted">Управление контентом и спортивной программой</p></div><div className="role-pill">Администратор</div></div><div className="admin-stats">{[{v:challenges.length,l:"челленджей"},{v:events.length,l:"событий"},{v:news.length,l:"публикаций"},{v:"200+",l:"участников"}].map((s,i)=><div key={i} className="stat-card"><strong>{s.v}</strong><span>{s.l}</span></div>)}</div><div className="admin-grid"><form className="admin-form" onSubmit={submit}><div className="admin-tabs">{[["challenge","Челлендж"],["event","Событие"],["news","Новость / анонс"]].map(([id,l])=><button type="button" key={id} onClick={()=>setTab(id)} className={tab===id?"active":""}>{l}</button>)}</div><h2>{tab==="challenge"?"Запустить новый челлендж":tab==="event"?"Добавить событие":"Опубликовать новость"}</h2><label>Название<input value={form.title} onChange={e=>change("title",e.target.value)} required/></label>{tab!=="news"&&<><label>Описание<textarea value={form.desc} onChange={e=>change("desc",e.target.value)}/></label><div className="form-row"><label>Дата<input type="date" value={form.date} onChange={e=>change("date",e.target.value)}/></label><label>Место / ссылка<input value={form.place} onChange={e=>change("place",e.target.value)} placeholder="Zoom или адрес"/></label></div></>}{tab==="news"&&<><label>Текст<textarea value={form.text} onChange={e=>change("text",e.target.value)}/></label><label>Фото<input type="file" accept="image/*" onChange={e=>change("image",e.target.files?.[0]?.name||"")}/></label></>}<button className="primary-btn" type="submit">{tab==="news"?"Опубликовать":"Сохранить и запустить"}</button></form><aside className="admin-list"><h2>Последние изменения</h2>{[...news.slice(0,3).map(x=>({e:x.emoji||"📢",t:x.title,s:"Публикация"})),...challenges.slice(0,3).map(x=>({e:x.emoji,t:x.title,s:x.statusLabel}))].slice(0,6).map((x,i)=><div key={i} className="admin-list-row"><span>{x.e}</span><div><b>{x.t}</b><small>{x.s}</small></div></div>)}</aside></div></div></div>;
+  const submit=e=>{
+    e.preventDefault();
+    if(!form.title.trim())return;
+    if(tab==="challenge")onAddChallenge(form);
+    if(tab==="event")onAddEvent(form);
+    if(tab==="news")onAddNews(form);
+    setForm({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",image:""});
+  };
+  return(
+    <div className="light-shell" style={{background:"radial-gradient(circle at 0% 8%,#F0DEFF 0,transparent 25%),radial-gradient(circle at 100% 42%,#FFE8EF 0,transparent 24%),linear-gradient(180deg,#FAF7FF 0%,#FBF9FF 100%)",color:BD,minHeight:"100vh",fontFamily:"'Open Sans',Arial,sans-serif"}}>
+      <PravoHeader setPage={setPage} signedIn={true} isAdmin={true}/>
+      <div style={{maxWidth:1220,margin:"0 auto",padding:"36px 32px 70px"}}>
+        <div className="admin-head">
+          <div><h1 style={{margin:"0 0 5px",fontSize:38,letterSpacing:"-1.5px"}}>Панель администратора</h1><p className="muted">Управление контентом и спортивной программой</p></div>
+          <div style={{display:"flex",gap:10,alignItems:"center"}}><button className="plain-link" onClick={()=>setPage("cabinet-light")}>Личный кабинет →</button><div className="role-pill">Администратор</div></div>
+        </div>
+        <div className="admin-stats">
+          {[{v:challenges.length,l:"челленджей"},{v:events.length,l:"событий"},{v:news.length,l:"публикаций"},{v:"200+",l:"участников"}].map((s,i)=><div key={i} className="stat-card"><strong>{s.v}</strong><span>{s.l}</span></div>)}
+        </div>
+        <div className="admin-grid">
+          <form className="admin-form" onSubmit={submit}>
+            <div className="admin-tabs">{[["challenge","Челлендж"],["event","Событие"],["news","Новость / анонс"]].map(([id,l])=><button type="button" key={id} onClick={()=>setTab(id)} className={tab===id?"active":""}>{l}</button>)}</div>
+            <h2>{tab==="challenge"?"Запустить новый челлендж":tab==="event"?"Добавить событие":"Опубликовать новость"}</h2>
+            <label>Название<input value={form.title} onChange={e=>change("title",e.target.value)} required/></label>
+            {tab!=="news"&&<><label>Описание<textarea value={form.desc} onChange={e=>change("desc",e.target.value)}/></label><div className="form-row"><label>Дата<input type="date" value={form.date} onChange={e=>change("date",e.target.value)}/></label><label>Место / ссылка<input value={form.place} onChange={e=>change("place",e.target.value)} placeholder="Zoom или адрес"/></label></div></>}
+            {tab==="news"&&<><label>Текст<textarea value={form.text} onChange={e=>change("text",e.target.value)}/></label><label>Фото<input type="file" accept="image/*" onChange={e=>change("image",e.target.files?.[0]?.name||"")}/></label></>}
+            <button className="primary-btn" type="submit">{tab==="news"?"Опубликовать":"Сохранить и запустить"}</button>
+          </form>
+          <aside className="admin-list"><h2>Последние изменения</h2>{[...news.slice(0,3).map(x=>({e:x.emoji||"📢",t:x.title,s:"Публикация"})),...challenges.slice(0,3).map(x=>({e:x.emoji,t:x.title,s:x.statusLabel}))].slice(0,6).map((x,i)=><div key={i} className="admin-list-row"><span>{x.e}</span><div><b>{x.t}</b><small>{x.s}</small></div></div>)}</aside>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 
@@ -844,6 +843,7 @@ export default function App(){
   return(
     <div style={{background:"radial-gradient(ellipse 1200px 800px at 15% 0%,rgba(124,58,237,0.14),transparent 60%),radial-gradient(ellipse 1000px 700px at 90% 30%,rgba(57,255,136,0.08),transparent 55%),#131319",color:"#fff",fontFamily:"system-ui,-apple-system,sans-serif",minHeight:"100%",overflowY:"auto"}}>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap');
         @keyframes kenBurns{0%{transform:scale(1) translate(0,0)}50%{transform:scale(1.07) translate(-1%,-1%)}100%{transform:scale(1.03) translate(1%,0.5%)}}
         @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
         @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
@@ -868,7 +868,7 @@ export default function App(){
       {toast&&<div style={{position:"fixed",top:16,left:"50%",transform:"translateX(-50%)",zIndex:999,background:"#D1FAE5",color:"#065F46",padding:"10px 20px",borderRadius:12,fontSize:13,fontWeight:600,boxShadow:"0 8px 24px rgba(0,0,0,0.4)",whiteSpace:"nowrap",border:"1px solid #6EE7B7",animation:"slideIn .3s ease"}}>✓ {toast}</div>}
 
       {/* NAV — прозрачная поверх hero (вариант 1), затемняется при скролле/на других страницах */}
-      {page!=="minimal"&&page!=="light"&&page!=="cabinet-light"&&(
+      {page!=="minimal"&&page!=="light"&&page!=="cabinet-light"&&page!=="admin"&&(
       <nav style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 32px",position:"fixed",top:0,left:0,right:0,zIndex:50,
         background:(page==="home"&&!scrolled)?"transparent":"rgba(19,19,25,0.97)",
         borderBottom:(page==="home"&&!scrolled)?"1px solid transparent":"1px solid rgba(255,255,255,0.05)",
