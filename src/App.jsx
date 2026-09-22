@@ -133,7 +133,138 @@ const RouteMap=({progress=0.62})=>{
   );
 };
 
-// ============ MINIMAL VARIANT (editorial redesign) ============
+// ============ ЛИЧНЫЙ КАБИНЕТ ============
+const CircleProgress=({value,max,size=72,color=P,label,sub})=>{
+  const r=(size-10)/2,circ=2*Math.PI*r,pct=Math.min(value/max,1);
+  return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6"/>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="6"
+          strokeDasharray={circ} strokeDashoffset={circ*(1-pct)} strokeLinecap="round"
+          transform={`rotate(-90 ${size/2} ${size/2})`} style={{transition:"stroke-dashoffset 1s ease"}}/>
+        <text x="50%" y="48%" textAnchor="middle" dominantBaseline="central" fontSize={size*0.22} fontWeight="800" fill="#fff">{value}</text>
+        <text x="50%" y="68%" textAnchor="middle" fontSize={size*0.11} fill="rgba(255,255,255,0.4)">из {max}</text>
+      </svg>
+      {label&&<div style={{textAlign:"center"}}><div style={{fontSize:12,fontWeight:600}}>{label}</div>{sub&&<div style={{fontSize:10,color:"rgba(255,255,255,0.4)"}}>{sub}</div>}</div>}
+    </div>
+  );
+};
+
+const MY_ACHIEVEMENTS=[
+  {e:"🔥",label:"7 дней подряд",done:true},
+  {e:"🏊",label:"10 км плавания",done:true},
+  {e:"👟",label:"Первое место",done:false},
+  {e:"🚴",label:"Велопрогулка",done:true},
+];
+const MY_EVENTS=[
+  {date:"17 июн",day:"СБ",title:"Утренний забег",place:"Парк Горького",n:32},
+  {date:"20 июн",day:"ВТ",title:"Йога онлайн",place:"Zoom",n:45},
+  {date:"24 июн",day:"СБ",title:"Велопрогулка",place:"Воробьёвы горы",n:28},
+];
+
+function CabinetHome({setPage}){
+  const reveal=id=>({});
+  const me=LEADERBOARD.find(u=>u.uid==="me")||{name:"Диана",merchi:42,delta:2};
+  const myRank=LEADERBOARD.slice().sort((a,b)=>b.merchi-a.merchi).findIndex(u=>u.uid==="me")+1;
+  return(
+    <div style={{padding:"96px 32px 48px",maxWidth:1240,margin:"0 auto"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:16,marginBottom:28}}>
+        <div>
+          <div style={{fontSize:26,fontWeight:800,letterSpacing:"-0.6px"}}>Добрый вечер, {me.name}! 👋</div>
+          <div style={{fontSize:13,color:"rgba(255,255,255,0.45)",marginTop:4}}>Стабильность сегодня — большие победы завтра</div>
+        </div>
+        <span style={{...glass(P,0.08),borderRadius:999,padding:"6px 16px",fontSize:12,fontWeight:600,color:PL}}>Сотрудник право(тех)</span>
+      </div>
+
+      {/* Личная статистика — кольца прогресса */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:32}}>
+        <div style={{...glass(P,0.04),borderRadius:16,padding:"18px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <CircleProgress value={5} max={7} color={P} label="Дней подряд" sub="стрик активности"/>
+        </div>
+        <div style={{...glass(NEON_GREEN,0.04),borderRadius:16,padding:"18px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <CircleProgress value={myRank||4} max={LEADERBOARD.length} color={NEON_GREEN} label="Место" sub="в общем рейтинге"/>
+        </div>
+        <div style={{...glass(P,0.04),borderRadius:16,padding:"18px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <CircleProgress value={8} max={12} color={P} label="Тыс. шагов" sub="на этой неделе"/>
+        </div>
+        <div style={{...glass(NEON_GREEN,0.04),borderRadius:16,padding:"18px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <CircleProgress value={3} max={5} color={NEON_GREEN} label="Активности" sub="в этом месяце"/>
+        </div>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1.3fr 1fr",gap:20}}>
+        {/* Мои челленджи */}
+        <div style={{...glass(P,0.03),borderRadius:16,padding:"20px 22px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <div style={{fontSize:16,fontWeight:700}}>Мои челленджи</div>
+            <button onClick={()=>setPage("challenges")} style={{background:"transparent",color:P,border:"none",fontSize:12,cursor:"pointer"}}>Все →</button>
+          </div>
+          {CHALLENGES.slice(0,3).map(c=>{
+            const progress=c.id==="c1"?60:c.id==="c2"?25:10;
+            return(
+              <div key={c.id} style={{marginBottom:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:6}}>
+                  <span style={{fontWeight:600}}>{c.emoji} {c.title}</span>
+                  <span style={{color:"rgba(255,255,255,0.4)"}}>{progress}%</span>
+                </div>
+                <div style={{height:4,background:"rgba(255,255,255,0.06)",borderRadius:4}}>
+                  <div style={{height:4,width:`${progress}%`,background:c.color,borderRadius:4,transition:"width 1s ease"}}/>
+                </div>
+              </div>
+            );
+          })}
+
+          <div style={{fontSize:16,fontWeight:700,margin:"22px 0 14px"}}>Достижения</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10}}>
+            {MY_ACHIEVEMENTS.map((a,i)=>(
+              <div key={i} style={{textAlign:"center",padding:"14px 8px",borderRadius:12,background:a.done?"rgba(124,58,237,0.1)":"rgba(255,255,255,0.02)",border:`1px solid ${a.done?"rgba(124,58,237,0.3)":"rgba(255,255,255,0.05)"}`,opacity:a.done?1:0.4}}>
+                <div style={{fontSize:22,marginBottom:6}}>{a.e}</div>
+                <div style={{fontSize:10,color:"rgba(255,255,255,0.6)",lineHeight:1.3}}>{a.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Рейтинг + события */}
+        <div style={{display:"flex",flexDirection:"column",gap:20}}>
+          <div style={{...glass(P,0.03),borderRadius:16,padding:"20px 22px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div style={{fontSize:16,fontWeight:700}}>Рейтинг</div>
+              <button onClick={()=>setPage("leaderboard")} style={{background:"transparent",color:P,border:"none",fontSize:12,cursor:"pointer"}}>Все →</button>
+            </div>
+            {LEADERBOARD.slice().sort((a,b)=>b.merchi-a.merchi).slice(0,5).map((u,i)=>(
+              <div key={u.uid} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 8px",borderRadius:8,marginBottom:2,background:u.uid==="me"?"rgba(124,58,237,0.12)":"transparent"}}>
+                <span style={{fontSize:12,color:"rgba(255,255,255,0.35)",width:14}}>{i+1}</span>
+                <Av uid={u.uid} size={28}/>
+                <span style={{flex:1,fontSize:13,fontWeight:u.uid==="me"?700:400,color:u.uid==="me"?PL:"#ddd"}}>{u.name}{u.uid==="me"&&" (вы)"}</span>
+                <span style={{fontSize:12,color:NEON_GREEN,fontWeight:600}}>⭐ {u.merchi}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{...glass(P,0.03),borderRadius:16,padding:"20px 22px"}}>
+            <div style={{fontSize:16,fontWeight:700,marginBottom:14}}>Ближайшие события</div>
+            {MY_EVENTS.map((e,i)=>(
+              <div key={i} style={{display:"flex",gap:12,alignItems:"center",padding:"9px 0",borderTop:i>0?"1px solid rgba(255,255,255,0.05)":"none"}}>
+                <div style={{textAlign:"center",flexShrink:0,width:40}}>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{e.day}</div>
+                  <div style={{fontSize:13,fontWeight:700}}>{e.date.split(" ")[0]}</div>
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.title}</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{e.place} · {e.n} участников</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 // Данные о фото для этого варианта — единый конфиг, чтобы фото менялись без правки вёрстки.
 const MIN_PHOTOS=[
   {id:"hero",src:IMG4,alt:"Сотрудник плывёт баттерфляем на закате",focalPoint:"center 35%",consent:true,credit:""},
@@ -422,16 +553,21 @@ export default function App(){
             </button>
           ))}
         </div>
-        <div style={{display:"flex",gap:8}}>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <button onClick={()=>setPage("minimal")} className="hov-btn" style={{background:"transparent",color:"#666",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"6px 12px",fontSize:12,cursor:"pointer"}}>Минимал-версия</button>
           <button onClick={()=>setIsAdmin(!isAdmin)} className="hov-btn" style={{background:"transparent",color:isAdmin?"#A78BFA":"#444",border:`1px solid ${isAdmin?"rgba(124,58,237,0.3)":"rgba(255,255,255,0.07)"}`,borderRadius:8,padding:"6px 12px",fontSize:12,cursor:"pointer"}}>{isAdmin?"✓ Автор":"Режим автора"}</button>
           <button onClick={()=>setPage("challenges")} className="hov-btn" style={{background:P,color:"#fff",border:"none",borderRadius:8,padding:"8px 18px",fontSize:13,fontWeight:600,cursor:"pointer",boxShadow:`0 4px 14px ${P}50`}}>Участвовать →</button>
+          <div onClick={()=>setPage("cabinet")} className="hov-btn" title="Личный кабинет"
+            style={{width:32,height:32,borderRadius:"50%",background:colFor("me"),display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"#fff",cursor:"pointer",border:page==="cabinet"?`2px solid ${P}`:"2px solid transparent"}}>Д</div>
         </div>
       </nav>
       )}
 
       {/* ── MINIMAL VARIANT — редакционный минимализм, для сравнения ── */}
       {page==="minimal"&&<MinimalHome setPage={setPage}/>}
+
+      {/* ── ЛИЧНЫЙ КАБИНЕТ ── */}
+      {page==="cabinet"&&<CabinetHome setPage={setPage}/>}
 
       {/* ── HOME ── */}
       {page==="home"&&(
