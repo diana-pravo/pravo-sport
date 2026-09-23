@@ -51,7 +51,7 @@ const LIGHT_SWIM="https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Swim
 const LIGHT_SURF="https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Surfer_carrying_his_board_%28Unsplash%29.jpg/960px-Surfer_carrying_his_board_%28Unsplash%29.jpg";
 const LIGHT_RUN=LIGHT_SURF;
 const LIGHT_CYCLE=LIGHT_SWIM;
-const MVP_HERO="/assets/hero-swimmer.jpg";
+const MVP_HERO=IMG2;
 const MVP_ICE="/assets/challenge-ice.webp";
 const MVP_SURF="/assets/team-surf.webp";
 const MVP_SPLASH="/assets/news-splash.webp";
@@ -412,7 +412,7 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
             <button onClick={participate} style={{border:0,borderRadius:28,background:"#8D27EE",color:"#fff",fontSize:16,fontWeight:800,padding:"15px 27px",cursor:"pointer"}}>Начать участвовать&nbsp;&nbsp;→</button>
           </div>
           <div style={{position:"relative",height:530}}>
-            <img src={MVP_HERO} alt="Пловец в открытой воде" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 48%",borderRadius:"48% 13% 12% 13% / 22% 15% 15% 15%",display:"block",background:"#DCECF2"}}/>
+            <img src={MVP_HERO} alt="Пловец в открытой воде" onError={e=>{if(e.currentTarget.src!==LIGHT_SWIM)e.currentTarget.src=LIGHT_SWIM;}} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 48%",borderRadius:"48% 13% 12% 13% / 22% 15% 15% 15%",display:"block",background:"#DCECF2"}}/>
           </div>
         </section>
 
