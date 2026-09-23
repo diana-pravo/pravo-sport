@@ -335,7 +335,7 @@ function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false}){
         </button>
         {signedIn
           ? <button className="pravo-avatar" onClick={account} style={{width:48,height:48,borderRadius:"50%",border:0,background:"#D90A78",color:"#fff",fontWeight:900,fontSize:19,cursor:"pointer",marginLeft:12}}>Д</button>
-          : <button onClick={onLogin} style={{width:48,height:48,borderRadius:"50%",border:"1px solid #E9DDF3",background:"#fff",color:"#8D27EE",fontWeight:800,fontSize:12,cursor:"pointer",marginLeft:12}}>Войти</button>}
+          : <button className="pravo-avatar" onClick={onLogin} style={{width:48,height:48,borderRadius:"50%",border:"1px solid #E9DDF3",background:"#fff",color:"#8D27EE",fontWeight:800,fontSize:12,cursor:"pointer",marginLeft:12}}>Войти</button>}
       </div>
     </div>
   );
@@ -527,7 +527,7 @@ function LightChallengesPage({setPage,challenges=CHALLENGES,signedIn=false,onLog
           })}
         </div>
         <div className="light-challenge-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}}>
-          {visible.map((c,i)=><div key={c.id} style={{position:"relative"}}>
+          {visible.map((c,i)=><div className="challenge-page-item" key={c.id} style={{position:"relative"}}>
             <LightChallengeCard c={c} i={challenges.indexOf(c)} onOpen={openResult}/>
             <button onClick={openResult} type="button" style={{position:"absolute",left:24,bottom:22,border:0,borderRadius:22,background:c.status==="active"?"#8D27EE":"#F4EEF8",color:c.status==="active"?"#fff":"#756D7E",fontSize:12,fontWeight:800,padding:"9px 14px",cursor:"pointer"}}>
               {c.status==="active"?"Внести результат":"Подробнее"}
@@ -990,6 +990,14 @@ export default function App(){
           .home-news-split{grid-column:1/-1!important}
           .news-page-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
         }
+        @media(max-width:900px){
+          .pravo-header-wrap{padding:12px 16px 0!important}
+          .pravo-header-inner{height:auto!important;min-height:72px!important;flex-wrap:wrap!important;row-gap:8px!important;padding:12px 16px!important}
+          .pravo-nav{order:5;width:100%;gap:4px!important;padding-top:8px;border-top:1px solid #F0EAF4;overflow-x:auto;justify-content:flex-start;scrollbar-width:none}
+          .pravo-nav::-webkit-scrollbar{display:none}
+          .pravo-nav button{flex:0 0 auto;padding:7px 10px!important}
+          .pravo-account-dot{margin-left:12px!important}
+        }
         @media(max-width:760px){
           html,body,#root{max-width:100%;overflow-x:hidden}
           .pravo-header-wrap{padding:10px 12px 0!important}
@@ -1014,6 +1022,7 @@ export default function App(){
           .light-filters button{flex:0 0 auto}
           .light-challenge-grid,.rewards-grid,.home-news-grid,.news-page-grid{grid-template-columns:1fr!important}
           .light-challenge-card{min-height:0!important}
+          .challenge-page-item .light-challenge-card>div:last-child{padding-bottom:72px!important}
           .light-challenge-media{height:230px!important}
           .company-progress-card{padding:22px!important;gap:12px!important}
           .company-progress-card h2{font-size:34px!important;letter-spacing:-1.6px!important}
