@@ -54,7 +54,7 @@ const LIGHT_CYCLE=LIGHT_SWIM;
 const MVP_HERO=IMG2;
 const MVP_ICE="/assets/challenge-ice.webp";
 const MVP_SURF="/assets/team-surf.webp";
-const MVP_SPLASH="/assets/news-splash.webp";
+const MVP_SPLASH=IMG4;
 const PHOTO_SCENES=[
   {label:"Серфинг",    sub:"Командный дух",  img:IMG1, emoji:"🏄",bg:"linear-gradient(160deg,#0a3d5c,#0e6b8a)",shapes:[]},
   {label:"Плавание",   sub:"Открытая вода",  img:IMG2, emoji:"🏊",bg:"linear-gradient(180deg,#c8dde8,#2a6b8a)",shapes:[]},
@@ -1045,13 +1045,75 @@ export default function App(){
           .stat-card,.admin-form,.admin-list{padding:18px!important}
         }
         @media(max-width:520px){
+          body{padding-bottom:env(safe-area-inset-bottom)}
+          .pravo-header-wrap{padding:8px 10px 0!important}
+          .pravo-header-inner{min-height:62px!important;border-radius:26px!important;padding:10px 12px!important;row-gap:7px!important}
+          .pravo-logo{font-size:19px!important;letter-spacing:-.8px!important}
+          .pravo-avatar{width:40px!important;height:40px!important;font-size:14px!important;margin-left:6px!important}
+          .pravo-nav{padding-top:7px!important;justify-content:space-between!important;overflow:visible!important}
+          .pravo-nav button{padding:6px 3px!important;font-size:11.5px!important}
           .pravo-participate{display:none!important}
-          .light-hero-image{height:270px!important}
-          .metrics-grid,.admin-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-          .stat-card{padding:16px!important}
-          .stat-card strong{font-size:25px!important}
-          .activity-row{align-items:flex-start!important}
+          .light-main{padding:20px 14px calc(40px + env(safe-area-inset-bottom))!important}
+          .light-hero{gap:14px!important}
+          .light-hero-copy{padding-top:6px!important}
+          .light-hero-title{font-size:clamp(42px,13.2vw,55px)!important;line-height:.93!important;letter-spacing:-2.7px!important;margin-bottom:20px!important}
+          .light-hero-copy>button{font-size:14px!important;padding:13px 21px!important}
+          .light-hero-image{height:250px!important}
+          .light-section-title,.light-page-title{font-size:clamp(36px,10.5vw,44px)!important;line-height:.98!important;letter-spacing:-2px!important}
+          #challenges{padding-top:34px!important;padding-bottom:52px!important}
+          #company-progress{padding-bottom:52px!important}
+          #rewards{padding-bottom:52px!important}
+          #news{padding-bottom:38px!important}
+          .light-filters{margin:24px 0 16px!important}
+          .light-filters button{padding:10px 17px!important;font-size:13px!important}
+          .light-challenge-media{height:215px!important}
+          .light-challenge-card>div:last-child{padding:22px 20px 24px!important}
+          .light-challenge-card h3{font-size:24px!important;letter-spacing:-.9px!important}
+          .company-progress-card{padding:22px 20px!important;border-radius:24px!important}
+          .company-progress-card h2{font-size:32px!important;letter-spacing:-1.3px!important}
+          .company-progress-card p{font-size:13px!important;line-height:1.45!important}
+          .company-progress-card>div:last-child{height:118px!important}
+          .rewards-head .light-section-title{font-size:40px!important;line-height:.98!important}
+          .rewards-head p{font-size:14px!important;line-height:1.45!important}
+          .rewards-grid>div{height:230px!important;padding:22px!important;border-radius:24px!important}
+          .rewards-grid>div>div:nth-child(2){font-size:42px!important;margin-top:20px!important}
+          .rewards-grid h3{font-size:21px!important}
+          .how-grid{padding:26px 18px!important;border-radius:24px!important;gap:20px!important;margin-bottom:52px!important}
+          .how-title{font-size:38px!important;letter-spacing:-1.8px!important}
+          .how-grid>div:first-child p{font-size:15px!important}
+          .how-grid>div:last-child>div{grid-template-columns:28px 46px 1fr!important;gap:9px!important;padding:15px 0!important}
+          .how-grid>div:last-child h3{font-size:18px!important}
+          .how-grid>div:last-child p{font-size:13px!important;line-height:1.4!important}
+          .home-news-split{grid-template-rows:auto 190px!important;border-radius:24px!important}
+          .home-news-split>div{padding:24px!important}
+          .home-news-split h3{font-size:26px!important;line-height:1.04!important;margin:24px 0 12px!important}
+          .home-news-grid article{min-height:230px!important;border-radius:24px!important}
+          .home-news-grid article:not(.home-news-split){padding:24px!important}
+          .home-news-grid article:not(.home-news-split) h3{font-size:22px!important;margin-top:22px!important}
+          .news-page-grid article{border-radius:24px!important}
+          .light-dashboard-content{padding:22px 14px calc(52px + env(safe-area-inset-bottom))!important}
+          .admin-head{gap:10px!important;margin-bottom:22px!important}
+          .admin-head h1{font-size:29px!important;letter-spacing:-1px!important}
+          .admin-head>div:last-child{width:100%;justify-content:space-between!important;gap:8px!important}
+          .admin-stats{gap:12px!important}
+          .stat-card{padding:15px!important;border-radius:18px!important}
+          .admin-form,.admin-list{padding:18px 16px!important;border-radius:20px!important}
+          .admin-tabs{display:flex!important;gap:6px!important;overflow-x:auto!important;white-space:nowrap!important;scrollbar-width:none}
+          .admin-tabs::-webkit-scrollbar{display:none}
+          .admin-tabs button{flex:0 0 auto!important;padding:9px 12px!important;font-size:12px!important}
+          .admin-form h2,.admin-list h2{font-size:24px!important}
+          .profile-head{margin-bottom:22px!important}
+          .profile-head>div:first-child{align-items:flex-start!important}
+          .profile-head h1{font-size:23px!important;line-height:1.1!important}
+          .role-pill{font-size:12px!important;padding:9px 13px!important}
+          .cabinet-grid{gap:16px!important}
+          .cabinet-grid section{padding:18px!important}
+          .section-title{font-size:19px!important}
+          .challenge-row .mini-btn{font-size:11px!important;padding:7px 10px!important}
+          .event-row{gap:10px!important}
+          .event-row .mini-btn{font-size:11px!important;padding:7px 10px!important}
         }
+
 
       `}</style>
 
