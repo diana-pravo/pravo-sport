@@ -416,6 +416,31 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
           </div>
         </section>
 
+        <section className="scenario-section" style={{padding:"16px 0 78px"}}>
+          <div style={{fontSize:13,fontWeight:800,letterSpacing:"2px",color:"#8D27EE",marginBottom:14}}>ОДНА ТОЧКА ВХОДА</div>
+          <div className="light-section-head" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:22,marginBottom:28}}>
+            <div>
+              <h2 className="light-section-title" style={{fontSize:58,lineHeight:1,letterSpacing:"-3px",margin:"0 0 12px",fontWeight:800}}>Что ты хочешь сделать?</h2>
+              <p style={{fontSize:15,color:"#746D7E",margin:0,maxWidth:650,lineHeight:1.55}}>Выбери сценарий — платформа приведёт к нужной активности, людям, прогрессу или поддержке.</p>
+            </div>
+          </div>
+          <div className="scenario-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
+            {[
+              {n:"01",title:"Участвовать",text:"Челленджи · старты · офлайн · лектории",accent:"#8D27EE",bg:"#fff",action:()=>setPage("challenges"),cta:"Открыть"},
+              {n:"02",title:"Найти людей",text:"Города · команды · бадди · амбассадоры",accent:"#139CC0",bg:"#fff",action:null,cta:"Следующий этап"},
+              {n:"03",title:"Видеть прогресс",text:"Рейтинг · достижения · награды · бенефиты",accent:"#10052F",bg:"#E9FF1F",action:participate,cta:"Мой прогресс"},
+              {n:"04",title:"Получить поддержку",text:"Тренер · новости · анонсы",accent:"#159B66",bg:"#fff",action:()=>setPage("news"),cta:"Перейти"}
+            ].map(s=><button key={s.n} type="button" onClick={s.action||undefined} className="scenario-card" style={{appearance:"none",textAlign:"left",border:"1px solid #E5DDEB",background:s.bg,borderRadius:26,padding:"24px",minHeight:205,display:"flex",flexDirection:"column",cursor:s.action?"pointer":"default",color:"#10052F",boxShadow:"0 10px 28px rgba(50,25,80,.04)"}}>
+              <div style={{fontSize:12,fontWeight:900,color:s.accent}}>{s.n}</div>
+              <div style={{marginTop:"auto"}}>
+                <h3 style={{fontSize:24,lineHeight:1.05,letterSpacing:"-.8px",margin:"0 0 10px",fontWeight:800}}>{s.title}</h3>
+                <p style={{fontSize:13,lineHeight:1.5,color:"#746D7E",margin:"0 0 18px"}}>{s.text}</p>
+                <span style={{fontSize:12,fontWeight:800,color:s.action?s.accent:"#9B93A4"}}>{s.cta} {s.action?"↗":""}</span>
+              </div>
+            </button>)}
+          </div>
+        </section>
+
         <section id="challenges" style={{padding:"42px 0 76px",scrollMarginTop:110}}>
           <div style={{fontSize:13,fontWeight:800,letterSpacing:"2px",color:"#8D27EE",marginBottom:16}}>ВЫБИРАЙ СВОЙ ТЕМП</div>
           <div className="light-section-head" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:20}}>
@@ -619,8 +644,10 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
 }
 
 
-function AdminPanel({setPage,challenges,events,news,onAddChallenge,onAddEvent,onAddNews}){
+function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=[],onAddChallenge,onAddEvent,onAddNews}){
   const [tab,setTab]=useState("challenge");
+  const [section,setSection]=useState("content");
+  const [analyticsPeriod,setAnalyticsPeriod]=useState("30");
   const [form,setForm]=useState({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",fileName:"",fileType:"",fileData:""});
   const change=(k,v)=>setForm(p=>({...p,[k]:v}));
   const handleFile=e=>{
@@ -643,33 +670,131 @@ function AdminPanel({setPage,challenges,events,news,onAddChallenge,onAddEvent,on
     if(tab==="news")onAddNews(form);
     setForm({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",fileName:"",fileType:"",fileData:""});
   };
+
+  // MVP demo until central event tracking / backend analytics is connected.
+  const analyticsByPeriod={
+    "7":{visitors:118,views:92,joins:36,submits:22,active:49,returning:31,eventSignups:18,trend:[36,49,44,58,62,71,76]},
+    "30":{visitors:327,views:222,joins:100,submits:62,active:129,returning:41,eventSignups:74,trend:[118,136,151,174,191,205,222]},
+    "90":{visitors:684,views:458,joins:181,submits:112,active:246,returning:47,eventSignups:163,trend:[216,248,285,319,356,407,458]}
+  };
+  const a=analyticsByPeriod[analyticsPeriod];
+  const conversion=a.visitors?Math.round(a.joins/a.visitors*1000)/10:0;
+  const resultConversion=a.joins?Math.round(a.submits/a.joins*1000)/10:0;
+  const funnel=[
+    {label:"Посетили платформу",value:a.visitors,color:"#10052F"},
+    {label:"Открыли челлендж",value:a.views,color:"#5D21B6"},
+    {label:"Начали участвовать",value:a.joins,color:"#8D27EE"},
+    {label:"Внесли результат",value:a.submits,color:"#B86BFA"}
+  ];
+  const topChallenges=[
+    {title:"Шаг за шагом",views:164,participants:62,conv:38},
+    {title:"Километры лета",views:121,participants:31,conv:26},
+    {title:"Движение каждый день",views:94,participants:25,conv:27}
+  ];
+
   return(
     <div className="light-shell" style={{background:"radial-gradient(circle at 0% 8%,#F0DEFF 0,transparent 25%),radial-gradient(circle at 100% 42%,#FFE8EF 0,transparent 24%),linear-gradient(180deg,#FAF7FF 0%,#FBF9FF 100%)",color:BD,minHeight:"100vh",fontFamily:"'Open Sans',Arial,sans-serif"}}>
       <PravoHeader setPage={setPage} signedIn={true} isAdmin={true}/>
       <div className="light-dashboard-content" style={{maxWidth:1220,margin:"0 auto",padding:"36px 32px 70px"}}>
         <div className="admin-head">
-          <div><h1 style={{margin:"0 0 5px",fontSize:38,letterSpacing:"-1.5px"}}>Панель администратора</h1><p className="muted">Управление контентом и спортивной программой</p></div>
+          <div><h1 style={{margin:"0 0 5px",fontSize:38,letterSpacing:"-1.5px"}}>Панель администратора</h1><p className="muted">Управление контентом, спортивной программой и эффективностью платформы</p></div>
           <div style={{display:"flex",gap:10,alignItems:"center"}}><button className="plain-link" onClick={()=>setPage("cabinet-light")}>Личный кабинет →</button><div className="role-pill">Администратор</div></div>
         </div>
-        <div className="admin-stats">
-          {[{v:challenges.length,l:"челленджей"},{v:events.length,l:"событий"},{v:news.length,l:"публикаций"},{v:"200+",l:"участников"}].map((s,i)=><div key={i} className="stat-card"><strong>{s.v}</strong><span>{s.l}</span></div>)}
+
+        <div className="admin-section-tabs" style={{display:"flex",gap:8,marginBottom:22}}>
+          {[["content","Контент"],["analytics","Аналитика"]].map(([id,label])=><button key={id} type="button" onClick={()=>setSection(id)} style={{border:section===id?0:"1px solid #E2D7EC",background:section===id?"#10052F":"#fff",color:section===id?"#fff":"#10052F",borderRadius:24,padding:"11px 18px",fontWeight:800,cursor:"pointer"}}>{label}</button>)}
         </div>
-        <div className="admin-grid">
-          <form className="admin-form" onSubmit={submit}>
-            <div className="admin-tabs">{[["challenge","Челлендж"],["event","Событие"],["news","Новость / анонс"]].map(([id,l])=><button type="button" key={id} onClick={()=>setTab(id)} className={tab===id?"active":""}>{l}</button>)}</div>
-            <h2>{tab==="challenge"?"Запустить новый челлендж":tab==="event"?"Добавить событие":"Опубликовать новость"}</h2>
-            <label>Название<input value={form.title} onChange={e=>change("title",e.target.value)} required/></label>
-            {tab!=="news"&&<><label>Описание<textarea value={form.desc} onChange={e=>change("desc",e.target.value)}/></label><div className="form-row"><label>Дата<input type="date" value={form.date} onChange={e=>change("date",e.target.value)}/></label><label>Место / ссылка<input value={form.place} onChange={e=>change("place",e.target.value)} placeholder="Zoom или адрес"/></label></div></>}
-            {tab==="news"&&<label>Текст<textarea value={form.text} onChange={e=>change("text",e.target.value)}/></label>}
-            <label>Фото / файл
-              <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" onChange={handleFile}/>
-              {form.fileName&&<span style={{fontSize:11,color:"#756f7e",fontWeight:600}}>Прикреплено: {form.fileName}</span>}
-              {form.fileData&&<img src={form.fileData} alt="Предпросмотр" style={{marginTop:6,width:"100%",maxHeight:180,objectFit:"cover",borderRadius:12,border:"1px solid #E7DDED"}}/>}
-            </label>
-            <button className="primary-btn" type="submit">{tab==="news"?"Опубликовать":"Сохранить и запустить"}</button>
-          </form>
-          <aside className="admin-list"><h2>Последние изменения</h2>{[...news.slice(0,3).map(x=>({e:x.emoji||"📢",t:x.title,s:"Публикация"})),...challenges.slice(0,3).map(x=>({e:x.emoji,t:x.title,s:x.statusLabel}))].slice(0,6).map((x,i)=><div key={i} className="admin-list-row"><span>{x.e}</span><div><b>{x.t}</b><small>{x.s}</small></div></div>)}</aside>
-        </div>
+
+        {section==="content"?<>
+          <div className="admin-stats">
+            {[{v:challenges.length,l:"челленджей"},{v:events.length,l:"событий"},{v:news.length,l:"публикаций"},{v:"200+",l:"участников"}].map((s,i)=><div key={i} className="stat-card"><strong>{s.v}</strong><span>{s.l}</span></div>)}
+          </div>
+          <div className="admin-grid">
+            <form className="admin-form" onSubmit={submit}>
+              <div className="admin-tabs">{[["challenge","Челлендж"],["event","Событие"],["news","Новость / анонс"]].map(([id,l])=><button type="button" key={id} onClick={()=>setTab(id)} className={tab===id?"active":""}>{l}</button>)}</div>
+              <h2>{tab==="challenge"?"Запустить новый челлендж":tab==="event"?"Добавить событие":"Опубликовать новость"}</h2>
+              <label>Название<input value={form.title} onChange={e=>change("title",e.target.value)} required/></label>
+              {tab!=="news"&&<><label>Описание<textarea value={form.desc} onChange={e=>change("desc",e.target.value)}/></label><div className="form-row"><label>Дата<input type="date" value={form.date} onChange={e=>change("date",e.target.value)}/></label><label>Место / ссылка<input value={form.place} onChange={e=>change("place",e.target.value)} placeholder="Zoom или адрес"/></label></div></>}
+              {tab==="news"&&<label>Текст<textarea value={form.text} onChange={e=>change("text",e.target.value)}/></label>}
+              <label>Фото / файл
+                <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" onChange={handleFile}/>
+                {form.fileName&&<span style={{fontSize:11,color:"#756f7e",fontWeight:600}}>Прикреплено: {form.fileName}</span>}
+                {form.fileData&&<img src={form.fileData} alt="Предпросмотр" style={{marginTop:6,width:"100%",maxHeight:180,objectFit:"cover",borderRadius:12,border:"1px solid #E7DDED"}}/>}
+              </label>
+              <button className="primary-btn" type="submit">{tab==="news"?"Опубликовать":"Сохранить и запустить"}</button>
+            </form>
+            <aside className="admin-list"><h2>Последние изменения</h2>{[...news.slice(0,3).map(x=>({e:x.emoji||"📢",t:x.title,s:"Публикация"})),...challenges.slice(0,3).map(x=>({e:x.emoji,t:x.title,s:x.statusLabel}))].slice(0,6).map((x,i)=><div key={i} className="admin-list-row"><span>{x.e}</span><div><b>{x.t}</b><small>{x.s}</small></div></div>)}</aside>
+          </div>
+        </>:<>
+          <div className="analytics-toolbar" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,marginBottom:18,flexWrap:"wrap"}}>
+            <div>
+              <h2 style={{fontSize:28,letterSpacing:"-1px",margin:"0 0 5px"}}>Аналитика платформы</h2>
+              <div style={{fontSize:12,color:"#81798B"}}><span style={{color:"#8D27EE",fontWeight:800}}>MVP · демо-данные</span> — реальные показатели появятся после подключения централизованного трекинга.</div>
+            </div>
+            <div className="analytics-periods" style={{display:"flex",gap:6}}>
+              {[["7","7 дней"],["30","30 дней"],["90","90 дней"]].map(([id,label])=><button key={id} type="button" onClick={()=>setAnalyticsPeriod(id)} style={{border:analyticsPeriod===id?0:"1px solid #E2D7EC",background:analyticsPeriod===id?"#8D27EE":"#fff",color:analyticsPeriod===id?"#fff":"#756D7E",borderRadius:20,padding:"9px 13px",fontSize:12,fontWeight:800,cursor:"pointer"}}>{label}</button>)}
+            </div>
+          </div>
+
+          <div className="analytics-kpis" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14,marginBottom:18}}>
+            {[
+              {v:a.visitors,l:"уникальных посетителей",sub:"за период"},
+              {v:conversion+"%",l:"конверсия в участие",sub:a.joins+" участников"},
+              {v:a.active,l:"активных пользователей",sub:"совершили действие"},
+              {v:a.returning+"%",l:"возвращаемость",sub:"повторные визиты"}
+            ].map((x,i)=><div key={i} className="stat-card analytics-kpi"><strong>{x.v}</strong><span>{x.l}</span><small style={{display:"block",marginTop:8,color:"#AAA2B2",fontSize:10}}>{x.sub}</small></div>)}
+          </div>
+
+          <div className="analytics-main-grid" style={{display:"grid",gridTemplateColumns:"1.05fr .95fr",gap:18,marginBottom:18}}>
+            <section className="admin-form analytics-card">
+              <div style={{display:"flex",justifyContent:"space-between",gap:12,alignItems:"flex-start"}}><div><h2 style={{margin:"0 0 4px"}}>Воронка участия</h2><p className="muted" style={{fontSize:12}}>Где сотрудники теряются на пути до результата</p></div><div style={{fontSize:12,color:"#8D27EE",fontWeight:800}}>Посещение → результат</div></div>
+              <div style={{display:"flex",flexDirection:"column",gap:12,marginTop:8}}>
+                {funnel.map((f,i)=>{const pct=Math.max(8,Math.round(f.value/a.visitors*100));return <div key={f.label}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}><span style={{fontSize:12,fontWeight:700}}>{f.label}</span><b style={{fontSize:18}}>{f.value}</b></div>
+                  <div style={{height:12,background:"#F0EAF4",borderRadius:99,overflow:"hidden"}}><div style={{height:"100%",width:pct+"%",background:f.color,borderRadius:99}}/></div>
+                  {i<funnel.length-1&&<div style={{fontSize:10,color:"#9B93A4",marginTop:4}}>↓ {Math.round(funnel[i+1].value/f.value*100)}% переходят дальше</div>}
+                </div>})}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginTop:8}}>
+                <div style={{background:"#F7F1FC",borderRadius:14,padding:"14px"}}><b style={{fontSize:22,color:"#8D27EE"}}>{conversion}%</b><div style={{fontSize:11,color:"#756D7E",marginTop:3}}>визит → участие</div></div>
+                <div style={{background:"#F7F1FC",borderRadius:14,padding:"14px"}}><b style={{fontSize:22,color:"#8D27EE"}}>{resultConversion}%</b><div style={{fontSize:11,color:"#756D7E",marginTop:3}}>участие → результат</div></div>
+              </div>
+            </section>
+
+            <section className="admin-list analytics-card">
+              <h2 style={{margin:"0 0 4px"}}>Динамика интереса</h2>
+              <p className="muted" style={{fontSize:12,marginBottom:18}}>Открытия челленджей в течение периода</p>
+              <div style={{height:210,display:"flex",alignItems:"flex-end",gap:9,padding:"8px 4px 24px",borderBottom:"1px solid #EDE6F1"}}>
+                {a.trend.map((v,i)=>{const max=Math.max(...a.trend);return <div key={i} style={{flex:1,height:"100%",display:"flex",alignItems:"flex-end"}}><div title={String(v)} style={{width:"100%",height:Math.max(12,Math.round(v/max*100))+"%",background:i===a.trend.length-1?"#8D27EE":"#E5CDF8",borderRadius:"8px 8px 3px 3px"}}/></div>})}
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10,marginTop:16}}>
+                <div><b style={{fontSize:21}}>{a.eventSignups}</b><div className="muted" style={{fontSize:10}}>регистраций на события</div></div>
+                <div><b style={{fontSize:21}}>{Math.max(results.length,a.submits)}</b><div className="muted" style={{fontSize:10}}>внесённых результатов</div></div>
+              </div>
+            </section>
+          </div>
+
+          <div className="analytics-main-grid" style={{display:"grid",gridTemplateColumns:"1.15fr .85fr",gap:18}}>
+            <section className="admin-form analytics-card">
+              <h2 style={{margin:"0 0 4px"}}>Популярность челленджей</h2>
+              <p className="muted" style={{fontSize:12,marginBottom:8}}>Сравнение просмотров и реального участия</p>
+              {topChallenges.map((x,i)=><div key={x.title} style={{display:"grid",gridTemplateColumns:"1fr 80px 90px 62px",gap:12,alignItems:"center",padding:"13px 0",borderTop:i?"1px solid #EEE7F3":"none"}}>
+                <b style={{fontSize:13}}>{x.title}</b><span style={{fontSize:12,color:"#756D7E"}}>{x.views} просм.</span><span style={{fontSize:12,color:"#756D7E"}}>{x.participants} участ.</span><strong style={{fontSize:13,color:"#8D27EE",textAlign:"right"}}>{x.conv}%</strong>
+              </div>)}
+            </section>
+            <section className="admin-list analytics-card">
+              <h2 style={{margin:"0 0 8px"}}>Что отслеживать</h2>
+              {[
+                ["page_view","Посещение страницы"],
+                ["challenge_view","Открытие челленджа"],
+                ["challenge_join","Нажатие «Участвовать»"],
+                ["result_submit","Внесение результата"],
+                ["event_signup","Запись на событие"]
+              ].map(([event,label],i)=><div key={event} className="admin-list-row" style={{alignItems:"center"}}><span style={{fontSize:15,color:"#8D27EE"}}>●</span><div><b style={{fontSize:12}}>{label}</b><small>{event}</small></div></div>)}
+              <div style={{background:"#F7F1FC",borderRadius:12,padding:"12px",fontSize:11,lineHeight:1.5,color:"#756D7E",marginTop:10}}>Для общей статистики по сотрудникам события должны отправляться в централизованное хранилище. Данные только из localStorage не подходят для продуктовой аналитики.</div>
+            </section>
+          </div>
+        </>}
       </div>
     </div>
   );
@@ -973,7 +1098,12 @@ export default function App(){
         .admin-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}.admin-head h1{margin:18px 0 4px;font-size:32px}.admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}.stat-card,.admin-form,.admin-list{background:#fff;border:1px solid #eadff5;border-radius:20px;padding:22px;box-shadow:0 10px 35px rgba(76,29,149,.06)}.stat-card strong{display:block;color:#8C26EA;font-size:29px}.stat-card span{font-size:12px;color:#756f7e}.admin-grid{display:grid;grid-template-columns:1.4fr .8fr;gap:20px}.admin-form{display:flex;flex-direction:column;gap:14px}.admin-form h2,.admin-list h2{margin:4px 0 8px}.admin-tabs{display:flex;gap:6px;flex-wrap:wrap}.admin-tabs button{border:0;border-radius:999px;padding:8px 12px;background:#f3eef8;color:#6d6476;font-weight:700;cursor:pointer}.admin-tabs button.active{background:#8C26EA;color:#fff}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-list-row{display:flex;gap:12px;padding:12px 0;border-top:1px solid #eee7f5}.admin-list-row>span{font-size:23px}.admin-list-row b,.admin-list-row small{display:block}.admin-list-row small{margin-top:3px;color:#8a8494}.login-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.login-choice{border:1px solid #e3d9ed;border-radius:16px;background:#fff;padding:18px;text-align:left;cursor:pointer}.login-choice b{display:block;margin-bottom:5px}.login-choice span{font-size:12px;color:#756f7e}
         @media(max-width:820px){.metrics-grid,.admin-stats{grid-template-columns:repeat(2,1fr)}.cabinet-grid,.admin-grid{grid-template-columns:1fr}.profile-head,.admin-head{align-items:flex-start;flex-direction:column}.achievement-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}.login-actions{grid-template-columns:1fr}}
         /* Responsive MVP: desktop/tablet/mobile. Desktop styles stay unchanged. */
+        .scenario-card{transition:transform .18s ease,box-shadow .18s ease}.scenario-card:hover{transform:translateY(-3px);box-shadow:0 16px 38px rgba(50,25,80,.08)!important}.analytics-card{min-width:0}
         @media(max-width:1100px){
+          .scenario-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+          .analytics-main-grid{grid-template-columns:1fr!important}
+          .analytics-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+
           .pravo-header-wrap{padding:14px 20px 0!important}
           .pravo-header-inner{padding-left:20px!important;padding-right:14px!important}
           .pravo-nav{gap:10px!important}
@@ -1054,6 +1184,20 @@ export default function App(){
           .pravo-nav button{padding:6px 3px!important;font-size:11.5px!important}
           .pravo-participate{display:none!important}
           .light-main{padding:20px 14px calc(40px + env(safe-area-inset-bottom))!important}
+          .scenario-section{padding:10px 0 52px!important}
+          .scenario-grid{grid-template-columns:1fr!important;gap:10px!important}
+          .scenario-card{min-height:156px!important;padding:20px!important;border-radius:22px!important}
+          .scenario-card h3{font-size:22px!important}
+          .admin-section-tabs{width:100%!important}
+          .admin-section-tabs button{flex:1!important}
+          .analytics-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+          .analytics-toolbar{align-items:flex-start!important}
+          .analytics-periods{width:100%!important;overflow-x:auto!important}
+          .analytics-periods button{flex:1!important;white-space:nowrap!important}
+          .analytics-main-grid{grid-template-columns:1fr!important}
+          .analytics-card{padding:17px!important}
+          .analytics-card>div[style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr!important}
+
           .light-hero{gap:14px!important}
           .light-hero-copy{padding-top:6px!important}
           .light-hero-title{font-size:clamp(42px,13.2vw,55px)!important;line-height:.93!important;letter-spacing:-2.7px!important;margin-bottom:20px!important}
@@ -1159,7 +1303,7 @@ export default function App(){
       {page==="challenges"&&<LightChallengesPage setPage={setPage} challenges={appChallenges} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
       {page==="news"&&<LightNewsPage setPage={setPage} news={news} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
       {page==="cabinet-light"&&<LightCabinet setPage={setPage} challenges={appChallenges} events={events} results={results} registeredEvents={registeredEvents} onSubmitResult={addResult} onToggleEvent={toggleEvent}/>}
-      {page==="admin"&&<AdminPanel setPage={setPage} challenges={appChallenges} events={events} news={news} onAddChallenge={adminAddChallenge} onAddEvent={adminAddEvent} onAddNews={adminAddNews}/>}
+      {page==="admin"&&<AdminPanel setPage={setPage} challenges={appChallenges} events={events} news={news} results={results} registeredEvents={registeredEvents} onAddChallenge={adminAddChallenge} onAddEvent={adminAddEvent} onAddNews={adminAddNews}/>}
 
       {/* ── HOME ── */}
       {page==="home"&&(
