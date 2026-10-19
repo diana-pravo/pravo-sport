@@ -532,10 +532,24 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
   );
 }
 
-function LightChallengesPage({setPage,challenges=CHALLENGES,signedIn=false,onLogin,isAdmin=false}){
+function LightChallengesPage({setPage,challenges=CHALLENGES,signedIn=false,onLogin,isAdmin=false,joinedChallenges=[],onJoin}){
   const [filter,setFilter]=useState("all");
+  const [selected,setSelected]=useState(null);
   const visible=challenges.filter(c=>filter==="all"||(filter==="active"?c.status==="active":c.status!=="active"));
-  const openResult=()=>signedIn?setPage("cabinet-light"):onLogin?.();
+  const isJoined=c=>joinedChallenges.includes(c.id);
+  const openChallenge=c=>setSelected(c);
+  const join=c=>{
+    if(!signedIn){onLogin?.();return;}
+    onJoin?.(c.id);
+    setSelected(null);
+    setPage("cabinet-light");
+  };
+  const goResult=c=>{
+    if(!signedIn){onLogin?.();return;}
+    if(!isJoined(c)){join(c);return;}
+    setSelected(null);
+    setPage("cabinet-light");
+  };
   return(
     <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
       <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
@@ -553,16 +567,35 @@ function LightChallengesPage({setPage,challenges=CHALLENGES,signedIn=false,onLog
         </div>
         <div className="light-challenge-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:20}}>
           {visible.map((c,i)=><div className="challenge-page-item" key={c.id} style={{position:"relative"}}>
-            <LightChallengeCard c={c} i={challenges.indexOf(c)} onOpen={openResult}/>
-            <button onClick={openResult} type="button" style={{position:"absolute",left:24,bottom:22,border:0,borderRadius:22,background:c.status==="active"?"#8D27EE":"#F4EEF8",color:c.status==="active"?"#fff":"#756D7E",fontSize:12,fontWeight:800,padding:"9px 14px",cursor:"pointer"}}>
-              {c.status==="active"?"Внести результат":"Подробнее"}
+            <LightChallengeCard c={c} i={challenges.indexOf(c)} onOpen={()=>openChallenge(c)}/>
+            <button onClick={()=>openChallenge(c)} type="button" style={{position:"absolute",left:24,bottom:22,border:0,borderRadius:22,background:c.status==="active"?"#8D27EE":"#F4EEF8",color:c.status==="active"?"#fff":"#756D7E",fontSize:12,fontWeight:800,padding:"9px 14px",cursor:"pointer"}}>
+              {c.status==="active"?(isJoined(c)?"Внести результат":"Участвовать"):"Подробнее"}
             </button>
+            {isJoined(c)&&<span style={{position:"absolute",right:22,bottom:26,fontSize:11,fontWeight:800,color:"#159B66"}}>✓ Вы участвуете</span>}
           </div>)}
         </div>
       </main>
+
+      {selected&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setSelected(null)}>
+        <div className="light-modal challenge-detail-modal" style={{maxWidth:620}}>
+          <button type="button" className="modal-close" onClick={()=>setSelected(null)}>×</button>
+          <div style={{fontSize:12,fontWeight:800,color:selected.status==="active"?"#8D27EE":"#756D7E",marginBottom:10}}>{selected.statusLabel?.toUpperCase()}</div>
+          <h2 style={{fontSize:32,lineHeight:1.05,letterSpacing:"-1.2px",margin:"0 0 10px"}}>{selected.emoji} {selected.title}</h2>
+          <p className="muted" style={{fontSize:15,lineHeight:1.55,marginBottom:18}}>{selected.desc}</p>
+          <div className="challenge-detail-meta" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:20}}>
+            <div style={{background:"#F7F1FC",borderRadius:14,padding:"13px"}}><b>{selected.participants}</b><div className="muted" style={{fontSize:10,marginTop:3}}>участников</div></div>
+            <div style={{background:"#F7F1FC",borderRadius:14,padding:"13px"}}><b>{selected.daysLeft}</b><div className="muted" style={{fontSize:10,marginTop:3}}>дней</div></div>
+            <div style={{background:"#F7F1FC",borderRadius:14,padding:"13px"}}><b>{selected.type==="steps"?"Шаги":selected.type==="run"?"Километры":selected.type==="bike"?"Велосипед":"Плавание"}</b><div className="muted" style={{fontSize:10,marginTop:3}}>тип результата</div></div>
+          </div>
+          {selected.status==="active"?<button className="primary-btn" type="button" onClick={()=>isJoined(selected)?goResult(selected):join(selected)}>
+            {!signedIn?"Войти и участвовать":isJoined(selected)?"Перейти к внесению результата":"Участвовать"}
+          </button>:<button className="primary-btn" type="button" disabled style={{opacity:.45,cursor:"default"}}>Регистрация откроется позже</button>}
+        </div>
+      </div>}
     </div>
   );
 }
+
 
 function LightNewsPage({setPage,news=INIT_NEWS,signedIn=false,onLogin,isAdmin=false}){
   return(
@@ -597,11 +630,12 @@ function LightNewsPage({setPage,news=INIT_NEWS,signedIn=false,onLogin,isAdmin=fa
 }
 
 // Светлый личный кабинет: результаты, подтверждения, активность и записи на события.
-function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],registeredEvents=[],onSubmitResult,onToggleEvent}){
+function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],registeredEvents=[],joinedChallenges=[],onSubmitResult,onToggleEvent,isAdmin=false}){
   const [activeChallenge,setActiveChallenge]=useState(null);
   const [value,setValue]=useState("");
   const [comment,setComment]=useState("");
   const [proof,setProof]=useState(null);
+  const myChallenges=challenges.filter(c=>joinedChallenges.includes(c.id));
   const totalSteps=results.filter(r=>r.type==="steps").reduce((sum,r)=>sum+Number(r.value||0),8100);
   const totalPoints=42+results.reduce((sum,r)=>sum+Number(r.points||0),0);
   const submit=e=>{
@@ -615,9 +649,9 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
     <div className="light-shell" style={{background:"radial-gradient(circle at 0% 8%,#F0DEFF 0,transparent 25%),radial-gradient(circle at 100% 42%,#FFE8EF 0,transparent 24%),linear-gradient(180deg,#FAF7FF 0%,#FBF9FF 100%)",color:BD,minHeight:"100vh",position:"relative",overflowX:"hidden",fontFamily:"'Open Sans',Arial,sans-serif"}}>
       <PravoHeader setPage={setPage} signedIn={true}/>
       <div className="light-dashboard-content" style={{position:"relative",zIndex:2,maxWidth:1220,margin:"0 auto",padding:"34px 32px 64px"}}>
-        <div style={{display:"flex",justifyContent:"flex-end",marginBottom:24}}>
+        {isAdmin&&<div style={{display:"flex",justifyContent:"flex-end",marginBottom:24}}>
           <button onClick={()=>setPage("admin")} className="plain-link">Панель администратора →</button>
-        </div>
+        </div>}
         <div className="profile-head" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,marginBottom:28}}>
           <div style={{display:"flex",alignItems:"center",gap:16}}><div className="avatar">Д</div><div><h1 style={{fontSize:26,margin:0}}>Добрый день, Диана! 👋</h1><div className="muted">Стабильность сегодня — большие победы завтра</div></div></div>
           <span className="role-pill">Сотрудник право(тех)</span>
@@ -628,7 +662,7 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
         <div className="cabinet-grid">
           <div style={{display:"flex",flexDirection:"column",gap:20}}>
             <section style={card}><div className="section-title"><span>Мои челленджи</span><span style={{color:BP,fontSize:13}}>⭐ {totalPoints.toFixed(1)}</span></div>
-              {challenges.slice(0,4).map((c,i)=>{const own=results.filter(r=>r.challengeId===c.id).reduce((s,r)=>s+Number(r.value||0),0);const base=[60,25,10,5][i]||0;const progress=Math.min(100,base+own/1000);return <div key={c.id} className="challenge-row"><div style={{display:"flex",justifyContent:"space-between",gap:12}}><b>{c.emoji} {c.title}</b><button className="mini-btn" onClick={()=>setActiveChallenge(c)}>+ Результат</button></div><div className="progress-track"><div style={{width:`${progress}%`}}/></div><div className="muted" style={{fontSize:11}}>{progress.toFixed(0)}% · внесено: {own.toLocaleString("ru-RU")}</div></div>})}
+              {myChallenges.length===0?<div className="empty-state"><div style={{marginBottom:12}}>Вы пока не участвуете ни в одном челлендже.</div><button className="mini-btn active" onClick={()=>setPage("challenges")}>Выбрать челлендж</button></div>:myChallenges.slice(0,6).map((c,i)=>{const own=results.filter(r=>r.challengeId===c.id).reduce((s,r)=>s+Number(r.value||0),0);const base=i===0?60:0;const progress=Math.min(100,base+own/1000);return <div key={c.id} className="challenge-row"><div style={{display:"flex",justifyContent:"space-between",gap:12}}><b>{c.emoji} {c.title}</b><button className="mini-btn" onClick={()=>setActiveChallenge(c)}>+ Результат</button></div><div className="progress-track"><div style={{width:`${progress}%`}}/></div><div className="muted" style={{fontSize:11}}>{progress.toFixed(0)}% · внесено: {own.toLocaleString("ru-RU")}</div></div>})}
             </section>
             <section style={card}><div className="section-title">Последняя активность</div>{results.length===0?<div className="empty-state">После внесения результата здесь появится история активности.</div>:results.slice().reverse().slice(0,6).map(r=><div key={r.id} className="activity-row"><div className="activity-icon">✓</div><div style={{flex:1}}><b>{r.challengeTitle}</b><div className="muted" style={{fontSize:11}}>{r.date}{r.proofName?` · 📎 ${r.proofName}`:""}</div></div><strong style={{color:BP}}>{Number(r.value).toLocaleString("ru-RU")}</strong></div>)}</section>
           </div>
@@ -992,6 +1026,8 @@ export default function App(){
     {id:"e3",date:"24",day:"СБ",title:"Велопрогулка",place:"Воробьёвы горы",kind:"Челлендж"},
   ]));
   const [results,setResults]=useState(()=>load("pravo-sport-results",[]));
+  const [joinedChallenges,setJoinedChallenges]=useState(()=>load("pravo-sport-joined",["c1"]));
+  const [eventLog,setEventLog]=useState(()=>load("pravo-sport-event-log",[]));
   const [registeredEvents,setRegisteredEvents]=useState(()=>load("pravo-sport-registered",["e1","e2"]));
   const [signedIn,setSignedIn]=useState(()=>load("pravo-sport-signed",false));
   const [showLogin,setShowLogin]=useState(false);
@@ -1014,6 +1050,8 @@ export default function App(){
   useEffect(()=>{localStorage.setItem("pravo-sport-challenges",JSON.stringify(appChallenges));},[appChallenges]);
   useEffect(()=>{localStorage.setItem("pravo-sport-events",JSON.stringify(events));},[events]);
   useEffect(()=>{localStorage.setItem("pravo-sport-results",JSON.stringify(results));},[results]);
+  useEffect(()=>{localStorage.setItem("pravo-sport-joined",JSON.stringify(joinedChallenges));},[joinedChallenges]);
+  useEffect(()=>{localStorage.setItem("pravo-sport-event-log",JSON.stringify(eventLog.slice(-500)));},[eventLog]);
   useEffect(()=>{localStorage.setItem("pravo-sport-registered",JSON.stringify(registeredEvents));},[registeredEvents]);
   useEffect(()=>{localStorage.setItem("pravo-sport-signed",JSON.stringify(signedIn));},[signedIn]);
 
@@ -1054,6 +1092,13 @@ export default function App(){
   },[]);
 
   const notify=msg=>{setToast(msg);setTimeout(()=>setToast(null),3000);};
+  const trackEvent=(eventName,entityId="",meta={})=>setEventLog(p=>[...p,{id:Date.now()+Math.random(),eventName,entityId,meta,ts:new Date().toISOString()}].slice(-500));
+  const joinChallenge=id=>{
+    setJoinedChallenges(p=>p.includes(id)?p:[...p,id]);
+    setAppChallenges(p=>p.map(c=>c.id===id?{...c,participants:Number(c.participants||0)+1}:c));
+    trackEvent("challenge_join",id);
+    notify("Вы участвуете в челлендже");
+  };
   const addNews=()=>{
     if(!newPost.title.trim())return;
     const bgs=["linear-gradient(160deg,#1a0533,#2D1B69)","linear-gradient(160deg,#0d2200,#1a4000)","linear-gradient(160deg,#001520,#002840)"];
@@ -1066,11 +1111,13 @@ export default function App(){
     setTimeout(()=>{setSubmitChal(null);setSubmitVal("");setSubmitText("");setSubmitted(false);},2000);
   };
   const login=role=>{setSignedIn(true);setIsAdmin(role==="admin");setShowLogin(false);setPage(role==="admin"?"admin":"cabinet-light");};
-  const addResult=result=>{setResults(p=>[...p,result]);notify("Результат сохранён, прогресс обновлён");};
+  const addResult=result=>{setResults(p=>[...p,result]);setJoinedChallenges(p=>p.includes(result.challengeId)?p:[...p,result.challengeId]);trackEvent("result_submit",result.challengeId,{value:result.value});notify("Результат сохранён, прогресс обновлён");};
   const toggleEvent=id=>setRegisteredEvents(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);
   const adminAddChallenge=form=>{setAppChallenges(p=>[{id:`c${Date.now()}`,emoji:form.emoji||"🏃",title:form.title,desc:form.desc||"Новый корпоративный челлендж",participants:0,status:"active",statusLabel:"Активный",color:BP,daysLeft:30,type:"steps",attachmentName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||"",bg:"linear-gradient(135deg,#EDE1FB,#D9E8FB)"},...p]);notify("Челлендж запущен");};
   const adminAddEvent=form=>{const d=form.date?new Date(`${form.date}T12:00:00`):new Date();setEvents(p=>[{id:`e${Date.now()}`,date:String(d.getDate()).padStart(2,"0"),day:d.toLocaleDateString("ru-RU",{weekday:"short"}).toUpperCase(),title:form.title,place:form.place||"Онлайн",kind:form.kind||"Событие",attachmentName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||""},...p]);notify("Событие добавлено");};
   const adminAddNews=form=>{setNews(p=>[{id:Date.now(),title:form.title,cat:"Анонс",date:new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}),text:form.text||"Новая публикация",emoji:form.emoji||"📢",imageName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||"",bg:"linear-gradient(160deg,#F3EEFA,#E9F6EF)"},...p]);notify("Публикация добавлена");};
+
+  useEffect(()=>{trackEvent("page_view",page);},[page]);
 
   const fadeStyle=id=>({opacity:visible[id]?1:0,transform:visible[id]?"translateY(0)":"translateY(24px)",transition:"opacity .7s ease, transform .7s ease"});
 
@@ -1188,6 +1235,8 @@ export default function App(){
           .scenario-grid{grid-template-columns:1fr!important;gap:10px!important}
           .scenario-card{min-height:156px!important;padding:20px!important;border-radius:22px!important}
           .scenario-card h3{font-size:22px!important}
+          .challenge-detail-modal h2{font-size:27px!important}
+          .challenge-detail-meta{grid-template-columns:1fr!important}
           .admin-section-tabs{width:100%!important}
           .admin-section-tabs button{flex:1!important}
           .analytics-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
