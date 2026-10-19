@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { STORAGE_KEYS, DATA_MODE, readData, writeData, createAnalyticsEvent, sendAnalyticsEvent, flushAnalyticsQueue } from "./dataClient";
 const P="#7C3AED",PL="#A78BFA",NEON_GREEN="#39FF88",BG_DEEP="#0B0B0F";
 const HERO_WORDS=["эмоциями","азартом","энергией","драйвом","командой"];
 // Glassmorphism helper — тонкая светящаяся обводка + блюр
@@ -800,7 +801,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
       <PravoHeader setPage={setPage} signedIn={true} isAdmin={true}/>
       <div className="light-dashboard-content" style={{maxWidth:1220,margin:"0 auto",padding:"36px 32px 70px"}}>
         <div className="admin-head">
-          <div><h1 style={{margin:"0 0 5px",fontSize:38,letterSpacing:"-1.5px"}}>Панель администратора</h1><p className="muted">Управление контентом, спортивной программой и эффективностью платформы</p></div>
+          <div><h1 style={{margin:"0 0 5px",fontSize:38,letterSpacing:"-1.5px"}}>Панель администратора</h1><p className="muted">Управление контентом, спортивной программой и эффективностью платформы · {DATA_MODE==="local-demo"?"локальный MVP":"API ready"}</p></div>
           <div style={{display:"flex",gap:10,alignItems:"center"}}><button className="plain-link" onClick={()=>setPage("cabinet-light")}>Личный кабинет →</button><div className="role-pill">Администратор</div></div>
         </div>
 
@@ -1263,19 +1264,19 @@ export default function App(){
   const [page,setPage]=useState("light");
   const [scrolled,setScrolled]=useState(false);
   const [mouse,setMouse]=useState({x:0,y:0});
-  const load=(key,fallback)=>{try{const saved=localStorage.getItem(key);return saved?JSON.parse(saved):fallback;}catch{return fallback;}};
-  const [news,setNews]=useState(()=>load("pravo-sport-news",INIT_NEWS));
-  const [appChallenges,setAppChallenges]=useState(()=>load("pravo-sport-challenges",CHALLENGES));
-  const [events,setEvents]=useState(()=>load("pravo-sport-events",[
+  const load=(key,fallback)=>readData(key,fallback);
+  const [news,setNews]=useState(()=>load(STORAGE_KEYS.news,INIT_NEWS));
+  const [appChallenges,setAppChallenges]=useState(()=>load(STORAGE_KEYS.challenges,CHALLENGES));
+  const [events,setEvents]=useState(()=>load(STORAGE_KEYS.events,[
     {id:"e1",date:"17",day:"СБ",title:"Утренний забег",place:"Парк Горького",kind:"Офлайн"},
     {id:"e2",date:"20",day:"ВТ",title:"Йога онлайн",place:"Zoom",kind:"Видеовстреча"},
     {id:"e3",date:"24",day:"СБ",title:"Велопрогулка",place:"Воробьёвы горы",kind:"Челлендж"},
   ]));
-  const [results,setResults]=useState(()=>load("pravo-sport-results",[]));
-  const [joinedChallenges,setJoinedChallenges]=useState(()=>load("pravo-sport-joined",["c1"]));
-  const [eventLog,setEventLog]=useState(()=>load("pravo-sport-event-log",[]));
-  const [registeredEvents,setRegisteredEvents]=useState(()=>load("pravo-sport-registered",["e1","e2"]));
-  const [signedIn,setSignedIn]=useState(()=>load("pravo-sport-signed",false));
+  const [results,setResults]=useState(()=>load(STORAGE_KEYS.results,[]));
+  const [joinedChallenges,setJoinedChallenges]=useState(()=>load(STORAGE_KEYS.joinedChallenges,["c1"]));
+  const [eventLog,setEventLog]=useState(()=>load(STORAGE_KEYS.eventLog,[]));
+  const [registeredEvents,setRegisteredEvents]=useState(()=>load(STORAGE_KEYS.registeredEvents,["e1","e2"]));
+  const [signedIn,setSignedIn]=useState(()=>load(STORAGE_KEYS.signedIn,false));
   const [showLogin,setShowLogin]=useState(false);
   const [isAdmin,setIsAdmin]=useState(false);
   const [showAddNews,setShowAddNews]=useState(false);
@@ -1292,14 +1293,14 @@ export default function App(){
   const observerRefs=useRef({});
   const stripRef=useRef();
 
-  useEffect(()=>{localStorage.setItem("pravo-sport-news",JSON.stringify(news));},[news]);
-  useEffect(()=>{localStorage.setItem("pravo-sport-challenges",JSON.stringify(appChallenges));},[appChallenges]);
-  useEffect(()=>{localStorage.setItem("pravo-sport-events",JSON.stringify(events));},[events]);
-  useEffect(()=>{localStorage.setItem("pravo-sport-results",JSON.stringify(results));},[results]);
-  useEffect(()=>{localStorage.setItem("pravo-sport-joined",JSON.stringify(joinedChallenges));},[joinedChallenges]);
-  useEffect(()=>{localStorage.setItem("pravo-sport-event-log",JSON.stringify(eventLog.slice(-500)));},[eventLog]);
-  useEffect(()=>{localStorage.setItem("pravo-sport-registered",JSON.stringify(registeredEvents));},[registeredEvents]);
-  useEffect(()=>{localStorage.setItem("pravo-sport-signed",JSON.stringify(signedIn));},[signedIn]);
+  useEffect(()=>{writeData(STORAGE_KEYS.news,news);},[news]);
+  useEffect(()=>{writeData(STORAGE_KEYS.challenges,appChallenges);},[appChallenges]);
+  useEffect(()=>{writeData(STORAGE_KEYS.events,events);},[events]);
+  useEffect(()=>{writeData(STORAGE_KEYS.results,results);},[results]);
+  useEffect(()=>{writeData(STORAGE_KEYS.joinedChallenges,joinedChallenges);},[joinedChallenges]);
+  useEffect(()=>{writeData(STORAGE_KEYS.eventLog,eventLog.slice(-500));},[eventLog]);
+  useEffect(()=>{writeData(STORAGE_KEYS.registeredEvents,registeredEvents);},[registeredEvents]);
+  useEffect(()=>{writeData(STORAGE_KEYS.signedIn,signedIn);},[signedIn]);
 
   // Симуляция живой ленты — новые события "вталкивают" старые сверху
   useEffect(()=>{
@@ -1338,7 +1339,7 @@ export default function App(){
   },[]);
 
   const notify=msg=>{setToast(msg);setTimeout(()=>setToast(null),3000);};
-  const trackEvent=(eventName,entityId="",meta={})=>setEventLog(p=>[...p,{id:Date.now()+Math.random(),eventName,entityId,meta,ts:new Date().toISOString()}].slice(-500));
+  const trackEvent=(eventName,entityId="",meta={})=>{const event=createAnalyticsEvent(eventName,entityId,meta);setEventLog(p=>[...p,event].slice(-500));sendAnalyticsEvent(event);};
   const joinChallenge=id=>{
     setJoinedChallenges(p=>p.includes(id)?p:[...p,id]);
     setAppChallenges(p=>p.map(c=>c.id===id?{...c,participants:Number(c.participants||0)+1}:c));
@@ -1379,6 +1380,12 @@ export default function App(){
   };
 
   useEffect(()=>{trackEvent("page_view",page);},[page]);
+  useEffect(()=>{
+    flushAnalyticsQueue();
+    const onOnline=()=>flushAnalyticsQueue();
+    window.addEventListener("online",onOnline);
+    return()=>window.removeEventListener("online",onOnline);
+  },[]);
 
   const fadeStyle=id=>({opacity:visible[id]?1:0,transform:visible[id]?"translateY(0)":"translateY(24px)",transition:"opacity .7s ease, transform .7s ease"});
 
