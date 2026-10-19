@@ -535,7 +535,7 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
 function LightChallengesPage({setPage,challenges=CHALLENGES,signedIn=false,onLogin,isAdmin=false,joinedChallenges=[],onJoin}){
   const [filter,setFilter]=useState("all");
   const [selected,setSelected]=useState(null);
-  const visible=challenges.filter(c=>filter==="all"||(filter==="active"?c.status==="active":c.status!=="active"));
+  const visible=challenges.filter(c=>filter==="all"||(filter==="active"?c.status==="active":c.status==="soon"));
   const isJoined=c=>joinedChallenges.includes(c.id);
   const openChallenge=c=>setSelected(c);
   const join=c=>{
@@ -678,10 +678,32 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
 }
 
 
-function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=[],onAddChallenge,onAddEvent,onAddNews}){
+function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=[],joinedChallenges=[],onAddChallenge,onAddEvent,onAddNews,onUpdateChallenge}){
   const [tab,setTab]=useState("challenge");
   const [section,setSection]=useState("content");
   const [analyticsPeriod,setAnalyticsPeriod]=useState("30");
+  const [manageId,setManageId]=useState(null);
+  const [manageDraft,setManageDraft]=useState(null);
+  const openManage=challenge=>{
+    setManageId(challenge.id);
+    setManageDraft({
+      title:challenge.title||"",
+      desc:challenge.desc||"",
+      status:challenge.status||"active",
+      daysLeft:Number(challenge.daysLeft||0),
+      type:challenge.type||"steps"
+    });
+  };
+  const closeManage=()=>{setManageId(null);setManageDraft(null);};
+  const saveManage=e=>{
+    e.preventDefault();
+    if(!manageId||!manageDraft)return;
+    const labels={active:"Активный",soon:"Скоро",completed:"Завершён"};
+    onUpdateChallenge?.(manageId,{...manageDraft,statusLabel:labels[manageDraft.status]||manageDraft.status});
+    closeManage();
+  };
+  const managedChallenge=manageId?challenges.find(x=>x.id===manageId):null;
+  const managedResults=manageId?results.filter(r=>r.challengeId===manageId):[];
   const [form,setForm]=useState({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",fileName:"",fileType:"",fileData:""});
   const change=(k,v)=>setForm(p=>({...p,[k]:v}));
   const handleFile=e=>{
@@ -736,7 +758,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
         </div>
 
         <div className="admin-section-tabs" style={{display:"flex",gap:8,marginBottom:22}}>
-          {[["content","Контент"],["analytics","Аналитика"]].map(([id,label])=><button key={id} type="button" onClick={()=>setSection(id)} style={{border:section===id?0:"1px solid #E2D7EC",background:section===id?"#10052F":"#fff",color:section===id?"#fff":"#10052F",borderRadius:24,padding:"11px 18px",fontWeight:800,cursor:"pointer"}}>{label}</button>)}
+          {[["content","Контент"],["manage","Управление"],["analytics","Аналитика"]].map(([id,label])=><button key={id} type="button" onClick={()=>setSection(id)} style={{border:section===id?0:"1px solid #E2D7EC",background:section===id?"#10052F":"#fff",color:section===id?"#fff":"#10052F",borderRadius:24,padding:"11px 18px",fontWeight:800,cursor:"pointer"}}>{label}</button>)}
         </div>
 
         {section==="content"?<>
@@ -758,6 +780,41 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
               <button className="primary-btn" type="submit">{tab==="news"?"Опубликовать":"Сохранить и запустить"}</button>
             </form>
             <aside className="admin-list"><h2>Последние изменения</h2>{[...news.slice(0,3).map(x=>({e:x.emoji||"📢",t:x.title,s:"Публикация"})),...challenges.slice(0,3).map(x=>({e:x.emoji,t:x.title,s:x.statusLabel}))].slice(0,6).map((x,i)=><div key={i} className="admin-list-row"><span>{x.e}</span><div><b>{x.t}</b><small>{x.s}</small></div></div>)}</aside>
+          </div>
+        </>:section==="manage"?<>
+          <div className="manage-toolbar" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:16,marginBottom:18}}>
+            <div>
+              <h2 style={{fontSize:28,letterSpacing:"-1px",margin:"0 0 5px"}}>Управление челленджами</h2>
+              <p className="muted" style={{fontSize:12,margin:0}}>Статусы, параметры, участники и результаты в одном месте.</p>
+            </div>
+            <button type="button" className="primary-btn" style={{width:"auto",padding:"10px 16px"}} onClick={()=>{setSection("content");setTab("challenge");}}>+ Новый челлендж</button>
+          </div>
+
+          <div className="challenge-admin-list" style={{display:"flex",flexDirection:"column",gap:12}}>
+            {challenges.map(ch=>{
+              const ownResults=results.filter(r=>r.challengeId===ch.id);
+              const joinedHere=joinedChallenges.includes(ch.id);
+              const statusColor=ch.status==="active"?"#159B66":ch.status==="completed"?"#81798B":"#C88A00";
+              const statusBg=ch.status==="active"?"#EAF8F1":ch.status==="completed"?"#F1EEF3":"#FFF6D8";
+              return <section key={ch.id} className="admin-form challenge-admin-row" style={{display:"grid",gridTemplateColumns:"1fr auto",gap:18,alignItems:"center",padding:"20px 22px"}}>
+                <div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:8}}>
+                    <span style={{fontSize:20}}>{ch.emoji}</span>
+                    <h3 style={{fontSize:18,margin:0}}>{ch.title}</h3>
+                    <span style={{background:statusBg,color:statusColor,borderRadius:999,padding:"5px 9px",fontSize:10,fontWeight:800}}>{ch.statusLabel||ch.status}</span>
+                  </div>
+                  <p className="muted" style={{fontSize:12,lineHeight:1.45,margin:"0 0 12px"}}>{ch.desc}</p>
+                  <div className="challenge-admin-metrics" style={{display:"flex",gap:18,flexWrap:"wrap",fontSize:11,color:"#756D7E"}}>
+                    <span><b style={{color:"#10052F"}}>{ch.participants||0}</b> участников*</span>
+                    <span><b style={{color:"#10052F"}}>{ownResults.length}</b> результатов в MVP</span>
+                    <span><b style={{color:"#10052F"}}>{ch.daysLeft||0}</b> дней</span>
+                    {joinedHere&&<span style={{color:"#159B66",fontWeight:800}}>✓ текущий пользователь участвует</span>}
+                  </div>
+                  <div style={{fontSize:9.5,color:"#AAA2B2",marginTop:8}}>* Общий счётчик пока демо/исторический — реальные участники появятся после подключения backend или импорта Mattermost.</div>
+                </div>
+                <button type="button" className="mini-btn active" onClick={()=>openManage(ch)}>Управлять</button>
+              </section>;
+            })}
           </div>
         </>:<>
           <div className="analytics-toolbar" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,marginBottom:18,flexWrap:"wrap"}}>
@@ -830,6 +887,56 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
           </div>
         </>}
       </div>
+
+      {managedChallenge&&manageDraft&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&closeManage()}>
+        <form className="light-modal manage-challenge-modal" style={{maxWidth:700}} onSubmit={saveManage}>
+          <button type="button" className="modal-close" onClick={closeManage}>×</button>
+          <div style={{fontSize:11,fontWeight:800,letterSpacing:"1.5px",color:"#8D27EE",marginBottom:8}}>УПРАВЛЕНИЕ ЧЕЛЛЕНДЖЕМ</div>
+          <h2 style={{fontSize:28,letterSpacing:"-1px",margin:"0 0 18px"}}>{managedChallenge.emoji} {managedChallenge.title}</h2>
+
+          <div className="manage-form-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <label style={{gridColumn:"1/-1"}}>Название<input value={manageDraft.title} onChange={e=>setManageDraft(p=>({...p,title:e.target.value}))}/></label>
+            <label style={{gridColumn:"1/-1"}}>Описание<textarea value={manageDraft.desc} onChange={e=>setManageDraft(p=>({...p,desc:e.target.value}))}/></label>
+            <label>Статус
+              <select value={manageDraft.status} onChange={e=>setManageDraft(p=>({...p,status:e.target.value}))}>
+                <option value="active">Активный</option>
+                <option value="soon">Скоро</option>
+                <option value="completed">Завершён</option>
+              </select>
+            </label>
+            <label>Дней до завершения<input type="number" min="0" value={manageDraft.daysLeft} onChange={e=>setManageDraft(p=>({...p,daysLeft:Number(e.target.value)}))}/></label>
+            <label style={{gridColumn:"1/-1"}}>Тип результата
+              <select value={manageDraft.type} onChange={e=>setManageDraft(p=>({...p,type:e.target.value}))}>
+                <option value="steps">Шаги</option>
+                <option value="run">Бег / километры</option>
+                <option value="bike">Велосипед</option>
+                <option value="swim">Плавание</option>
+              </select>
+            </label>
+          </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,margin:"20px 0"}}>
+            <div style={{background:"#F7F1FC",borderRadius:16,padding:"16px"}}>
+              <div style={{fontSize:10,fontWeight:800,color:"#8D27EE",letterSpacing:"1px",marginBottom:8}}>УЧАСТНИКИ</div>
+              <div style={{fontSize:24,fontWeight:800}}>{managedChallenge.participants||0}</div>
+              <div className="muted" style={{fontSize:11}}>общий демо-счётчик</div>
+              {joinedChallenges.includes(managedChallenge.id)&&<div style={{marginTop:10,fontSize:11,fontWeight:700,color:"#159B66"}}>✓ Диана — участвует в текущем MVP</div>}
+              <div style={{marginTop:8,fontSize:9.5,lineHeight:1.4,color:"#AAA2B2"}}>Полный список сотрудников появится после корпоративной авторизации и backend.</div>
+            </div>
+            <div style={{background:"#F7F1FC",borderRadius:16,padding:"16px"}}>
+              <div style={{fontSize:10,fontWeight:800,color:"#8D27EE",letterSpacing:"1px",marginBottom:8}}>РЕЗУЛЬТАТЫ</div>
+              <div style={{fontSize:24,fontWeight:800}}>{managedResults.length}</div>
+              <div className="muted" style={{fontSize:11}}>сохранено в этом браузере</div>
+              {managedResults.slice(-3).reverse().map(x=><div key={x.id} style={{fontSize:10,marginTop:8,paddingTop:8,borderTop:"1px solid #E6DAEF"}}><b>{Number(x.value||0).toLocaleString("ru-RU")}</b> · {x.date}</div>)}
+            </div>
+          </div>
+
+          <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
+            <button type="button" className="mini-btn" onClick={closeManage}>Отмена</button>
+            <button type="submit" className="primary-btn" style={{width:"auto",padding:"10px 18px"}}>Сохранить изменения</button>
+          </div>
+        </form>
+      </div>}
     </div>
   );
 }
@@ -1114,6 +1221,11 @@ export default function App(){
   const addResult=result=>{setResults(p=>[...p,result]);setJoinedChallenges(p=>p.includes(result.challengeId)?p:[...p,result.challengeId]);trackEvent("result_submit",result.challengeId,{value:result.value});notify("Результат сохранён, прогресс обновлён");};
   const toggleEvent=id=>setRegisteredEvents(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);
   const adminAddChallenge=form=>{setAppChallenges(p=>[{id:`c${Date.now()}`,emoji:form.emoji||"🏃",title:form.title,desc:form.desc||"Новый корпоративный челлендж",participants:0,status:"active",statusLabel:"Активный",color:BP,daysLeft:30,type:"steps",attachmentName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||"",bg:"linear-gradient(135deg,#EDE1FB,#D9E8FB)"},...p]);notify("Челлендж запущен");};
+  const adminUpdateChallenge=(id,patch)=>{
+    setAppChallenges(p=>p.map(ch=>ch.id===id?{...ch,...patch}:ch));
+    trackEvent("admin_challenge_update",id,{status:patch.status});
+    notify("Изменения челленджа сохранены");
+  };
   const adminAddEvent=form=>{const d=form.date?new Date(`${form.date}T12:00:00`):new Date();setEvents(p=>[{id:`e${Date.now()}`,date:String(d.getDate()).padStart(2,"0"),day:d.toLocaleDateString("ru-RU",{weekday:"short"}).toUpperCase(),title:form.title,place:form.place||"Онлайн",kind:form.kind||"Событие",attachmentName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||""},...p]);notify("Событие добавлено");};
   const adminAddNews=form=>{setNews(p=>[{id:Date.now(),title:form.title,cat:"Анонс",date:new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}),text:form.text||"Новая публикация",emoji:form.emoji||"📢",imageName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||"",bg:"linear-gradient(160deg,#F3EEFA,#E9F6EF)"},...p]);notify("Публикация добавлена");};
 
@@ -1220,6 +1332,10 @@ export default function App(){
           .light-modal{padding:24px 18px!important;border-radius:20px!important;max-height:92vh;overflow-y:auto}
           .admin-head h1{font-size:30px!important}
           .stat-card,.admin-form,.admin-list{padding:18px!important}
+          .challenge-admin-row{grid-template-columns:1fr!important}
+          .challenge-admin-row>button{justify-self:start}
+          .manage-form-grid{grid-template-columns:1fr!important}
+          .manage-form-grid label{grid-column:1!important}
         }
         @media(max-width:520px){
           body{padding-bottom:env(safe-area-inset-bottom)}
@@ -1237,8 +1353,12 @@ export default function App(){
           .scenario-card h3{font-size:22px!important}
           .challenge-detail-modal h2{font-size:27px!important}
           .challenge-detail-meta{grid-template-columns:1fr!important}
-          .admin-section-tabs{width:100%!important}
-          .admin-section-tabs button{flex:1!important}
+          .admin-section-tabs{width:100%!important;overflow-x:auto!important;scrollbar-width:none}
+          .admin-section-tabs::-webkit-scrollbar{display:none}
+          .admin-section-tabs button{flex:0 0 auto!important}
+          .manage-toolbar{align-items:flex-start!important;flex-direction:column!important}
+          .challenge-admin-metrics{gap:9px!important}
+          .manage-challenge-modal>div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
           .analytics-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
           .analytics-toolbar{align-items:flex-start!important}
           .analytics-periods{width:100%!important;overflow-x:auto!important}
@@ -1349,10 +1469,10 @@ export default function App(){
 
       {/* ── СВЕТЛАЯ ВЕРСИЯ (продакшн-синтез референсов) ── */}
       {page==="light"&&<LightHome setPage={setPage} challenges={appChallenges} news={news} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
-      {page==="challenges"&&<LightChallengesPage setPage={setPage} challenges={appChallenges} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
+      {page==="challenges"&&<LightChallengesPage setPage={setPage} challenges={appChallenges} signedIn={signedIn} isAdmin={isAdmin} joinedChallenges={joinedChallenges} onJoin={joinChallenge} onLogin={()=>setShowLogin(true)}/>}
       {page==="news"&&<LightNewsPage setPage={setPage} news={news} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
-      {page==="cabinet-light"&&<LightCabinet setPage={setPage} challenges={appChallenges} events={events} results={results} registeredEvents={registeredEvents} onSubmitResult={addResult} onToggleEvent={toggleEvent}/>}
-      {page==="admin"&&<AdminPanel setPage={setPage} challenges={appChallenges} events={events} news={news} results={results} registeredEvents={registeredEvents} onAddChallenge={adminAddChallenge} onAddEvent={adminAddEvent} onAddNews={adminAddNews}/>}
+      {page==="cabinet-light"&&<LightCabinet setPage={setPage} challenges={appChallenges} events={events} results={results} registeredEvents={registeredEvents} joinedChallenges={joinedChallenges} onSubmitResult={addResult} onToggleEvent={toggleEvent} isAdmin={isAdmin}/>}
+      {page==="admin"&&<AdminPanel setPage={setPage} challenges={appChallenges} events={events} news={news} results={results} registeredEvents={registeredEvents} joinedChallenges={joinedChallenges} onAddChallenge={adminAddChallenge} onAddEvent={adminAddEvent} onAddNews={adminAddNews} onUpdateChallenge={adminUpdateChallenge}/>}
 
       {/* ── HOME ── */}
       {page==="home"&&(
