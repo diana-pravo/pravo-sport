@@ -598,6 +598,7 @@ function LightChallengesPage({setPage,challenges=CHALLENGES,signedIn=false,onLog
 
 
 function LightNewsPage({setPage,news=INIT_NEWS,signedIn=false,onLogin,isAdmin=false}){
+  const visibleNews=news.filter(n=>!n.archived);
   return(
     <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
       <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
@@ -608,7 +609,7 @@ function LightNewsPage({setPage,news=INIT_NEWS,signedIn=false,onLogin,isAdmin=fa
           <button onClick={()=>setPage("light")} style={{border:0,background:"transparent",color:"#8D27EE",fontSize:16,fontWeight:800,cursor:"pointer"}}>На главную ↗</button>
         </div>
         <div className="news-page-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16}}>
-          {news.map((n,i)=>{
+          {visibleNews.map((n,i)=>{
             const hasImage=n.attachmentData&&String(n.attachmentType||"").startsWith("image/");
             const visual=hasImage?n.attachmentData:(i===0?MVP_SPLASH:i===2?MVP_SURF:i===3?MVP_ICE:i===5?MVP_SPLASH:null);
             const mode=i%3;
@@ -636,6 +637,7 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
   const [comment,setComment]=useState("");
   const [proof,setProof]=useState(null);
   const myChallenges=challenges.filter(c=>joinedChallenges.includes(c.id));
+  const visibleEvents=events.filter(e=>!e.archived);
   const totalSteps=results.filter(r=>r.type==="steps").reduce((sum,r)=>sum+Number(r.value||0),8100);
   const totalPoints=42+results.reduce((sum,r)=>sum+Number(r.points||0),0);
   const submit=e=>{
@@ -667,7 +669,7 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
             <section style={card}><div className="section-title">Последняя активность</div>{results.length===0?<div className="empty-state">После внесения результата здесь появится история активности.</div>:results.slice().reverse().slice(0,6).map(r=><div key={r.id} className="activity-row"><div className="activity-icon">✓</div><div style={{flex:1}}><b>{r.challengeTitle}</b><div className="muted" style={{fontSize:11}}>{r.date}{r.proofName?` · 📎 ${r.proofName}`:""}</div></div><strong style={{color:BP}}>{Number(r.value).toLocaleString("ru-RU")}</strong></div>)}</section>
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:20}}>
-            <section style={card}><div className="section-title">Ближайшие события</div>{events.map((e,i)=>{const joined=registeredEvents.includes(e.id);return <div key={e.id} className="event-row" style={{borderTop:i?"1px solid #ece4f5":"none"}}><div className="event-date"><small>{e.day}</small><b>{e.date}</b></div><div style={{flex:1}}><b>{e.title}</b><div className="muted" style={{fontSize:11}}>{e.place} · {e.kind||"Событие"}{e.attachmentName?" · 📎 "+e.attachmentName:""}</div></div><button className={joined?"mini-btn active":"mini-btn"} onClick={()=>onToggleEvent(e.id)}>{joined?"Записана ✓":"Записаться"}</button></div>})}</section>
+            <section style={card}><div className="section-title">Ближайшие события</div>{visibleEvents.map((e,i)=>{const joined=registeredEvents.includes(e.id);return <div key={e.id} className="event-row" style={{borderTop:i?"1px solid #ece4f5":"none"}}><div className="event-date"><small>{e.day}</small><b>{e.date}</b></div><div style={{flex:1}}><b>{e.title}</b><div className="muted" style={{fontSize:11}}>{e.place} · {e.kind||"Событие"}{e.attachmentName?" · 📎 "+e.attachmentName:""}</div></div><button className={joined?"mini-btn active":"mini-btn"} onClick={()=>onToggleEvent(e.id)}>{joined?"Записана ✓":"Записаться"}</button></div>})}</section>
             <section style={card}><div className="section-title">Достижения</div><div className="achievement-grid">{[{e:"🔥",l:"7 дней подряд"},{e:"🏊",l:"10 км плавания"},{e:"👟",l:"Первый результат"},{e:"🚴",l:"Велопрогулка"}].map((a,i)=><div key={i} className="achievement"><span>{a.e}</span><small>{a.l}</small></div>)}</div></section>
           </div>
         </div>
@@ -678,10 +680,15 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
 }
 
 
-function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=[],joinedChallenges=[],onAddChallenge,onAddEvent,onAddNews,onUpdateChallenge}){
+function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=[],joinedChallenges=[],onAddChallenge,onAddEvent,onAddNews,onUpdateChallenge,onUpdateEvent,onUpdateNews}){
   const [tab,setTab]=useState("challenge");
   const [section,setSection]=useState("content");
   const [analyticsPeriod,setAnalyticsPeriod]=useState("30");
+  const [manageKind,setManageKind]=useState("challenge");
+  const [manageEventId,setManageEventId]=useState(null);
+  const [manageEventDraft,setManageEventDraft]=useState(null);
+  const [manageNewsId,setManageNewsId]=useState(null);
+  const [manageNewsDraft,setManageNewsDraft]=useState(null);
   const [manageId,setManageId]=useState(null);
   const [manageDraft,setManageDraft]=useState(null);
   const openManage=challenge=>{
@@ -704,6 +711,46 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
   };
   const managedChallenge=manageId?challenges.find(x=>x.id===manageId):null;
   const managedResults=manageId?results.filter(r=>r.challengeId===manageId):[];
+  const openEventManage=event=>{
+    setManageEventId(event.id);
+    setManageEventDraft({
+      title:event.title||"",
+      place:event.place||"",
+      kind:event.kind||"Событие",
+      dateISO:event.dateISO||"",
+      archived:!!event.archived
+    });
+  };
+  const closeEventManage=()=>{setManageEventId(null);setManageEventDraft(null);};
+  const saveEventManage=e=>{
+    e.preventDefault();
+    if(!manageEventId||!manageEventDraft)return;
+    let patch={...manageEventDraft};
+    if(manageEventDraft.dateISO){
+      const d=new Date(manageEventDraft.dateISO+"T12:00:00");
+      patch={...patch,date:String(d.getDate()).padStart(2,"0"),day:d.toLocaleDateString("ru-RU",{weekday:"short"}).toUpperCase()};
+    }
+    onUpdateEvent?.(manageEventId,patch);
+    closeEventManage();
+  };
+  const managedEvent=manageEventId?events.find(x=>x.id===manageEventId):null;
+  const openNewsManage=item=>{
+    setManageNewsId(item.id);
+    setManageNewsDraft({
+      title:item.title||"",
+      text:item.text||"",
+      cat:item.cat||"Анонс",
+      archived:!!item.archived
+    });
+  };
+  const closeNewsManage=()=>{setManageNewsId(null);setManageNewsDraft(null);};
+  const saveNewsManage=e=>{
+    e.preventDefault();
+    if(!manageNewsId||!manageNewsDraft)return;
+    onUpdateNews?.(manageNewsId,{...manageNewsDraft});
+    closeNewsManage();
+  };
+  const managedNews=manageNewsId?news.find(x=>x.id===manageNewsId):null;
   const [form,setForm]=useState({title:"",desc:"",date:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",fileName:"",fileType:"",fileData:""});
   const change=(k,v)=>setForm(p=>({...p,[k]:v}));
   const handleFile=e=>{
@@ -763,7 +810,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
 
         {section==="content"?<>
           <div className="admin-stats">
-            {[{v:challenges.length,l:"челленджей"},{v:events.length,l:"событий"},{v:news.length,l:"публикаций"},{v:"200+",l:"участников"}].map((s,i)=><div key={i} className="stat-card"><strong>{s.v}</strong><span>{s.l}</span></div>)}
+            {[{v:challenges.length,l:"челленджей"},{v:events.filter(x=>!x.archived).length,l:"событий"},{v:news.filter(x=>!x.archived).length,l:"публикаций"},{v:"200+",l:"участников"}].map((s,i)=><div key={i} className="stat-card"><strong>{s.v}</strong><span>{s.l}</span></div>)}
           </div>
           <div className="admin-grid">
             <form className="admin-form" onSubmit={submit}>
@@ -784,13 +831,17 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
         </>:section==="manage"?<>
           <div className="manage-toolbar" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:16,marginBottom:18}}>
             <div>
-              <h2 style={{fontSize:28,letterSpacing:"-1px",margin:"0 0 5px"}}>Управление челленджами</h2>
-              <p className="muted" style={{fontSize:12,margin:0}}>Статусы, параметры, участники и результаты в одном месте.</p>
+              <h2 style={{fontSize:28,letterSpacing:"-1px",margin:"0 0 5px"}}>Управление</h2>
+              <p className="muted" style={{fontSize:12,margin:0}}>Редактирование, статусы, архив и текущая активность по контенту.</p>
             </div>
-            <button type="button" className="primary-btn" style={{width:"auto",padding:"10px 16px"}} onClick={()=>{setSection("content");setTab("challenge");}}>+ Новый челлендж</button>
+            <button type="button" className="primary-btn" style={{width:"auto",padding:"10px 16px"}} onClick={()=>{setSection("content");setTab(manageKind==="challenge"?"challenge":manageKind==="event"?"event":"news");}}>+ Добавить</button>
           </div>
 
-          <div className="challenge-admin-list" style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div className="manage-kind-tabs" style={{display:"flex",gap:8,marginBottom:16}}>
+            {[["challenge","Челленджи"],["event","События"],["news","Новости"]].map(([id,label])=><button key={id} type="button" onClick={()=>setManageKind(id)} style={{border:manageKind===id?0:"1px solid #E2D7EC",background:manageKind===id?"#8D27EE":"#fff",color:manageKind===id?"#fff":"#756D7E",borderRadius:20,padding:"9px 14px",fontSize:12,fontWeight:800,cursor:"pointer"}}>{label}</button>)}
+          </div>
+
+          {manageKind==="challenge"?<div className="challenge-admin-list" style={{display:"flex",flexDirection:"column",gap:12}}>
             {challenges.map(ch=>{
               const ownResults=results.filter(r=>r.challengeId===ch.id);
               const joinedHere=joinedChallenges.includes(ch.id);
@@ -815,7 +866,41 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
                 <button type="button" className="mini-btn active" onClick={()=>openManage(ch)}>Управлять</button>
               </section>;
             })}
-          </div>
+          </div>:manageKind==="event"?<div className="challenge-admin-list" style={{display:"flex",flexDirection:"column",gap:12}}>
+            {events.map(ev=>{
+              const registeredHere=registeredEvents.includes(ev.id);
+              return <section key={ev.id} className="admin-form challenge-admin-row" style={{display:"grid",gridTemplateColumns:"1fr auto",gap:18,alignItems:"center",padding:"20px 22px",opacity:ev.archived?.62:1}}>
+                <div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:8}}>
+                    <span style={{fontSize:20}}>📅</span>
+                    <h3 style={{fontSize:18,margin:0}}>{ev.title}</h3>
+                    <span style={{background:ev.archived?"#F1EEF3":"#EAF8F1",color:ev.archived?"#81798B":"#159B66",borderRadius:999,padding:"5px 9px",fontSize:10,fontWeight:800}}>{ev.archived?"В архиве":"Опубликовано"}</span>
+                  </div>
+                  <p className="muted" style={{fontSize:12,lineHeight:1.45,margin:"0 0 12px"}}>{ev.date} {ev.day} · {ev.place} · {ev.kind||"Событие"}</p>
+                  <div className="challenge-admin-metrics" style={{display:"flex",gap:18,flexWrap:"wrap",fontSize:11,color:"#756D7E"}}>
+                    <span><b style={{color:"#10052F"}}>{registeredHere?1:0}</b> регистраций в текущем MVP</span>
+                    {registeredHere&&<span style={{color:"#159B66",fontWeight:800}}>✓ текущий пользователь записан</span>}
+                    {ev.attachmentName&&<span>📎 {ev.attachmentName}</span>}
+                  </div>
+                  <div style={{fontSize:9.5,color:"#AAA2B2",marginTop:8}}>Полный список регистраций появится после подключения общей базы и корпоративной авторизации.</div>
+                </div>
+                <button type="button" className="mini-btn active" onClick={()=>openEventManage(ev)}>Управлять</button>
+              </section>;
+            })}
+          </div>:<div className="challenge-admin-list" style={{display:"flex",flexDirection:"column",gap:12}}>
+            {news.map(item=><section key={item.id} className="admin-form challenge-admin-row" style={{display:"grid",gridTemplateColumns:"1fr auto",gap:18,alignItems:"center",padding:"20px 22px",opacity:item.archived?.62:1}}>
+              <div>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",marginBottom:8}}>
+                  <span style={{fontSize:20}}>{item.emoji||"📢"}</span>
+                  <h3 style={{fontSize:18,margin:0}}>{item.title}</h3>
+                  <span style={{background:item.archived?"#F1EEF3":"#EAF8F1",color:item.archived?"#81798B":"#159B66",borderRadius:999,padding:"5px 9px",fontSize:10,fontWeight:800}}>{item.archived?"Снято с публикации":"Опубликовано"}</span>
+                </div>
+                <p className="muted" style={{fontSize:12,lineHeight:1.45,margin:"0 0 10px"}}>{item.text}</p>
+                <div style={{display:"flex",gap:14,flexWrap:"wrap",fontSize:11,color:"#756D7E"}}><span>{item.cat||"Новость"}</span><span>{item.date}</span>{item.imageName&&<span>📎 {item.imageName}</span>}</div>
+              </div>
+              <button type="button" className="mini-btn active" onClick={()=>openNewsManage(item)}>Управлять</button>
+            </section>)}
+          </div>}
         </>:<>
           <div className="analytics-toolbar" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:16,marginBottom:18,flexWrap:"wrap"}}>
             <div>
@@ -934,6 +1019,60 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
           <div style={{display:"flex",gap:10,justifyContent:"flex-end"}}>
             <button type="button" className="mini-btn" onClick={closeManage}>Отмена</button>
             <button type="submit" className="primary-btn" style={{width:"auto",padding:"10px 18px"}}>Сохранить изменения</button>
+          </div>
+        </form>
+      </div>}
+
+      {managedEvent&&manageEventDraft&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&closeEventManage()}>
+        <form className="light-modal manage-challenge-modal" style={{maxWidth:650}} onSubmit={saveEventManage}>
+          <button type="button" className="modal-close" onClick={closeEventManage}>×</button>
+          <div style={{fontSize:11,fontWeight:800,letterSpacing:"1.5px",color:"#8D27EE",marginBottom:8}}>УПРАВЛЕНИЕ СОБЫТИЕМ</div>
+          <h2 style={{fontSize:28,letterSpacing:"-1px",margin:"0 0 18px"}}>📅 {managedEvent.title}</h2>
+          <div className="manage-form-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <label style={{gridColumn:"1/-1"}}>Название<input value={manageEventDraft.title} onChange={e=>setManageEventDraft(p=>({...p,title:e.target.value}))}/></label>
+            <label>Дата<input type="date" value={manageEventDraft.dateISO} onChange={e=>setManageEventDraft(p=>({...p,dateISO:e.target.value}))}/></label>
+            <label>Формат / тип<input value={manageEventDraft.kind} onChange={e=>setManageEventDraft(p=>({...p,kind:e.target.value}))}/></label>
+            <label style={{gridColumn:"1/-1"}}>Место / ссылка<input value={manageEventDraft.place} onChange={e=>setManageEventDraft(p=>({...p,place:e.target.value}))}/></label>
+          </div>
+          <div style={{background:"#F7F1FC",borderRadius:16,padding:"16px",margin:"18px 0"}}>
+            <div style={{fontSize:10,fontWeight:800,color:"#8D27EE",letterSpacing:"1px",marginBottom:8}}>РЕГИСТРАЦИИ</div>
+            <div style={{fontSize:24,fontWeight:800}}>{registeredEvents.includes(managedEvent.id)?1:0}</div>
+            <div className="muted" style={{fontSize:11}}>видно в текущем MVP-браузере</div>
+            {registeredEvents.includes(managedEvent.id)&&<div style={{marginTop:10,fontSize:11,fontWeight:700,color:"#159B66"}}>✓ Диана — зарегистрирована</div>}
+            <div style={{marginTop:8,fontSize:9.5,lineHeight:1.4,color:"#AAA2B2"}}>После backend здесь будет полный список сотрудников, дата регистрации и выгрузка участников.</div>
+          </div>
+          <div style={{display:"flex",gap:10,justifyContent:"space-between",alignItems:"center"}}>
+            <button type="button" className="mini-btn" style={{color:manageEventDraft.archived?"#159B66":"#A44747"}} onClick={()=>setManageEventDraft(p=>({...p,archived:!p.archived}))}>{manageEventDraft.archived?"Вернуть из архива":"Архивировать"}</button>
+            <div style={{display:"flex",gap:10}}><button type="button" className="mini-btn" onClick={closeEventManage}>Отмена</button><button type="submit" className="primary-btn" style={{width:"auto",padding:"10px 18px"}}>Сохранить</button></div>
+          </div>
+        </form>
+      </div>}
+
+      {managedNews&&manageNewsDraft&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&closeNewsManage()}>
+        <form className="light-modal manage-challenge-modal" style={{maxWidth:650}} onSubmit={saveNewsManage}>
+          <button type="button" className="modal-close" onClick={closeNewsManage}>×</button>
+          <div style={{fontSize:11,fontWeight:800,letterSpacing:"1.5px",color:"#8D27EE",marginBottom:8}}>УПРАВЛЕНИЕ ПУБЛИКАЦИЕЙ</div>
+          <h2 style={{fontSize:28,letterSpacing:"-1px",margin:"0 0 18px"}}>{managedNews.emoji||"📢"} {managedNews.title}</h2>
+          <div className="manage-form-grid" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <label style={{gridColumn:"1/-1"}}>Заголовок<input value={manageNewsDraft.title} onChange={e=>setManageNewsDraft(p=>({...p,title:e.target.value}))}/></label>
+            <label>Категория
+              <select value={manageNewsDraft.cat} onChange={e=>setManageNewsDraft(p=>({...p,cat:e.target.value}))}>
+                <option value="Анонс">Анонс</option>
+                <option value="Новости">Новости</option>
+                <option value="Результаты">Результаты</option>
+                <option value="Итоги">Итоги</option>
+                <option value="Мероприятие">Мероприятие</option>
+              </select>
+            </label>
+            <div/>
+            <label style={{gridColumn:"1/-1"}}>Текст<textarea value={manageNewsDraft.text} onChange={e=>setManageNewsDraft(p=>({...p,text:e.target.value}))}/></label>
+          </div>
+          <div style={{background:"#F7F1FC",borderRadius:16,padding:"14px",margin:"18px 0",fontSize:11,lineHeight:1.45,color:"#756D7E"}}>
+            Статус: <b style={{color:manageNewsDraft.archived?"#81798B":"#159B66"}}>{manageNewsDraft.archived?"снято с публикации":"опубликовано"}</b>. Снятая публикация остаётся в админке, но исчезает из раздела новостей сотрудников.
+          </div>
+          <div style={{display:"flex",gap:10,justifyContent:"space-between",alignItems:"center"}}>
+            <button type="button" className="mini-btn" style={{color:manageNewsDraft.archived?"#159B66":"#A44747"}} onClick={()=>setManageNewsDraft(p=>({...p,archived:!p.archived}))}>{manageNewsDraft.archived?"Опубликовать снова":"Снять с публикации"}</button>
+            <div style={{display:"flex",gap:10}}><button type="button" className="mini-btn" onClick={closeNewsManage}>Отмена</button><button type="submit" className="primary-btn" style={{width:"auto",padding:"10px 18px"}}>Сохранить</button></div>
           </div>
         </form>
       </div>}
@@ -1226,8 +1365,18 @@ export default function App(){
     trackEvent("admin_challenge_update",id,{status:patch.status});
     notify("Изменения челленджа сохранены");
   };
-  const adminAddEvent=form=>{const d=form.date?new Date(`${form.date}T12:00:00`):new Date();setEvents(p=>[{id:`e${Date.now()}`,date:String(d.getDate()).padStart(2,"0"),day:d.toLocaleDateString("ru-RU",{weekday:"short"}).toUpperCase(),title:form.title,place:form.place||"Онлайн",kind:form.kind||"Событие",attachmentName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||""},...p]);notify("Событие добавлено");};
-  const adminAddNews=form=>{setNews(p=>[{id:Date.now(),title:form.title,cat:"Анонс",date:new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}),text:form.text||"Новая публикация",emoji:form.emoji||"📢",imageName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||"",bg:"linear-gradient(160deg,#F3EEFA,#E9F6EF)"},...p]);notify("Публикация добавлена");};
+  const adminAddEvent=form=>{const d=form.date?new Date(`${form.date}T12:00:00`):new Date();setEvents(p=>[{id:`e${Date.now()}`,date:String(d.getDate()).padStart(2,"0"),day:d.toLocaleDateString("ru-RU",{weekday:"short"}).toUpperCase(),dateISO:form.date||"",title:form.title,place:form.place||"Онлайн",kind:form.kind||"Событие",archived:false,attachmentName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||""},...p]);notify("Событие добавлено");};
+  const adminUpdateEvent=(id,patch)=>{
+    setEvents(p=>p.map(ev=>ev.id===id?{...ev,...patch}:ev));
+    trackEvent("admin_event_update",id,{archived:!!patch.archived});
+    notify(patch.archived?"Событие перемещено в архив":"Изменения события сохранены");
+  };
+  const adminAddNews=form=>{setNews(p=>[{id:Date.now(),title:form.title,cat:"Анонс",date:new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}),text:form.text||"Новая публикация",emoji:form.emoji||"📢",archived:false,imageName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||"",bg:"linear-gradient(160deg,#F3EEFA,#E9F6EF)"},...p]);notify("Публикация добавлена");};
+  const adminUpdateNews=(id,patch)=>{
+    setNews(p=>p.map(item=>item.id===id?{...item,...patch}:item));
+    trackEvent("admin_news_update",String(id),{archived:!!patch.archived});
+    notify(patch.archived?"Публикация снята":"Публикация обновлена");
+  };
 
   useEffect(()=>{trackEvent("page_view",page);},[page]);
 
@@ -1357,6 +1506,9 @@ export default function App(){
           .admin-section-tabs::-webkit-scrollbar{display:none}
           .admin-section-tabs button{flex:0 0 auto!important}
           .manage-toolbar{align-items:flex-start!important;flex-direction:column!important}
+          .manage-kind-tabs{width:100%!important;overflow-x:auto!important;scrollbar-width:none}
+          .manage-kind-tabs::-webkit-scrollbar{display:none}
+          .manage-kind-tabs button{flex:0 0 auto!important}
           .challenge-admin-metrics{gap:9px!important}
           .manage-challenge-modal>div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
           .analytics-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
@@ -1472,7 +1624,7 @@ export default function App(){
       {page==="challenges"&&<LightChallengesPage setPage={setPage} challenges={appChallenges} signedIn={signedIn} isAdmin={isAdmin} joinedChallenges={joinedChallenges} onJoin={joinChallenge} onLogin={()=>setShowLogin(true)}/>}
       {page==="news"&&<LightNewsPage setPage={setPage} news={news} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
       {page==="cabinet-light"&&<LightCabinet setPage={setPage} challenges={appChallenges} events={events} results={results} registeredEvents={registeredEvents} joinedChallenges={joinedChallenges} onSubmitResult={addResult} onToggleEvent={toggleEvent} isAdmin={isAdmin}/>}
-      {page==="admin"&&<AdminPanel setPage={setPage} challenges={appChallenges} events={events} news={news} results={results} registeredEvents={registeredEvents} joinedChallenges={joinedChallenges} onAddChallenge={adminAddChallenge} onAddEvent={adminAddEvent} onAddNews={adminAddNews} onUpdateChallenge={adminUpdateChallenge}/>}
+      {page==="admin"&&<AdminPanel setPage={setPage} challenges={appChallenges} events={events} news={news} results={results} registeredEvents={registeredEvents} joinedChallenges={joinedChallenges} onAddChallenge={adminAddChallenge} onAddEvent={adminAddEvent} onAddNews={adminAddNews} onUpdateChallenge={adminUpdateChallenge} onUpdateEvent={adminUpdateEvent} onUpdateNews={adminUpdateNews}/>}
 
       {/* ── HOME ── */}
       {page==="home"&&(
