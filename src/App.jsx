@@ -1630,6 +1630,12 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
 
 export default function App(){
   const [page,setPage]=useState(()=>hashToPage(window.location.hash));
+
+  useEffect(()=>{
+    if(window.location.search){
+      window.history.replaceState(window.history.state,"",window.location.pathname+window.location.hash);
+    }
+  },[]);
   const load=(key,fallback)=>readData(key,fallback);
   const [news,setNews]=useState(()=>load(STORAGE_KEYS.news,INIT_NEWS));
   const [appChallenges,setAppChallenges]=useState(()=>load(STORAGE_KEYS.challenges,CHALLENGES));
