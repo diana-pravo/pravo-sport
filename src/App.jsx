@@ -909,7 +909,103 @@ function ProgressModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fal
   );
 }
 
+function SupportModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=false,news=INIT_NEWS,events=[]}){
+  const tabs=[["trainer","Тренер"],["sport-news","Новости спорта"],["announcements","Анонсы"]];
+  const [questions,setQuestions]=useState(()=>readData(STORAGE_KEYS.trainerQuestions,[]));
+  const [bookmarks,setBookmarks]=useState(()=>readData(STORAGE_KEYS.supportBookmarks,[]));
+  const [topic,setTopic]=useState("Тренировки");
+  const [question,setQuestion]=useState("");
+  const [search,setSearch]=useState("");
+  const requireLogin=fn=>{if(!signedIn){onLogin?.();return;}fn();};
+  const track=(name,id,meta={})=>sendAnalyticsEvent(createAnalyticsEvent(name,id,meta));
+  const save=(key,value)=>{writeData(key,value);return value;};
+  const card={background:"#fff",border:"1px solid #E8E1ED",borderRadius:24,boxShadow:"0 10px 28px rgba(50,25,80,.045)"};
+  const trainerTopics=[
+    {icon:"🏃",title:"Подготовка к старту",text:"Как построить план и не перегореть."},
+    {icon:"🧘",title:"Восстановление",text:"Сон, мобилити и нагрузка между тренировками."},
+    {icon:"💪",title:"Силовые тренировки",text:"Базовые рекомендации для новичков."},
+    {icon:"❤️",title:"Самочувствие",text:"Как понять, когда нагрузку лучше снизить."}
+  ];
+  const visibleNews=(news||[]).filter(n=>!n.archived).filter(n=>!search||(`${n.title||""} ${n.text||""} ${n.cat||""}`).toLowerCase().includes(search.toLowerCase()));
+  const visibleEvents=(events||[]).filter(e=>!e.archived).filter(e=>!search||(`${e.title||""} ${e.place||""} ${e.kind||""}`).toLowerCase().includes(search.toLowerCase()));
+  const ask=()=>requireLogin(()=>{
+    if(!question.trim())return;
+    const item={id:`q-${Date.now()}`,topic,text:question.trim(),status:"Отправлен тренеру",date:new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"long"})};
+    const next=[item,...questions];setQuestions(next);save(STORAGE_KEYS.trainerQuestions,next);track("trainer_question_submit",item.id,{topic});setQuestion("");
+  });
+  const toggleBookmark=id=>{
+    setBookmarks(prev=>{const next=prev.includes(id)?prev.filter(x=>x!==id):[...prev,id];save(STORAGE_KEYS.supportBookmarks,next);track(prev.includes(id)?"support_bookmark_remove":"support_bookmark_add",id);return next;});
+  };
+  return(
+    <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
+      <main className="light-main support-main" style={{maxWidth:1450,margin:"0 auto",padding:"38px 42px 80px"}}>
+        <section className="support-hero" style={{...card,position:"relative",overflow:"hidden",padding:"38px",background:"linear-gradient(115deg,#EAF8F2 0%,#F7F3FC 56%,#fff 100%)"}}>
+          <img src={LIGHT_SWIM} alt="" style={{position:"absolute",right:0,top:0,width:"39%",height:"100%",objectFit:"cover",opacity:.8,maskImage:"linear-gradient(90deg,transparent,#000 35%)",WebkitMaskImage:"linear-gradient(90deg,transparent,#000 35%)"}}/>
+          <div style={{position:"relative",zIndex:2,maxWidth:760}}>
+            <div style={{fontSize:11,fontWeight:900,letterSpacing:"1.6px",color:"#159B66",marginBottom:10}}>ПОДДЕРЖКА И ИНФОРМАЦИЯ</div>
+            <h1 className="light-page-title" style={{fontSize:58,lineHeight:1,letterSpacing:"-2.8px",margin:"0 0 12px",fontWeight:800}}>Помощь, новости и важные события</h1>
+            <p style={{fontSize:16,lineHeight:1.55,color:"#6E6877",margin:0,maxWidth:650}}>Один раздел для вопросов тренеру, спортивных новостей и ближайших анонсов.</p>
+          </div>
+        </section>
+
+        <nav className="support-tabs" style={{display:"flex",gap:8,overflowX:"auto",padding:"18px 0 8px",scrollbarWidth:"none"}}>
+          {tabs.map(([id,label])=><button key={id} type="button" onClick={()=>setPage(`module:${id}`)} style={{flex:"0 0 auto",border:moduleId===id?0:"1px solid #E5DCEB",background:moduleId===id?"#10052F":"#fff",color:moduleId===id?"#fff":"#554C62",borderRadius:18,padding:"10px 15px",fontSize:12.5,fontWeight:800,cursor:"pointer"}}>{label}</button>)}
+        </nav>
+
+        {moduleId==="trainer"&&<>
+          <div className="trainer-layout" style={{display:"grid",gridTemplateColumns:"1.05fr .95fr",gap:16,marginTop:16}}>
+            <section style={{...card,padding:"24px"}}>
+              <div style={{fontSize:11,fontWeight:900,color:"#159B66",letterSpacing:"1.3px"}}>ЗАДАТЬ ВОПРОС</div><h2 style={{fontSize:28,margin:"5px 0 8px"}}>Корпоративный тренер</h2>
+              <p style={{fontSize:12.5,lineHeight:1.5,color:"#756E7E",margin:"0 0 16px"}}>Выбери тему и опиши ситуацию. В MVP вопрос сохраняется локально, а после подключения backend пойдёт в рабочую очередь тренера.</p>
+              <select value={topic} onChange={e=>setTopic(e.target.value)} style={{width:"100%",border:"1px solid #E4DCE9",borderRadius:12,padding:"11px 12px",font:"inherit",background:"#fff",marginBottom:9}}>{["Тренировки","Подготовка к старту","Восстановление","Самочувствие","Питание"].map(x=><option key={x}>{x}</option>)}</select>
+              <textarea value={question} onChange={e=>setQuestion(e.target.value)} placeholder="Напиши свой вопрос..." style={{width:"100%",minHeight:130,border:"1px solid #E4DCE9",borderRadius:12,padding:"11px 12px",font:"inherit",resize:"vertical",marginBottom:10}}/>
+              <button className="primary-btn" onClick={ask}>Отправить тренеру</button>
+              {questions.length>0&&<div style={{marginTop:18}}><h3 style={{fontSize:15,margin:"0 0 8px"}}>Мои вопросы</h3>{questions.slice(0,4).map(q=><div key={q.id} style={{display:"grid",gridTemplateColumns:"1fr auto",gap:12,padding:"10px 0",borderTop:"1px solid #EEE7F2"}}><div><b style={{fontSize:12}}>{q.topic}</b><div style={{fontSize:11,color:"#7B7484",marginTop:3}}>{q.text}</div></div><span style={{fontSize:10,fontWeight:800,color:"#159B66",background:"#EAF8F2",borderRadius:999,padding:"6px 9px",alignSelf:"start"}}>{q.status}</span></div>)}</div>}
+            </section>
+            <section style={{...card,padding:"24px"}}>
+              <div style={{fontSize:11,fontWeight:900,color:"#159B66",letterSpacing:"1.3px"}}>ЧАСТЫЕ ТЕМЫ</div><h2 style={{fontSize:25,margin:"5px 0 16px"}}>С чего начать</h2>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:10}}>
+                {trainerTopics.map(x=><div key={x.title} style={{border:"1px solid #EEE7F2",borderRadius:18,padding:"16px"}}><div style={{fontSize:25}}>{x.icon}</div><b style={{display:"block",fontSize:13,margin:"9px 0 4px"}}>{x.title}</b><span style={{fontSize:11,color:"#7B7484",lineHeight:1.45}}>{x.text}</span></div>)}
+              </div>
+            </section>
+          </div>
+        </>}
+
+        {moduleId==="sport-news"&&<>
+          <div className="support-section-head" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,margin:"28px 0 16px"}}>
+            <div><div style={{fontSize:11,fontWeight:900,color:"#159B66",letterSpacing:"1.3px"}}>НОВОСТИ СПОРТА</div><h2 style={{fontSize:31,margin:"5px 0 0",letterSpacing:"-1.2px"}}>Что происходит в сообществе</h2></div>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Поиск по новостям" style={{width:280,border:"1px solid #E4DCE9",borderRadius:14,padding:"10px 12px",font:"inherit",outline:"none"}}/>
+          </div>
+          <div className="support-news-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:14}}>
+            {visibleNews.map((n,i)=>{const id=String(n.id||i);const saved=bookmarks.includes(id);return <article key={id} style={{...card,overflow:"hidden"}}>
+              <div style={{height:145,background:i%2===0?"linear-gradient(135deg,#DDF4EC,#EDE1FA)":"linear-gradient(135deg,#FFF0DA,#E7EFFB)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:54}}>{n.emoji||"🏃"}</div>
+              <div style={{padding:"18px"}}><div style={{display:"flex",justifyContent:"space-between",gap:10}}><span style={{fontSize:10,fontWeight:900,color:"#159B66"}}>{(n.cat||"Новость").toUpperCase()}</span><button onClick={()=>toggleBookmark(id)} style={{border:0,background:"transparent",cursor:"pointer",color:saved?"#8D27EE":"#A49CAB",fontSize:18}}>{saved?"★":"☆"}</button></div><h3 style={{fontSize:19,lineHeight:1.15,margin:"9px 0 8px"}}>{n.title}</h3><p style={{fontSize:12,lineHeight:1.5,color:"#756E7E",margin:0}}>{n.text}</p><button onClick={()=>track("news_view",id)} style={{border:0,background:"transparent",padding:0,color:"#8D27EE",fontWeight:800,cursor:"pointer",marginTop:14}}>Читать ↗</button></div>
+            </article>})}
+          </div>
+        </>}
+
+        {moduleId==="announcements"&&<>
+          <div className="support-section-head" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,margin:"28px 0 16px"}}>
+            <div><div style={{fontSize:11,fontWeight:900,color:"#159B66",letterSpacing:"1.3px"}}>АНОНСЫ</div><h2 style={{fontSize:31,margin:"5px 0 0",letterSpacing:"-1.2px"}}>Что скоро будет</h2></div>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Поиск по событиям" style={{width:280,border:"1px solid #E4DCE9",borderRadius:14,padding:"10px 12px",font:"inherit",outline:"none"}}/>
+          </div>
+          <div className="announcement-list" style={{display:"grid",gap:12}}>
+            {visibleEvents.map((e,i)=><article key={e.id||i} style={{...card,padding:"18px 20px",display:"grid",gridTemplateColumns:"74px 1fr auto",gap:18,alignItems:"center"}}>
+              <div style={{width:62,height:62,borderRadius:18,background:"#EAF8F2",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><b style={{fontSize:23,lineHeight:1}}>{e.date||"—"}</b><span style={{fontSize:10,color:"#159B66",fontWeight:800,marginTop:4}}>{e.day||""}</span></div>
+              <div><div style={{fontSize:10,fontWeight:900,color:"#159B66"}}>{(e.kind||"СОБЫТИЕ").toUpperCase()}</div><h3 style={{fontSize:18,margin:"5px 0 4px"}}>{e.title}</h3><div style={{fontSize:11,color:"#7B7484"}}>{e.place||"Онлайн"}</div></div>
+              <button onClick={()=>track("event_view",String(e.id||i))} type="button" style={{border:"1px solid #D8CDE2",background:"#fff",color:"#7C2BD0",borderRadius:14,padding:"9px 12px",fontWeight:800,cursor:"pointer"}}>Подробнее</button>
+            </article>)}
+          </div>
+          {visibleEvents.length===0&&<div style={{...card,padding:"28px",textAlign:"center",color:"#7B7484"}}>По этому запросу событий пока нет.</div>}
+        </>}
+      </main>
+    </div>
+  );
+}
+
 function PlatformModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=false}){
+  if(["trainer","sport-news","announcements"].includes(moduleId)) return <SupportModulePage setPage={setPage} moduleId={moduleId} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>;
   if(["ratings","coins","benefits","achievement"].includes(moduleId)) return <ProgressModulePage setPage={setPage} moduleId={moduleId} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>;
   if(["city-sport","teams","buddy","ambassadors","athlete-card"].includes(moduleId)) return <CommunityModulePage setPage={setPage} moduleId={moduleId} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>;
   const module=PLATFORM_MODULES.find(item=>item.id===moduleId);
@@ -1848,6 +1944,9 @@ export default function App(){
         .module-feature-grid>div{transition:transform .18s ease}.module-feature-grid>div:hover{transform:translateY(-2px)}
         .community-tabs::-webkit-scrollbar{display:none}.community-main select,.community-main input{color:#10052F}
         .progress-tabs::-webkit-scrollbar{display:none}.progress-main input,.progress-main textarea{color:#10052F;outline:none}
+        .support-tabs::-webkit-scrollbar{display:none}.support-main input,.support-main textarea,.support-main select{color:#10052F;outline:none}
+        @media(max-width:1000px){.trainer-layout{grid-template-columns:1fr!important}.support-news-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+        @media(max-width:620px){.support-main{padding-top:24px!important}.support-hero{padding:26px!important}.support-hero>img{width:58%!important;opacity:.5!important}.support-hero>div{max-width:80%!important}.support-section-head{align-items:flex-start!important;flex-direction:column!important}.support-section-head input{width:100%!important}.support-news-grid{grid-template-columns:1fr!important}.announcement-list article{grid-template-columns:58px 1fr!important}.announcement-list article>button{grid-column:1/-1!important;width:100%!important}}
         @media(max-width:1000px){.progress-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.coin-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.benefit-grid{grid-template-columns:1fr!important}.achievement-layout{grid-template-columns:1fr!important}}
         @media(max-width:620px){.progress-main{padding-top:24px!important}.progress-hero{padding:26px!important}.progress-hero>img{width:58%!important;opacity:.5!important}.progress-hero>div{max-width:78%!important}.progress-kpis,.coin-grid{grid-template-columns:1fr!important}.rating-row{grid-template-columns:28px 38px 1fr auto!important}.rating-row>div:nth-child(4){grid-column:3/5;text-align:left!important}.rating-row>div:nth-child(5){display:none}.benefit-grid article{grid-template-columns:52px 1fr!important}.benefit-grid article>button{grid-column:1/-1!important;width:100%!important}.achievement-showcase{grid-template-columns:1fr!important}}
         @media(max-width:1000px){.community-people-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.community-filters{grid-template-columns:1fr 1fr!important}.community-filters input{grid-column:1/-1}.community-grid{grid-template-columns:1fr!important}}
