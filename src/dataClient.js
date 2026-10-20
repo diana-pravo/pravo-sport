@@ -14,6 +14,8 @@ export const STORAGE_KEYS = Object.freeze({
   communityTeams: "pravo-sport-community-teams",
   communityBuddyRequests: "pravo-sport-community-buddy-requests",
   communityApplications: "pravo-sport-community-applications",
+  rewardRedemptions: "pravo-sport-reward-redemptions",
+  achievementClaims: "pravo-sport-achievement-claims",
 });
 
 export const DATA_MODE = API_BASE_URL ? "remote-ready" : "local-demo";
