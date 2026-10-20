@@ -103,6 +103,39 @@ const MVP_ICE="/assets/challenge-ice.webp";
 const MVP_SURF="/assets/team-surf.webp";
 const MVP_SPLASH=IMG4;
 
+const FREE_CYCLE="https://images.unsplash.com/photo-1669748828862-44819cec7d6b?auto=format&fit=crop&w=1600&q=82";
+const FREE_YOGA="https://images.unsplash.com/photo-1695795634692-567cec15ad95?auto=format&fit=crop&w=1600&q=82";
+
+function SportIcon({name,size=22,strokeWidth=1.9}){
+  const common={width:size,height:size,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth,strokeLinecap:"round",strokeLinejoin:"round","aria-hidden":true};
+  const paths={
+    trophy:<><path d="M8 4h8v3c0 4-2.3 7-4 7s-4-3-4-7V4Z"/><path d="M8 6H5v1c0 2.2 1.3 3.7 3.5 4"/><path d="M16 6h3v1c0 2.2-1.3 3.7-3.5 4"/><path d="M12 14v4"/><path d="M9 20h6"/></>,
+    run:<><circle cx="13" cy="4.5" r="1.5"/><path d="m10 9 3-2 2.5 2.5 2.5.5"/><path d="m12.5 8.5-1 4 3 2.5"/><path d="m11.5 12.5-3 2-2 4"/><path d="m14.5 15-1 4"/></>,
+    pin:<><path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z"/><circle cx="12" cy="10" r="2"/></>,
+    mic:<><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 10a6 6 0 0 0 12 0"/><path d="M12 16v4"/><path d="M9 20h6"/></>,
+    map:<><path d="m3 6 5-2 8 2 5-2v14l-5 2-8-2-5 2V6Z"/><path d="M8 4v14"/><path d="M16 6v14"/></>,
+    star:<><path d="m12 3 2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8L12 3Z"/></>,
+    profile:<><circle cx="12" cy="8" r="3"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></>,
+    users:<><circle cx="9" cy="8" r="3"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 6.5a2.5 2.5 0 0 1 0 5"/><path d="M18 14a5 5 0 0 1 2.5 4.3"/></>,
+    heart:<><path d="M20.8 4.8a5.5 5.5 0 0 0-7.8 0L12 5.8l-1-1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.4a5.5 5.5 0 0 0 0-7.8Z"/></>,
+    chart:<><path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M22 19H2"/></>,
+    coin:<><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.5"/></>,
+    gift:<><rect x="4" y="9" width="16" height="11" rx="2"/><path d="M12 9v11"/><path d="M3 9h18"/><path d="M12 9c-3.2 0-5-1.3-5-3 0-1.3 1-2 2-2 1.8 0 3 2.6 3 5Z"/><path d="M12 9c3.2 0 5-1.3 5-3 0-1.3-1-2-2-2-1.8 0-3 2.6-3 5Z"/></>,
+    flag:<><path d="M5 21V4"/><path d="M5 5h10l-2 3 2 3H5"/></>,
+    chat:<><path d="M4 5h16v11H8l-4 4V5Z"/><path d="M8 9h8"/><path d="M8 12h5"/></>,
+    news:<><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></>,
+    bell:<><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"/><path d="M10 19h4"/></>,
+    bolt:<><path d="m13 2-8 12h6l-1 8 8-12h-6l1-8Z"/></>,
+    arrow:<><path d="M5 12h14"/><path d="m14 7 5 5-5 5"/></>,
+    dumbbell:<><path d="M6 8v8"/><path d="M18 8v8"/><path d="M3 10v4"/><path d="M21 10v4"/><path d="M6 12h12"/></>,
+    shirt:<><path d="m8 4 4 2 4-2 4 3-3 4v9H7v-9L4 7l4-3Z"/></>,
+    wave:<><path d="M3 15c3-4 5 4 8 0s5 4 10 0"/><path d="M3 10c3-4 5 4 8 0s5 4 10 0"/></>
+  };
+  return <svg {...common}>{paths[name]||paths.arrow}</svg>;
+}
+const MODULE_ICON_MAP={challenges:"trophy",starts:"run",offline:"pin",meetups:"mic","city-sport":"map",ambassadors:"star","athlete-card":"profile",teams:"users",buddy:"heart",ratings:"chart",coins:"coin",benefits:"gift",achievement:"flag",trainer:"chat","sport-news":"news",announcements:"bell"};
+const ModuleIcon=({id,size=22})=><SportIcon name={MODULE_ICON_MAP[id]||"arrow"} size={size}/>;
+
 function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false,activeGroup:activeGroupProp=""}){
   const [activeGroup,setActiveGroup]=useState(activeGroupProp);
   const [mobileMenuOpen,setMobileMenuOpen]=useState(false);
@@ -166,7 +199,7 @@ const PLATFORM_BLOCKS=[
   {
     id:"participate",n:"01",title:"Участвовать",eyebrow:"ВКЛЮЧАЙСЯ В ДВИЖЕНИЕ",
     description:"Выбирай формат, регистрируйся и участвуй — от челленджей до живых встреч.",
-    accent:"#8D27EE",soft:"#F3EAFE",image:MVP_SPLASH,
+    accent:"#8D27EE",soft:"#F3EAFE",image:FREE_CYCLE,
     modules:[
       {id:"challenges",icon:"🏆",title:"Челленджи",text:"Активные, будущие и прошедшие челленджи.",target:"challenges",features:["Активные челленджи","Будущие анонсы","Прошедшие челленджи","Рейтинг"]},
       {id:"starts",icon:"🏃",title:"Забеги / старты",text:"Твои старты, календарь и заявки.",features:["Твои старты","Календарь ПравоТех","Заявка на компенсацию","Новости стартов"]},
@@ -200,7 +233,7 @@ const PLATFORM_BLOCKS=[
   {
     id:"support",n:"04",title:"Поддержка и информация",eyebrow:"ВСЁ НУЖНОЕ В ОДНОМ МЕСТЕ",
     description:"Получай помощь, читай новости и не пропускай будущие спортивные события.",
-    accent:"#159B66",soft:"#EAF8F2",image:LIGHT_SWIM,
+    accent:"#159B66",soft:"#EAF8F2",image:FREE_YOGA,
     modules:[
       {id:"trainer",icon:"💬",title:"Консультации с тренером",text:"Задай вопрос корпоративному тренеру.",features:["Задать вопрос","Перечень тем","Ответ корпоративного тренера"]},
       {id:"sport-news",icon:"▤",title:"Новости спорта",text:"Сводка спортивной жизни компании.",features:["Новости компании","Истории коллег","Добавить новость","Модерация"]},
@@ -283,16 +316,16 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
     {type:"АНОНС",date:"18 мая 2026",title:"Открываем регистрацию на летний заплыв",mode:"purple"}
   ];
   const rewards=[
-    {n:"01",emoji:"🏆",title:"Лидер сезона",text:"Сертификат 5 000 ₽ и фирменный мерч",bg:"#11052F",fg:"#fff"},
-    {n:"02",emoji:"⚡",title:"Серия 14 дней",text:"Эксклюзивный дроп право(спорт)",bg:"#8D27EE",fg:"#fff"},
-    {n:"03",emoji:"♥",title:"Командный игрок",text:"Бонусные баллы за поддержку коллег",bg:"#E9FF1F",fg:"#10052F"},
-    {n:"+",emoji:"↗",title:"Новые награды",text:"Открывай достижения в каждом челлендже",bg:"#fff",fg:"#10052F"}
+    {n:"01",icon:"trophy",title:"Лидер сезона",text:"Сертификат 5 000 ₽ и фирменный мерч",bg:"#11052F",fg:"#fff"},
+    {n:"02",icon:"bolt",title:"Серия 14 дней",text:"Эксклюзивный дроп право(спорт)",bg:"#8D27EE",fg:"#fff"},
+    {n:"03",icon:"heart",title:"Командный игрок",text:"Бонусные баллы за поддержку коллег",bg:"#E9FF1F",fg:"#10052F"},
+    {n:"+",icon:"arrow",title:"Новые награды",text:"Открывай достижения в каждом челлендже",bg:"#fff",fg:"#10052F"}
   ];
   const steps=[
-    {n:"01",icon:"◎",title:"Выбери челлендж",text:"Личный или командный — какой подходит сейчас."},
-    {n:"02",icon:"↗",title:"Фиксируй результат",text:"Добавляй активность и следи за прогрессом."},
-    {n:"03",icon:"✦",title:"Поддерживай своих",text:"Реакции коллег помогают не останавливаться."},
-    {n:"04",icon:"⌁",title:"Получай награды",text:"Баллы, достижения и приятные спортивные бонусы."}
+    {n:"01",icon:"trophy",title:"Выбери челлендж",text:"Личный или командный — какой подходит сейчас."},
+    {n:"02",icon:"chart",title:"Фиксируй результат",text:"Добавляй активность и следи за прогрессом."},
+    {n:"03",icon:"heart",title:"Поддерживай своих",text:"Реакции коллег помогают не останавливаться."},
+    {n:"04",icon:"gift",title:"Получай награды",text:"Баллы, достижения и приятные спортивные бонусы."}
   ];
   return(
     <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
@@ -329,7 +362,7 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
               </div>
               <div className="platform-module-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:10,padding:14}}>
                 {(block.id==="community"?block.modules.filter(module=>module.id!=="athlete-card"):block.modules).map((module,moduleIndex,visibleModules)=><button key={module.id} type="button" className="platform-module-btn" onClick={()=>module.target?setPage(module.target):setPage(`module:${module.id}`)} style={{appearance:"none",border:"1px solid #EEE8F2",borderRadius:18,background:"#fff",padding:"15px 14px",display:"grid",gridTemplateColumns:"38px 1fr 18px",gap:10,alignItems:"center",textAlign:"left",color:"#10052F",cursor:"pointer",minHeight:88,gridColumn:visibleModules.length%2===1&&moduleIndex===visibleModules.length-1?"1/-1":undefined}}>
-                  <span style={{width:38,height:38,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",background:block.soft,color:block.accent,fontSize:19,fontWeight:900}}>{module.icon}</span>
+                  <span style={{width:38,height:38,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",background:block.soft,color:block.accent,fontSize:19,fontWeight:900}}><ModuleIcon id={module.id} size={22}/></span>
                   <span>
                     <b style={{display:"block",fontSize:14,lineHeight:1.25,marginBottom:4}}>{module.title}</b>
                     <small style={{display:"block",fontSize:11,lineHeight:1.35,color:"#7A7383"}}>{module.text}</small>
@@ -381,7 +414,7 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
           <div className="rewards-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
             {rewards.map((r,i)=><div key={r.n} style={{height:350,borderRadius:28,background:r.bg,color:r.fg,border:r.bg==="#fff"?"1px solid #DED8E3":"none",padding:"27px",display:"flex",flexDirection:"column"}}>
               <div style={{fontSize:12,fontWeight:800}}>{r.n}</div>
-              <div style={{fontSize:i===3?64:50,textAlign:"center",margin:"65px 0 0"}}>{r.emoji}</div>
+              <div style={{fontSize:i===3?64:50,textAlign:"center",margin:"65px 0 0"}}><SportIcon name={r.icon} size={i===3?54:46}/></div>
               <div style={{marginTop:"auto"}}><h3 style={{fontSize:23,margin:"0 0 8px",fontWeight:800}}>{r.title}</h3><p style={{fontSize:13,lineHeight:1.45,opacity:.75,margin:0}}>{r.text}</p></div>
             </div>)}
           </div>
@@ -396,7 +429,7 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
           <div>
             {steps.map(s=><div key={s.n} style={{display:"grid",gridTemplateColumns:"40px 58px 1fr",gap:18,alignItems:"center",padding:"20px 0",borderBottom:"1px solid #E8E4EA"}}>
               <div style={{fontSize:12,color:"#8D27EE",fontWeight:800}}>{s.n}</div>
-              <div style={{width:56,height:56,borderRadius:18,background:"#F5EDFC",display:"flex",alignItems:"center",justifyContent:"center",color:"#8D27EE",fontSize:24}}>{s.icon}</div>
+              <div style={{width:56,height:56,borderRadius:18,background:"#F5EDFC",display:"flex",alignItems:"center",justifyContent:"center",color:"#8D27EE",fontSize:24}}><SportIcon name={s.icon} size={22}/></div>
               <div><h3 style={{fontSize:21,margin:"0 0 4px",fontWeight:800}}>{s.title}</h3><p style={{fontSize:14,color:"#7B7483",margin:0}}>{s.text}</p></div>
             </div>)}
           </div>
@@ -648,16 +681,16 @@ function ProgressModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fal
     {rank:6,name:"Никита Р.",team:"Product",value:"36 500 шагов",delta:"+1",avatar:"НР"}
   ];
   const rewards=[
-    {id:"fitmost",title:"Fitmost",text:"Доступ к спортивным студиям и тренировкам.",cost:120,emoji:"🏋️"},
-    {id:"merch",title:"Спортивный мерч",text:"Футболка или аксессуар право(спорт).",cost:90,emoji:"👕"},
-    {id:"consult",title:"Персональная консультация",text:"30 минут с корпоративным тренером.",cost:70,emoji:"💬"},
-    {id:"start",title:"Компенсация старта",text:"Часть стоимости участия в согласованном старте.",cost:180,emoji:"🏁"}
+    {id:"fitmost",title:"Fitmost",text:"Доступ к спортивным студиям и тренировкам.",cost:120,icon:"dumbbell"},
+    {id:"merch",title:"Спортивный мерч",text:"Футболка или аксессуар право(спорт).",cost:90,icon:"shirt"},
+    {id:"consult",title:"Персональная консультация",text:"30 минут с корпоративным тренером.",cost:70,icon:"chat"},
+    {id:"start",title:"Компенсация старта",text:"Часть стоимости участия в согласованном старте.",cost:180,icon:"flag"}
   ];
   const earned=[
-    {id:"streak",icon:"⚡",title:"Серия 14 дней",text:"Активность 14 дней подряд",done:true},
-    {id:"team",icon:"♥",title:"Командный игрок",text:"Поддержка коллег и командные активности",done:true},
-    {id:"starter",icon:"🏁",title:"Первый старт",text:"Первый подтверждённый результат",done:true},
-    {id:"leader",icon:"🏆",title:"Топ-3 сезона",text:"Попади в тройку рейтинга",done:false}
+    {id:"streak",icon:"bolt",title:"Серия 14 дней",text:"Активность 14 дней подряд",done:true},
+    {id:"team",icon:"heart",title:"Командный игрок",text:"Поддержка коллег и командные активности",done:true},
+    {id:"starter",icon:"flag",title:"Первый старт",text:"Первый подтверждённый результат",done:true},
+    {id:"leader",icon:"trophy",title:"Топ-3 сезона",text:"Попади в тройку рейтинга",done:false}
   ];
   const coinBalance=145-redemptions.reduce((sum,id)=>sum+(rewards.find(r=>r.id===id)?.cost||0),0);
   const redeem=reward=>requireLogin(()=>{
@@ -719,7 +752,7 @@ function ProgressModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fal
           <div className="progress-section-head" style={{margin:"28px 0 16px"}}><div style={{fontSize:11,fontWeight:900,color:"#D97706",letterSpacing:"1.3px"}}>БЕНЕФИТЫ</div><h2 style={{fontSize:31,margin:"5px 0 0",letterSpacing:"-1.2px"}}>На что можно потратить коины</h2></div>
           <div className="benefit-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:14}}>
             {rewards.map(r=>{const used=redemptions.includes(r.id);const disabled=used||coinBalance<r.cost;return <article key={r.id} style={{...card,padding:"22px",display:"grid",gridTemplateColumns:"58px 1fr auto",gap:16,alignItems:"center"}}>
-              <div style={{width:58,height:58,borderRadius:18,background:"#FFF4E5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:27}}>{r.emoji}</div>
+              <div style={{width:58,height:58,borderRadius:18,background:"#FFF4E5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:27}}><SportIcon name={r.icon} size={27}/></div>
               <div><h3 style={{fontSize:18,margin:"0 0 5px"}}>{r.title}</h3><p style={{fontSize:12,color:"#756E7E",margin:0,lineHeight:1.45}}>{r.text}</p><div style={{fontSize:11,fontWeight:900,color:"#D97706",marginTop:8}}>{r.cost} коинов</div></div>
               <button onClick={()=>redeem(r)} disabled={disabled} type="button" style={{border:0,background:used?"#E9F8EF":disabled?"#F2EEF4":"#10052F",color:used?"#08783F":disabled?"#9991A0":"#fff",borderRadius:14,padding:"9px 12px",fontWeight:800,cursor:disabled?"default":"pointer"}}>{used?"✓ Выбрано":coinBalance<r.cost?"Не хватает":"Выбрать"}</button>
             </article>})}
@@ -732,7 +765,7 @@ function ProgressModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fal
               <div style={{fontSize:11,fontWeight:900,color:"#D97706",letterSpacing:"1.3px"}}>МОИ ДОСТИЖЕНИЯ</div><h2 style={{fontSize:28,margin:"5px 0 20px"}}>Открытые бейджи</h2>
               <div className="achievement-showcase" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:10}}>
                 {earned.map(a=><div key={a.id} style={{border:"1px solid #EEE7F2",borderRadius:18,padding:"18px",opacity:a.done?1:.45,background:a.done?"#fff":"#FAF8FB"}}>
-                  <div style={{fontSize:32}}>{a.icon}</div><b style={{display:"block",fontSize:14,margin:"10px 0 4px"}}>{a.title}</b><span style={{fontSize:11,color:"#7B7484"}}>{a.text}</span>
+                  <div style={{fontSize:32}}><SportIcon name={a.icon} size={30}/></div><b style={{display:"block",fontSize:14,margin:"10px 0 4px"}}>{a.title}</b><span style={{fontSize:11,color:"#7B7484"}}>{a.text}</span>
                 </div>)}
               </div>
             </section>
@@ -757,15 +790,17 @@ function SupportModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fals
   const [topic,setTopic]=useState("Тренировки");
   const [question,setQuestion]=useState("");
   const [search,setSearch]=useState("");
+  const [selectedNews,setSelectedNews]=useState(null);
+  const [selectedEvent,setSelectedEvent]=useState(null);
   const requireLogin=fn=>{if(!signedIn){onLogin?.();return;}fn();};
   const track=(name,id,meta={})=>sendAnalyticsEvent(createAnalyticsEvent(name,id,meta));
   const save=(key,value)=>{writeData(key,value);return value;};
   const card={background:"#fff",border:"1px solid #E8E1ED",borderRadius:24,boxShadow:"0 10px 28px rgba(50,25,80,.045)"};
   const trainerTopics=[
-    {icon:"🏃",title:"Подготовка к старту",text:"Как построить план и не перегореть."},
-    {icon:"🧘",title:"Восстановление",text:"Сон, мобилити и нагрузка между тренировками."},
-    {icon:"💪",title:"Силовые тренировки",text:"Базовые рекомендации для новичков."},
-    {icon:"❤️",title:"Самочувствие",text:"Как понять, когда нагрузку лучше снизить."}
+    {icon:"run",title:"Подготовка к старту",text:"Как построить план и не перегореть."},
+    {icon:"wave",title:"Восстановление",text:"Сон, мобилити и нагрузка между тренировками."},
+    {icon:"dumbbell",title:"Силовые тренировки",text:"Базовые рекомендации для новичков."},
+    {icon:"heart",title:"Самочувствие",text:"Как понять, когда нагрузку лучше снизить."}
   ];
   const visibleNews=(news||[]).filter(n=>!n.archived).filter(n=>!search||(`${n.title||""} ${n.text||""} ${n.cat||""}`).toLowerCase().includes(search.toLowerCase()));
   const visibleEvents=(events||[]).filter(e=>!e.archived).filter(e=>!search||(`${e.title||""} ${e.place||""} ${e.kind||""}`).toLowerCase().includes(search.toLowerCase()));
@@ -807,7 +842,7 @@ function SupportModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fals
             <section style={{...card,padding:"24px"}}>
               <div style={{fontSize:11,fontWeight:900,color:"#159B66",letterSpacing:"1.3px"}}>ЧАСТЫЕ ТЕМЫ</div><h2 style={{fontSize:25,margin:"5px 0 16px"}}>С чего начать</h2>
               <div style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:10}}>
-                {trainerTopics.map(x=><div key={x.title} style={{border:"1px solid #EEE7F2",borderRadius:18,padding:"16px"}}><div style={{fontSize:25}}>{x.icon}</div><b style={{display:"block",fontSize:13,margin:"9px 0 4px"}}>{x.title}</b><span style={{fontSize:11,color:"#7B7484",lineHeight:1.45}}>{x.text}</span></div>)}
+                {trainerTopics.map(x=><div key={x.title} style={{border:"1px solid #EEE7F2",borderRadius:18,padding:"16px"}}><div style={{fontSize:25}}><SportIcon name={x.icon} size={25}/></div><b style={{display:"block",fontSize:13,margin:"9px 0 4px"}}>{x.title}</b><span style={{fontSize:11,color:"#7B7484",lineHeight:1.45}}>{x.text}</span></div>)}
               </div>
             </section>
           </div>
@@ -821,7 +856,7 @@ function SupportModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fals
           <div className="support-news-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:14}}>
             {visibleNews.map((n,i)=>{const id=String(n.id||i);const saved=bookmarks.includes(id);return <article key={id} style={{...card,overflow:"hidden"}}>
               <div style={{height:145,background:i%2===0?"linear-gradient(135deg,#DDF4EC,#EDE1FA)":"linear-gradient(135deg,#FFF0DA,#E7EFFB)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:54}}>{n.emoji||"🏃"}</div>
-              <div style={{padding:"18px"}}><div style={{display:"flex",justifyContent:"space-between",gap:10}}><span style={{fontSize:10,fontWeight:900,color:"#159B66"}}>{(n.cat||"Новость").toUpperCase()}</span><button onClick={()=>toggleBookmark(id)} style={{border:0,background:"transparent",cursor:"pointer",color:saved?"#8D27EE":"#A49CAB",fontSize:18}}>{saved?"★":"☆"}</button></div><h3 style={{fontSize:19,lineHeight:1.15,margin:"9px 0 8px"}}>{n.title}</h3><p style={{fontSize:12,lineHeight:1.5,color:"#756E7E",margin:0}}>{n.text}</p><button onClick={()=>track("news_view",id)} style={{border:0,background:"transparent",padding:0,color:"#8D27EE",fontWeight:800,cursor:"pointer",marginTop:14}}>Читать ↗</button></div>
+              <div style={{padding:"18px"}}><div style={{display:"flex",justifyContent:"space-between",gap:10}}><span style={{fontSize:10,fontWeight:900,color:"#159B66"}}>{(n.cat||"Новость").toUpperCase()}</span><button onClick={()=>toggleBookmark(id)} style={{border:0,background:"transparent",cursor:"pointer",color:saved?"#8D27EE":"#A49CAB",fontSize:18}}>{saved?"★":"☆"}</button></div><h3 style={{fontSize:19,lineHeight:1.15,margin:"9px 0 8px"}}>{n.title}</h3><p style={{fontSize:12,lineHeight:1.5,color:"#756E7E",margin:0}}>{n.text}</p><button onClick={()=>{setSelectedNews(n);track("news_view",id);}} style={{border:0,background:"transparent",padding:0,color:"#8D27EE",fontWeight:800,cursor:"pointer",marginTop:14}}>Читать ↗</button></div>
             </article>})}
           </div>
         </>}
@@ -835,12 +870,28 @@ function SupportModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fals
             {visibleEvents.map((e,i)=><article key={e.id||i} style={{...card,padding:"18px 20px",display:"grid",gridTemplateColumns:"74px 1fr auto",gap:18,alignItems:"center"}}>
               <div style={{width:62,height:62,borderRadius:18,background:"#EAF8F2",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><b style={{fontSize:23,lineHeight:1}}>{e.date||"—"}</b><span style={{fontSize:10,color:"#159B66",fontWeight:800,marginTop:4}}>{e.day||""}</span></div>
               <div><div style={{fontSize:10,fontWeight:900,color:"#159B66"}}>{(e.kind||"СОБЫТИЕ").toUpperCase()}</div><h3 style={{fontSize:18,margin:"5px 0 4px"}}>{e.title}</h3><div style={{fontSize:11,color:"#7B7484"}}>{e.place||"Онлайн"}</div></div>
-              <button onClick={()=>track("event_view",String(e.id||i))} type="button" style={{border:"1px solid #D8CDE2",background:"#fff",color:"#7C2BD0",borderRadius:14,padding:"9px 12px",fontWeight:800,cursor:"pointer"}}>Подробнее</button>
+              <button onClick={()=>{setSelectedEvent(e);track("event_view",String(e.id||i));}} type="button" style={{border:"1px solid #D8CDE2",background:"#fff",color:"#7C2BD0",borderRadius:14,padding:"9px 12px",fontWeight:800,cursor:"pointer"}}>Подробнее</button>
             </article>)}
           </div>
           {visibleEvents.length===0&&<div style={{...card,padding:"28px",textAlign:"center",color:"#7B7484"}}>По этому запросу событий пока нет.</div>}
         </>}
       </main>
+      {selectedNews&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setSelectedNews(null)}><article className="light-modal" style={{maxWidth:620}}>
+        <button className="modal-close" onClick={()=>setSelectedNews(null)}>×</button>
+        <div style={{fontSize:10,fontWeight:900,letterSpacing:"1.2px",color:"#159B66"}}>{(selectedNews.cat||"НОВОСТЬ").toUpperCase()}</div>
+        <h2 style={{fontSize:30,lineHeight:1.08}}>{selectedNews.title}</h2>
+        <div style={{fontSize:12,color:"#81798B"}}>{selectedNews.date||""}</div>
+        <p style={{fontSize:14,lineHeight:1.65,color:"#5F5869",margin:0}}>{selectedNews.text||"Подробности публикации появятся здесь."}</p>
+      </article></div>}
+      {selectedEvent&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setSelectedEvent(null)}><article className="light-modal" style={{maxWidth:560}}>
+        <button className="modal-close" onClick={()=>setSelectedEvent(null)}>×</button>
+        <div style={{display:"flex",alignItems:"center",gap:12}}><div style={{width:58,height:58,borderRadius:18,background:"#EAF8F2",color:"#159B66",display:"flex",alignItems:"center",justifyContent:"center"}}><SportIcon name="bell" size={26}/></div><div><div style={{fontSize:10,fontWeight:900,color:"#159B66"}}>{(selectedEvent.kind||"СОБЫТИЕ").toUpperCase()}</div><h2 style={{fontSize:26,margin:"4px 0 0"}}>{selectedEvent.title}</h2></div></div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:10}}>
+          <div style={{background:"#F8F4FB",borderRadius:14,padding:"13px"}}><b style={{fontSize:12}}>Когда</b><div style={{fontSize:12,color:"#756E7E",marginTop:4}}>{selectedEvent.date||"Дата уточняется"} {selectedEvent.day||""}</div></div>
+          <div style={{background:"#F8F4FB",borderRadius:14,padding:"13px"}}><b style={{fontSize:12}}>Где</b><div style={{fontSize:12,color:"#756E7E",marginTop:4}}>{selectedEvent.place||"Онлайн"}</div></div>
+        </div>
+        <p style={{fontSize:13.5,lineHeight:1.6,color:"#5F5869",margin:0}}>{selectedEvent.meta||"Подробная информация о событии появится здесь."}</p>
+      </article></div>}
     </div>
   );
 }
@@ -957,7 +1008,7 @@ function PlatformOverviewPage({setPage,blockId,signedIn=false,onLogin,isAdmin=fa
           <h2 style={{fontSize:34,letterSpacing:"-1.3px",margin:"0 0 18px"}}>Куда перейти</h2>
           <div className="overview-module-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:14}}>
             {block.modules.map(module=><button key={module.id} type="button" onClick={()=>openModule(module)} style={{appearance:"none",border:"1px solid #E7E0EC",borderRadius:22,background:"#fff",padding:"20px",display:"grid",gridTemplateColumns:"52px 1fr 24px",gap:14,alignItems:"center",textAlign:"left",cursor:"pointer",color:"#10052F",boxShadow:"0 8px 22px rgba(50,25,80,.035)"}}>
-              <span style={{width:52,height:52,borderRadius:16,background:block.soft,color:block.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>{module.icon}</span>
+              <span style={{width:52,height:52,borderRadius:16,background:block.soft,color:block.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}><ModuleIcon id={module.id} size={22}/></span>
               <span><b style={{display:"block",fontSize:17,marginBottom:5}}>{module.title}</b><span style={{fontSize:12.5,lineHeight:1.45,color:"#746D7E"}}>{module.text}</span></span>
               <span style={{color:block.accent,fontSize:22}}>›</span>
             </button>)}
@@ -998,7 +1049,7 @@ function PlatformModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fal
           <img src={module.image} alt="" onError={e=>{e.currentTarget.style.display="none";}} style={{position:"absolute",right:0,top:0,width:"46%",height:"100%",objectFit:"cover",opacity:.88,maskImage:"linear-gradient(90deg,transparent,#000 35%)",WebkitMaskImage:"linear-gradient(90deg,transparent,#000 35%)"}}/>
           <div style={{position:"relative",zIndex:2,maxWidth:650}}>
             <div style={{fontSize:11,fontWeight:900,letterSpacing:"1.7px",color:module.accent,marginBottom:14}}>{module.blockTitle.toUpperCase()}</div>
-            <div style={{width:54,height:54,borderRadius:18,display:"flex",alignItems:"center",justifyContent:"center",background:module.accent,color:"#fff",fontSize:25,fontWeight:900,marginBottom:22}}>{module.icon}</div>
+            <div style={{width:54,height:54,borderRadius:18,display:"flex",alignItems:"center",justifyContent:"center",background:module.accent,color:"#fff",fontSize:25,fontWeight:900,marginBottom:22}}><ModuleIcon id={module.id} size={22}/></div>
             <h1 className="light-page-title" style={{fontSize:62,lineHeight:.98,letterSpacing:"-3.2px",margin:"0 0 16px",fontWeight:800}}>{module.title}</h1>
             <p style={{fontSize:17,lineHeight:1.55,color:"#6F687A",margin:"0 0 26px",maxWidth:560}}>{module.text}</p>
             <button type="button" onClick={primary} style={{border:0,borderRadius:25,background:module.accent,color:"#fff",padding:"13px 20px",fontSize:13,fontWeight:800,cursor:"pointer"}}>
@@ -1016,9 +1067,6 @@ function PlatformModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fal
               <b style={{fontSize:17,lineHeight:1.25,marginTop:"auto"}}>{feature}</b>
             </div>)}
           </div>
-          {!module.target&&<div style={{marginTop:22,borderRadius:22,background:"#fff",border:"1px dashed #D9CDE3",padding:"18px 20px",fontSize:13,lineHeight:1.5,color:"#756E7E"}}>
-            Раздел уже доступен в навигации. Здесь будут собраны связанные действия и материалы.
-          </div>}
         </section>
       </main>
     </div>
@@ -1672,6 +1720,7 @@ export default function App(){
         @keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
         button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid rgba(141,39,238,.22);outline-offset:2px}
         html,body,button,input,textarea,select{font-family:'Open Sans',Arial,sans-serif}
+        svg{display:block;flex:0 0 auto}
         .light-section-title,.light-page-title{font-size:52px!important;line-height:1.02!important;letter-spacing:-2.4px!important}
         .how-title{font-size:52px!important;line-height:1.02!important;letter-spacing:-2.4px!important}
         .light-hero-title{font-size:clamp(56px,5.4vw,78px)!important;letter-spacing:-3.8px!important}
