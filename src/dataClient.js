@@ -10,6 +10,10 @@ export const STORAGE_KEYS = Object.freeze({
   signedIn: "pravo-sport-signed",
   eventLog: "pravo-sport-event-log",
   syncQueue: "pravo-sport-sync-queue",
+  communityActivities: "pravo-sport-community-activities",
+  communityTeams: "pravo-sport-community-teams",
+  communityBuddyRequests: "pravo-sport-community-buddy-requests",
+  communityApplications: "pravo-sport-community-applications",
 });
 
 export const DATA_MODE = API_BASE_URL ? "remote-ready" : "local-demo";
