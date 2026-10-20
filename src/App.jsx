@@ -385,6 +385,11 @@ function CommunityModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fa
   const [applications,setApplications]=useState(()=>readData(STORAGE_KEYS.communityApplications,[]));
   const [showActivityForm,setShowActivityForm]=useState(false);
   const [activityForm,setActivityForm]=useState({title:"",city:"Москва",sport:"Бег",when:""});
+  const [joinedActivities,setJoinedActivities]=useState(()=>readData(STORAGE_KEYS.communityActivityJoins,[]));
+  const [showAmbassadorForm,setShowAmbassadorForm]=useState(false);
+  const [ambassadorForm,setAmbassadorForm]=useState({sport:"Бег",experience:"",idea:"",city:"Москва"});
+  const [ambassadorApplications,setAmbassadorApplications]=useState(()=>readData(STORAGE_KEYS.ambassadorApplications,[]));
+  const [selectedAthlete,setSelectedAthlete]=useState(null);
   const communityTabs=[
     ["city-sport","Спорт по городам"],
     ["teams","Команды"],
@@ -428,6 +433,26 @@ function CommunityModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fa
     setActivityForm({title:"",city:"Москва",sport:"Бег",when:""});
     setShowActivityForm(false);
   });
+  const toggleActivity=id=>requireLogin(()=>{
+    setJoinedActivities(prev=>{
+      const joined=prev.includes(id);
+      const next=joined?prev.filter(x=>x!==id):[...prev,id];
+      writeData(STORAGE_KEYS.communityActivityJoins,next);
+      setActivities(items=>items.map(x=>x.id===id?{...x,people:Math.max(0,Number(x.people||0)+(joined?-1:1))}:x));
+      track(joined?"community_activity_leave":"community_activity_join",id);
+      return next;
+    });
+  });
+  const submitAmbassador=()=>requireLogin(()=>{
+    if(!ambassadorForm.idea.trim())return;
+    const item={id:`amb-${Date.now()}`,...ambassadorForm,status:"На рассмотрении",date:new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"long"})};
+    const next=[item,...ambassadorApplications];
+    setAmbassadorApplications(next);
+    writeData(STORAGE_KEYS.ambassadorApplications,next);
+    track("ambassador_application_submit",item.id,{sport:item.sport,city:item.city});
+    setAmbassadorForm({sport:"Бег",experience:"",idea:"",city:"Москва"});
+    setShowAmbassadorForm(false);
+  });
   const filteredPeople=COMMUNITY_PEOPLE.filter(p=>(city==="Все города"||p.city===city)&&(sport==="Все виды"||p.sports.includes(sport))&&(!query||(`${p.name} ${p.city} ${p.sports.join(" ")}`).toLowerCase().includes(query.toLowerCase())));
   const filteredActivities=activities.filter(a=>(city==="Все города"||a.city===city)&&(sport==="Все виды"||a.sport===sport)&&(!query||(`${a.title} ${a.city} ${a.sport}`).toLowerCase().includes(query.toLowerCase())));
   const ambassadors=COMMUNITY_PEOPLE.filter(p=>p.role);
@@ -466,7 +491,7 @@ function CommunityModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fa
             {filteredActivities.map(a=><article key={a.id} style={{...cardStyle,padding:"22px"}}>
               <div style={{display:"flex",justifyContent:"space-between",gap:12,marginBottom:18}}><span style={{background:"#EAF7FB",color:"#1484A9",padding:"6px 10px",borderRadius:999,fontSize:10,fontWeight:800}}>{a.sport}</span><span style={{fontSize:11,color:"#7D7587"}}>{a.city}</span></div>
               <h3 style={{fontSize:22,margin:"0 0 8px"}}>{a.title}</h3><p style={{fontSize:13,color:"#756E7E",margin:"0 0 18px"}}>{a.when} · организатор {a.author}</p>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><span style={{fontSize:12,color:"#756E7E"}}>👥 {a.people} уже идут</span><button onClick={()=>requireLogin(()=>{track("community_activity_join",a.id);setActivities(prev=>prev.map(x=>x.id===a.id?{...x,people:x.people+1}:x));})} type="button" style={{border:"1px solid #DCCDEA",background:"#fff",color:"#7C2BD0",borderRadius:14,padding:"8px 12px",fontWeight:800,cursor:"pointer"}}>Присоединиться</button></div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><span style={{fontSize:12,color:"#756E7E"}}>👥 {a.people} уже идут</span><button onClick={()=>toggleActivity(a.id)} type="button" style={{border:joinedActivities.includes(a.id)?0:"1px solid #DCCDEA",background:joinedActivities.includes(a.id)?"#E9F8EF":"#fff",color:joinedActivities.includes(a.id)?"#08783F":"#7C2BD0",borderRadius:14,padding:"8px 12px",fontWeight:800,cursor:"pointer"}}>{joinedActivities.includes(a.id)?"✓ Вы идёте":"Присоединиться"}</button></div>
             </article>)}
           </div>
         </>}
@@ -503,7 +528,8 @@ function CommunityModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fa
               <button type="button" onClick={()=>toggleApplication(`amb-${p.id}`)} style={{border:0,background:applied?"#E9F8EF":"#10052F",color:applied?"#08783F":"#fff",borderRadius:14,padding:"9px 12px",fontWeight:800,cursor:"pointer"}}>{applied?"✓ Заявка отправлена":"Предложить инициативу"}</button>
             </article>})}
           </div>
-          <div style={{...cardStyle,marginTop:16,padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:20,background:"#E9FF1F"}}><div><div style={{fontSize:11,fontWeight:900,letterSpacing:"1.2px"}}>ХОЧЕШЬ БОЛЬШЕ?</div><h3 style={{fontSize:24,margin:"6px 0 0"}}>Стань амбассадором своего вида спорта</h3></div><button type="button" onClick={()=>toggleApplication("become-ambassador")} style={{border:0,background:"#10052F",color:"#fff",borderRadius:16,padding:"11px 15px",fontWeight:800,cursor:"pointer"}}>{applications.includes("become-ambassador")?"✓ Заявка отправлена":"Подать заявку"}</button></div>
+          <div style={{...cardStyle,marginTop:16,padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:20,background:"#E9FF1F"}}><div><div style={{fontSize:11,fontWeight:900,letterSpacing:"1.2px"}}>ХОЧЕШЬ БОЛЬШЕ?</div><h3 style={{fontSize:24,margin:"6px 0 0"}}>Стань амбассадором своего вида спорта</h3><p style={{fontSize:12.5,margin:"7px 0 0",color:"#514A57"}}>Расскажи, какой спорт развиваешь и что готов предложить коллегам.</p></div><button type="button" onClick={()=>requireLogin(()=>setShowAmbassadorForm(true))} style={{border:0,background:"#10052F",color:"#fff",borderRadius:16,padding:"11px 15px",fontWeight:800,cursor:"pointer"}}>Подать заявку</button></div>
+          {ambassadorApplications.length>0&&<section style={{...cardStyle,marginTop:14,padding:"20px"}}><h3 style={{margin:"0 0 10px"}}>Моя заявка</h3>{ambassadorApplications.slice(0,2).map(x=><div key={x.id} style={{display:"grid",gridTemplateColumns:"1fr auto",gap:12,padding:"10px 0",borderTop:"1px solid #EEE7F2"}}><div><b style={{fontSize:13}}>{x.sport} · {x.city}</b><div style={{fontSize:11,color:"#7B7484",marginTop:3}}>{x.idea}</div></div><span style={{fontSize:10,fontWeight:800,color:"#8D27EE",background:"#F4EEF8",borderRadius:999,padding:"6px 9px",alignSelf:"start"}}>{x.status}</span></div>)}</section>}
         </>}
 
         {moduleId==="athlete-card"&&<>
@@ -513,11 +539,30 @@ function CommunityModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fa
               <div style={{height:120,background:i%2===0?"linear-gradient(135deg,#E7D7F9,#D7EFF7)":"linear-gradient(135deg,#FFF0D9,#F3E3FA)",display:"flex",alignItems:"flex-end",padding:"18px"}}>
                 <div style={{width:64,height:64,borderRadius:"50%",background:colFor(p.id),color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:18,border:"4px solid #fff"}}>{p.avatar}</div>
               </div>
-              <div style={{padding:"18px"}}><h3 style={{fontSize:20,margin:"0 0 5px"}}>{p.name}</h3><div style={{fontSize:11,color:"#7D7587"}}>{p.city} · {p.sports.join(" · ")}</div><p style={{fontSize:12.5,lineHeight:1.5,color:"#756E7E",minHeight:58}}>{p.about}</p><button type="button" onClick={()=>track("profile_view",p.id)} style={{border:0,background:"transparent",color:"#8D27EE",padding:0,fontWeight:800,cursor:"pointer"}}>Открыть историю ↗</button></div>
+              <div style={{padding:"18px"}}><h3 style={{fontSize:20,margin:"0 0 5px"}}>{p.name}</h3><div style={{fontSize:11,color:"#7D7587"}}>{p.city} · {p.sports.join(" · ")}</div><p style={{fontSize:12.5,lineHeight:1.5,color:"#756E7E",minHeight:58}}>{p.about}</p><button type="button" onClick={()=>{setSelectedAthlete(p);track("profile_view",p.id);}} style={{border:0,background:"transparent",color:"#8D27EE",padding:0,fontWeight:800,cursor:"pointer"}}>Открыть историю ↗</button></div>
             </article>)}
           </div>
         </>}
       </main>
+
+      {showAmbassadorForm&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setShowAmbassadorForm(false)}><div className="light-modal">
+        <button className="modal-close" onClick={()=>setShowAmbassadorForm(false)}>×</button>
+        <h2>Стать амбассадором спорта</h2>
+        <p className="muted" style={{marginTop:-4}}>Расскажи, какую спортивную инициативу ты готов развивать внутри компании.</p>
+        <label>Вид спорта<select value={ambassadorForm.sport} onChange={e=>setAmbassadorForm(p=>({...p,sport:e.target.value}))} style={{border:"1px solid #e3d9ed",borderRadius:11,padding:"11px 12px",font:"inherit",background:"#fff"}}>{sports.filter(x=>x!=="Все виды").map(x=><option key={x}>{x}</option>)}</select></label>
+        <label>Город<select value={ambassadorForm.city} onChange={e=>setAmbassadorForm(p=>({...p,city:e.target.value}))} style={{border:"1px solid #e3d9ed",borderRadius:11,padding:"11px 12px",font:"inherit",background:"#fff"}}>{cities.filter(x=>x!=="Все города").map(x=><option key={x}>{x}</option>)}</select></label>
+        <label>Опыт<textarea value={ambassadorForm.experience} onChange={e=>setAmbassadorForm(p=>({...p,experience:e.target.value}))} placeholder="Например: бегаю 5 лет, организовывал совместные старты"/></label>
+        <label>Что ты можешь предложить? <textarea value={ambassadorForm.idea} onChange={e=>setAmbassadorForm(p=>({...p,idea:e.target.value}))} placeholder="Тренировки, встречи, помощь новичкам, организацию команды..." required/></label>
+        <button className="primary-btn" onClick={submitAmbassador}>Отправить заявку</button>
+      </div></div>}
+
+      {selectedAthlete&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setSelectedAthlete(null)}><div className="light-modal" style={{maxWidth:560}}>
+        <button className="modal-close" onClick={()=>setSelectedAthlete(null)}>×</button>
+        <div style={{display:"flex",alignItems:"center",gap:14}}><div style={{width:64,height:64,borderRadius:"50%",background:colFor(selectedAthlete.id),color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:900}}>{selectedAthlete.avatar}</div><div><h2 style={{margin:0}}>{selectedAthlete.name}</h2><div className="muted">{selectedAthlete.city} · {selectedAthlete.sports.join(" · ")}</div></div></div>
+        <div style={{background:"#F8F4FB",borderRadius:18,padding:"18px"}}><div style={{fontSize:10,fontWeight:900,color:"#8D27EE",letterSpacing:"1px",marginBottom:8}}>СПОРТИВНАЯ ИСТОРИЯ</div><p style={{fontSize:14,lineHeight:1.6,margin:0,color:"#5F5869"}}>{selectedAthlete.about} Спорт для меня — способ переключаться, находить единомышленников и постепенно видеть собственный прогресс.</p></div>
+        <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{selectedAthlete.sports.map(s=><span key={s} style={{background:"#F4EEF8",color:"#6B2BB4",padding:"6px 9px",borderRadius:999,fontSize:11,fontWeight:800}}>{s}</span>)}</div>
+        {selectedAthlete.role&&<div style={{fontSize:12,fontWeight:800,color:"#159B66"}}>★ {selectedAthlete.role}</div>}
+      </div></div>}
 
       {showActivityForm&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setShowActivityForm(false)}><div className="light-modal">
         <button className="modal-close" onClick={()=>setShowActivityForm(false)}>×</button><h2>Предложить активность</h2>
@@ -1004,7 +1049,7 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
   const card={...lg(0.88),borderRadius:20,padding:"22px 24px"};
   return(
     <div className="light-shell" style={{background:"radial-gradient(circle at 0% 8%,#F0DEFF 0,transparent 25%),radial-gradient(circle at 100% 42%,#FFE8EF 0,transparent 24%),linear-gradient(180deg,#FAF7FF 0%,#FBF9FF 100%)",color:BD,minHeight:"100vh",position:"relative",overflowX:"hidden",fontFamily:"'Open Sans',Arial,sans-serif"}}>
-      <PravoHeader setPage={setPage} signedIn={true}/>
+      <PravoHeader setPage={setPage} signedIn={true} isAdmin={isAdmin}/>
       <div className="light-dashboard-content" style={{position:"relative",zIndex:2,maxWidth:1220,margin:"0 auto",padding:"34px 32px 64px"}}>
         {isAdmin&&<div style={{display:"flex",justifyContent:"flex-end",marginBottom:24}}>
           <button onClick={()=>setPage("admin")} className="plain-link">Панель администратора →</button>
@@ -1543,7 +1588,7 @@ export default function App(){
         .platform-block-card:hover{transform:translateY(-2px);box-shadow:0 18px 42px rgba(50,25,80,.08)!important}
         .platform-module-btn:hover{transform:translateY(-2px);border-color:#D8CBE3!important;box-shadow:0 10px 24px rgba(50,25,80,.07)}
         .module-feature-grid>div{transition:transform .18s ease}.module-feature-grid>div:hover{transform:translateY(-2px)}
-        .community-tabs::-webkit-scrollbar{display:none}.community-main select,.community-main input{color:#10052F}
+        .community-tabs::-webkit-scrollbar{display:none}.community-main select,.community-main input,.community-main textarea{color:#10052F}.community-main button{transition:transform .15s ease,box-shadow .15s ease}.community-main button:active{transform:scale(.98)}
         .progress-tabs::-webkit-scrollbar{display:none}.progress-main input,.progress-main textarea{color:#10052F;outline:none}
         .support-tabs::-webkit-scrollbar{display:none}.support-main input,.support-main textarea,.support-main select{color:#10052F;outline:none}
         .participate-tabs::-webkit-scrollbar{display:none}.participate-main input,.participate-main textarea{color:#10052F;outline:none}
