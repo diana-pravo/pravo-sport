@@ -71,10 +71,10 @@ function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false,activeGroup:ac
     setPage(isAdmin?"admin":"cabinet-light");
   };
   const groups=[
-    {id:"block-participate",label:"Участвовать",target:"challenges"},
-    {id:"block-community",label:"Сообщество",target:"module:city-sport"},
-    {id:"block-motivation",label:"Прогресс",target:"module:ratings"},
-    {id:"block-support",label:"Поддержка",target:"module:trainer"},
+    {id:"block-participate",label:"Участвовать",target:"module:participate-overview"},
+    {id:"block-community",label:"Сообщество",target:"module:community-overview"},
+    {id:"block-motivation",label:"Прогресс",target:"module:progress-overview"},
+    {id:"block-support",label:"Поддержка",target:"module:support-overview"},
     {id:"news",label:"Новости",target:"news"}
   ];
   return(
@@ -84,10 +84,10 @@ function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false,activeGroup:ac
           право<span style={{color:"#8D27EE"}}>(спорт)</span>
         </button>
 
-        <nav className="pravo-nav pravo-group-nav" aria-label="Основные разделы" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:4,flex:1,minWidth:0}}>
+        <nav className="pravo-nav pravo-group-nav" aria-label="Основные разделы" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:7,flex:1,minWidth:0}}>
           {groups.map(item=>{
             const active=activeGroup===item.id;
-            return <button key={item.id} type="button" onClick={()=>go(item.id,item.target)} className={active?"group-nav-btn is-active":"group-nav-btn"} style={{position:"relative",border:0,background:active?"#F5EEFC":"transparent",color:active?"#5F17B8":"#5F5869",borderRadius:16,padding:"10px 14px",fontSize:13.5,fontWeight:active?800:700,cursor:"pointer",whiteSpace:"nowrap"}}>
+            return <button key={item.id} type="button" onClick={()=>go(item.id,item.target)} className={active?"group-nav-btn is-active":"group-nav-btn"} style={{position:"relative",border:0,background:active?"#F5EEFC":"transparent",color:active?"#5F17B8":"#5F5869",borderRadius:16,padding:"10px 14px",fontSize:15.5,fontWeight:active?800:700,cursor:"pointer",whiteSpace:"nowrap"}}>
               {item.label}
               {active&&<span aria-hidden="true" style={{position:"absolute",left:"50%",bottom:3,width:22,height:2,borderRadius:2,background:"#8D27EE",transform:"translateX(-50%)"}}/>}
             </button>;
@@ -98,6 +98,7 @@ function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false,activeGroup:ac
         <button className="pravo-participate" onClick={()=>signedIn?setPage("cabinet-light"):onLogin?.()} style={{height:44,border:0,borderRadius:20,background:"#10052F",color:"#fff",fontWeight:800,fontSize:13.5,padding:"0 19px",cursor:"pointer",marginLeft:9,boxShadow:"0 8px 18px rgba(16,5,47,.13)"}}>
           Мой спорт <span style={{marginLeft:6,opacity:.8}}>↗</span>
         </button>
+        {signedIn&&<button type="button" className="pravo-admin-link" onClick={()=>setPage("admin")} style={{height:40,border:"1px solid #E9E1EF",borderRadius:18,background:"#fff",color:"#6F687A",fontWeight:800,fontSize:12.5,padding:"0 13px",cursor:"pointer",marginLeft:8}}>Админка</button>}
         {signedIn
           ? <button className="pravo-avatar" onClick={account} style={{width:42,height:42,borderRadius:"50%",border:"3px solid #fff",boxShadow:"0 0 0 1px #E6D9F0",background:"#D90A78",color:"#fff",fontWeight:900,fontSize:16,cursor:"pointer",marginLeft:9}}>Д</button>
           : <button className="pravo-avatar" onClick={onLogin} style={{width:42,height:42,borderRadius:"50%",border:"1px solid #E6D9F0",background:"#fff",color:"#8D27EE",fontWeight:800,fontSize:11,cursor:"pointer",marginLeft:9}}>Войти</button>}
@@ -387,7 +388,7 @@ function CommunityModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fa
   const [activityForm,setActivityForm]=useState({title:"",city:"Москва",sport:"Бег",when:""});
   const [joinedActivities,setJoinedActivities]=useState(()=>readData(STORAGE_KEYS.communityActivityJoins,[]));
   const [showAmbassadorForm,setShowAmbassadorForm]=useState(false);
-  const [ambassadorForm,setAmbassadorForm]=useState({sport:"Бег",experience:"",idea:"",city:"Москва"});
+  const [ambassadorForm,setAmbassadorForm]=useState({sport:"Бег",sportOther:"",experience:"",idea:"",city:"Москва"});
   const [ambassadorApplications,setAmbassadorApplications]=useState(()=>readData(STORAGE_KEYS.ambassadorApplications,[]));
   const [selectedAthlete,setSelectedAthlete]=useState(null);
   const communityTabs=[
@@ -445,12 +446,12 @@ function CommunityModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fa
   });
   const submitAmbassador=()=>requireLogin(()=>{
     if(!ambassadorForm.idea.trim())return;
-    const item={id:`amb-${Date.now()}`,...ambassadorForm,status:"На рассмотрении",date:new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"long"})};
+    const item={id:`amb-${Date.now()}`,...ambassadorForm,sport:ambassadorForm.sport==="Другое"?(ambassadorForm.sportOther.trim()||"Другое"):ambassadorForm.sport,status:"На рассмотрении",date:new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"long"})};
     const next=[item,...ambassadorApplications];
     setAmbassadorApplications(next);
     writeData(STORAGE_KEYS.ambassadorApplications,next);
     track("ambassador_application_submit",item.id,{sport:item.sport,city:item.city});
-    setAmbassadorForm({sport:"Бег",experience:"",idea:"",city:"Москва"});
+    setAmbassadorForm({sport:"Бег",sportOther:"",experience:"",idea:"",city:"Москва"});
     setShowAmbassadorForm(false);
   });
   const filteredPeople=COMMUNITY_PEOPLE.filter(p=>(city==="Все города"||p.city===city)&&(sport==="Все виды"||p.sports.includes(sport))&&(!query||(`${p.name} ${p.city} ${p.sports.join(" ")}`).toLowerCase().includes(query.toLowerCase())));
@@ -549,7 +550,8 @@ function CommunityModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fa
         <button className="modal-close" onClick={()=>setShowAmbassadorForm(false)}>×</button>
         <h2>Стать амбассадором спорта</h2>
         <p className="muted" style={{marginTop:-4}}>Расскажи, какую спортивную инициативу ты готов развивать внутри компании.</p>
-        <label>Вид спорта<select value={ambassadorForm.sport} onChange={e=>setAmbassadorForm(p=>({...p,sport:e.target.value}))} style={{border:"1px solid #e3d9ed",borderRadius:11,padding:"11px 12px",font:"inherit",background:"#fff"}}>{sports.filter(x=>x!=="Все виды").map(x=><option key={x}>{x}</option>)}</select></label>
+        <label>Вид спорта<select value={ambassadorForm.sport} onChange={e=>setAmbassadorForm(p=>({...p,sport:e.target.value,sportOther:e.target.value==="Другое"?p.sportOther:""}))} style={{border:"1px solid #e3d9ed",borderRadius:11,padding:"11px 12px",font:"inherit",background:"#fff"}}>{[...sports.filter(x=>x!=="Все виды"),"Другое"].map(x=><option key={x}>{x}</option>)}</select></label>
+        {ambassadorForm.sport==="Другое"&&<label>Другой вид спорта<input value={ambassadorForm.sportOther} onChange={e=>setAmbassadorForm(p=>({...p,sportOther:e.target.value}))} placeholder="Например, скалолазание"/></label>}
         <label>Город<select value={ambassadorForm.city} onChange={e=>setAmbassadorForm(p=>({...p,city:e.target.value}))} style={{border:"1px solid #e3d9ed",borderRadius:11,padding:"11px 12px",font:"inherit",background:"#fff"}}>{cities.filter(x=>x!=="Все города").map(x=><option key={x}>{x}</option>)}</select></label>
         <label>Опыт<textarea value={ambassadorForm.experience} onChange={e=>setAmbassadorForm(p=>({...p,experience:e.target.value}))} placeholder="Например: бегаю 5 лет, организовывал совместные старты"/></label>
         <label>Что ты можешь предложить? <textarea value={ambassadorForm.idea} onChange={e=>setAmbassadorForm(p=>({...p,idea:e.target.value}))} placeholder="Тренировки, встречи, помощь новичкам, организацию команды..." required/></label>
@@ -879,7 +881,45 @@ function ParticipateModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=
   );
 }
 
+function PlatformOverviewPage({setPage,blockId,signedIn=false,onLogin,isAdmin=false}){
+  const block=PLATFORM_BLOCKS.find(x=>x.id===blockId);
+  if(!block)return null;
+  const activeMap={participate:"block-participate",community:"block-community",motivation:"block-motivation",support:"block-support"};
+  const openModule=module=>module.target?setPage(module.target):setPage(`module:${module.id}`);
+  return(
+    <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin} activeGroup={activeMap[blockId]||""}/>
+      <main className="light-main platform-overview-main" style={{maxWidth:1280,margin:"0 auto",padding:"46px 42px 78px"}}>
+        <section style={{position:"relative",overflow:"hidden",border:"1px solid #E7E0EC",borderRadius:30,background:`linear-gradient(110deg,${block.soft},#fff)`,padding:"38px",minHeight:245,boxShadow:"0 12px 34px rgba(50,25,80,.05)"}}>
+          <img src={block.image} alt="" style={{position:"absolute",right:0,top:0,width:"43%",height:"100%",objectFit:"cover",opacity:.9,maskImage:"linear-gradient(90deg,transparent,#000 32%)",WebkitMaskImage:"linear-gradient(90deg,transparent,#000 32%)"}}/>
+          <div style={{position:"relative",zIndex:2,maxWidth:660}}>
+            <div style={{fontSize:11,fontWeight:900,letterSpacing:"1.5px",color:block.accent,marginBottom:10}}>{block.eyebrow}</div>
+            <h1 className="light-page-title" style={{margin:"0 0 12px",fontWeight:800}}>{block.title}</h1>
+            <p style={{fontSize:16,lineHeight:1.55,color:"#6F687A",margin:0,maxWidth:610}}>{block.description}</p>
+          </div>
+        </section>
+
+        <section style={{paddingTop:28}}>
+          <div style={{fontSize:11,fontWeight:900,letterSpacing:"1.4px",color:block.accent,marginBottom:9}}>ВЫБЕРИ, ЧТО НУЖНО</div>
+          <h2 style={{fontSize:34,letterSpacing:"-1.3px",margin:"0 0 18px"}}>Куда перейти</h2>
+          <div className="overview-module-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:14}}>
+            {block.modules.map(module=><button key={module.id} type="button" onClick={()=>openModule(module)} style={{appearance:"none",border:"1px solid #E7E0EC",borderRadius:22,background:"#fff",padding:"20px",display:"grid",gridTemplateColumns:"52px 1fr 24px",gap:14,alignItems:"center",textAlign:"left",cursor:"pointer",color:"#10052F",boxShadow:"0 8px 22px rgba(50,25,80,.035)"}}>
+              <span style={{width:52,height:52,borderRadius:16,background:block.soft,color:block.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24}}>{module.icon}</span>
+              <span><b style={{display:"block",fontSize:17,marginBottom:5}}>{module.title}</b><span style={{fontSize:12.5,lineHeight:1.45,color:"#746D7E"}}>{module.text}</span></span>
+              <span style={{color:block.accent,fontSize:22}}>›</span>
+            </button>)}
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+
 function PlatformModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=false,news=INIT_NEWS,events=[],registeredEvents=[],onToggleEvent}){
+  if(moduleId==="participate-overview") return <PlatformOverviewPage setPage={setPage} blockId="participate" signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>;
+  if(moduleId==="community-overview") return <PlatformOverviewPage setPage={setPage} blockId="community" signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>;
+  if(moduleId==="progress-overview") return <PlatformOverviewPage setPage={setPage} blockId="motivation" signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>;
+  if(moduleId==="support-overview") return <PlatformOverviewPage setPage={setPage} blockId="support" signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>;
   if(["starts","offline","meetups"].includes(moduleId)) return <ParticipateModulePage setPage={setPage} moduleId={moduleId} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin} events={events} registeredEvents={registeredEvents} onToggleEvent={onToggleEvent}/>;
   if(["trainer","sport-news","announcements"].includes(moduleId)) return <SupportModulePage setPage={setPage} moduleId={moduleId} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin} news={news} events={events}/>;
   if(["ratings","coins","benefits","achievement"].includes(moduleId)) return <ProgressModulePage setPage={setPage} moduleId={moduleId} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>;
@@ -1585,8 +1625,10 @@ export default function App(){
         .metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}.cabinet-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px}.section-title{display:flex;justify-content:space-between;align-items:center;font-size:17px;font-weight:800;margin-bottom:16px}.challenge-row{padding:13px 0;border-top:1px solid #eee7f5}.challenge-row:first-of-type{border-top:0}.progress-track{height:6px;background:#eee7f5;border-radius:99px;margin:9px 0 6px;overflow:hidden}.progress-track>div{height:100%;background:linear-gradient(90deg,#8C26EA,#A78BFA);border-radius:99px}.mini-btn{border:1px solid #e4d5f1;background:#fff;color:#8C26EA;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer}.mini-btn.active{background:#8C26EA;color:#fff}.activity-row,.event-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid #eee7f5}.activity-icon{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#e9f8ef;color:#08783f;font-weight:900}.event-date{width:38px;text-align:center;display:flex;flex-direction:column}.event-date small{color:#8a8494}.achievement-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.achievement{background:#f5edfc;border:1px solid #e4cff7;border-radius:12px;padding:12px 6px;text-align:center}.achievement span{display:block;font-size:20px}.achievement small{font-size:9px;color:#6a6472}.empty-state{padding:20px;border:1px dashed #d8cae6;border-radius:14px;color:#8a8494;font-size:13px;text-align:center}
         .modal-backdrop{position:fixed;inset:0;background:rgba(13,6,40,.48);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(7px)}.light-modal{position:relative;width:min(480px,100%);background:#fff;border-radius:24px;padding:28px;box-shadow:0 30px 90px rgba(13,6,40,.25);display:flex;flex-direction:column;gap:14px}.light-modal h2{margin:0}.light-modal label,.admin-form label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700}.light-modal input,.light-modal textarea,.admin-form input,.admin-form textarea{width:100%;border:1px solid #e3d9ed;border-radius:11px;padding:11px 12px;font:inherit;outline:none}.light-modal textarea,.admin-form textarea{min-height:86px;resize:vertical}.modal-close{position:absolute;top:14px;right:16px;border:0;background:none;font-size:25px;cursor:pointer;color:#817989}.upload-box{border:1px dashed #cdb8df!important;border-radius:12px;padding:13px;color:#8C26EA;cursor:pointer}.upload-box input{display:none}.points-preview{background:#f5edfc;border-radius:10px;padding:10px;color:#8C26EA;font-size:12px;font-weight:700}.primary-btn{border:0;border-radius:12px;background:#8C26EA;color:#fff;padding:12px 18px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px rgba(140,38,234,.25)}
         .admin-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}.admin-head h1{margin:18px 0 4px;font-size:32px}.admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}.stat-card,.admin-form,.admin-list{background:#fff;border:1px solid #eadff5;border-radius:20px;padding:22px;box-shadow:0 10px 35px rgba(76,29,149,.06)}.stat-card strong{display:block;color:#8C26EA;font-size:29px}.stat-card span{font-size:12px;color:#756f7e}.admin-grid{display:grid;grid-template-columns:1.4fr .8fr;gap:20px}.admin-form{display:flex;flex-direction:column;gap:14px}.admin-form h2,.admin-list h2{margin:4px 0 8px}.admin-tabs{display:flex;gap:6px;flex-wrap:wrap}.admin-tabs button{border:0;border-radius:999px;padding:8px 12px;background:#f3eef8;color:#6d6476;font-weight:700;cursor:pointer}.admin-tabs button.active{background:#8C26EA;color:#fff}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-list-row{display:flex;gap:12px;padding:12px 0;border-top:1px solid #eee7f5}.admin-list-row>span{font-size:23px}.admin-list-row b,.admin-list-row small{display:block}.admin-list-row small{margin-top:3px;color:#8a8494}.login-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.login-choice{border:1px solid #e3d9ed;border-radius:16px;background:#fff;padding:18px;text-align:left;cursor:pointer}.login-choice b{display:block;margin-bottom:5px}.login-choice span{font-size:12px;color:#756f7e}
-        @media(max-width:820px){.metrics-grid,.admin-stats{grid-template-columns:repeat(2,1fr)}.cabinet-grid,.admin-grid{grid-template-columns:1fr}.profile-head,.admin-head{align-items:flex-start;flex-direction:column}.achievement-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}.login-actions{grid-template-columns:1fr}}
+        @media(max-width:820px){.pravo-admin-link{display:none!important}.metrics-grid,.admin-stats{grid-template-columns:repeat(2,1fr)}.cabinet-grid,.admin-grid{grid-template-columns:1fr}.profile-head,.admin-head{align-items:flex-start;flex-direction:column}.achievement-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}.login-actions{grid-template-columns:1fr}}
         .group-nav-btn,.platform-block-card,.platform-module-btn{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease,color .18s ease}
+        .overview-module-grid button{transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+        .overview-module-grid button:hover{transform:translateY(-2px);border-color:#D9CBE4!important;box-shadow:0 12px 28px rgba(50,25,80,.07)!important}
         .group-nav-btn:hover{background:#FAF7FD!important;color:#5F17B8!important}
         .group-nav-btn.is-active:hover{background:#F5EEFC!important}
         .platform-block-card,.platform-module-btn{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
@@ -1606,7 +1648,7 @@ export default function App(){
         @media(max-width:1000px){.community-people-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.community-filters{grid-template-columns:1fr 1fr!important}.community-filters input{grid-column:1/-1}.community-grid{grid-template-columns:1fr!important}}
         @media(max-width:620px){.community-main{padding-top:24px!important}.community-hero{padding:26px!important}.community-hero>img{width:58%!important;opacity:.55!important}.community-hero>div{max-width:78%!important}.community-people-grid{grid-template-columns:1fr!important}.community-filters{grid-template-columns:1fr!important}.community-filters input{grid-column:auto}.community-section-head{align-items:flex-start!important;flex-direction:column!important}.community-grid article[style*="grid-template-columns"]{grid-template-columns:52px 1fr!important}.community-grid article[style*="grid-template-columns"]>button{grid-column:1/-1!important;width:100%!important}}
         @media(max-width:1100px){.module-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-        @media(max-width:760px){.pravo-group-nav{display:none!important}.pravo-mobile-menu{display:block!important}.pravo-search{display:none!important}.platform-block-grid{grid-template-columns:1fr!important}.platform-block-hero{min-height:190px!important;padding:24px!important}.platform-block-hero>div{max-width:70%!important}.module-hero{min-height:330px!important;padding:30px!important}.module-hero>div{max-width:72%!important}.module-feature-grid{grid-template-columns:1fr!important}}
+        @media(max-width:760px){.pravo-group-nav{display:none!important}.pravo-mobile-menu{display:block!important}.overview-module-grid{grid-template-columns:1fr!important}.pravo-search{display:none!important}.platform-block-grid{grid-template-columns:1fr!important}.platform-block-hero{min-height:190px!important;padding:24px!important}.platform-block-hero>div{max-width:70%!important}.module-hero{min-height:330px!important;padding:30px!important}.module-hero>div{max-width:72%!important}.module-feature-grid{grid-template-columns:1fr!important}}
         @media(max-width:520px){.platform-module-grid{grid-template-columns:1fr!important}.platform-block-hero{min-height:220px!important}.platform-block-hero>img{width:48%!important;opacity:.72!important}.platform-block-hero>div{max-width:78%!important}.platform-module-btn{min-height:82px!important;padding:14px!important}.module-hero{min-height:390px!important;padding:24px!important;align-items:flex-end!important}.module-hero>img{width:100%!important;height:48%!important;mask-image:linear-gradient(180deg,#000,transparent)!important;-webkit-mask-image:linear-gradient(180deg,#000,transparent)!important}.module-hero>div{max-width:100%!important}.module-hero h1{font-size:42px!important}}
         /* Responsive production layout: desktop/tablet/mobile. */
         .scenario-card{transition:transform .18s ease,box-shadow .18s ease}.scenario-card:hover{transform:translateY(-3px);box-shadow:0 16px 38px rgba(50,25,80,.08)!important}.analytics-card{min-width:0}
