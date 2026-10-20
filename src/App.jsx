@@ -19,7 +19,7 @@ const LEADERBOARD=[
   {uid:"u1",name:"Алексей Ковалёв",merchi:87,delta:1},
   {uid:"u2",name:"Мария Петрова",merchi:74,delta:0},
   {uid:"u3",name:"Иван Сидоров",merchi:68,delta:-1},
-  {uid:"me",name:"Диана",merchi:42,delta:2},
+  {uid:"me",name:"Вы",merchi:42,delta:2},
   {uid:"u4",name:"Ольга Смирнова",merchi:38,delta:0},
 ];
 const CHALLENGES=[
@@ -174,13 +174,13 @@ const MY_EVENTS=[
 
 function CabinetHome({setPage}){
   const reveal=id=>({});
-  const me=LEADERBOARD.find(u=>u.uid==="me")||{name:"Диана",merchi:42,delta:2};
+  const me=LEADERBOARD.find(u=>u.uid==="me")||{name:"Вы",merchi:42,delta:2};
   const myRank=LEADERBOARD.slice().sort((a,b)=>b.merchi-a.merchi).findIndex(u=>u.uid==="me")+1;
   return(
     <div style={{padding:"96px 32px 48px",maxWidth:1240,margin:"0 auto"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:16,marginBottom:28}}>
         <div>
-          <div style={{fontSize:26,fontWeight:800,letterSpacing:"-0.6px"}}>Добрый вечер, {me.name}! 👋</div>
+          <div style={{fontSize:26,fontWeight:800,letterSpacing:"-0.6px"}}>Добрый вечер! 👋</div>
           <div style={{fontSize:13,color:"rgba(255,255,255,0.45)",marginTop:4}}>Стабильность сегодня — большие победы завтра</div>
         </div>
         <span style={{...glass(P,0.08),borderRadius:999,padding:"6px 16px",fontSize:12,fontWeight:600,color:PL}}>Сотрудник право(тех)</span>
@@ -458,7 +458,7 @@ function LightChallengeCard({c,i,onOpen}){
         <h3 style={{fontSize:27,letterSpacing:"-1.2px",margin:"0 0 8px",fontWeight:800}}>{c.title}</h3>
         <p style={{fontSize:14,color:"#746D7E",margin:0,maxWidth:"82%"}}>{c.desc}</p>
         {c.attachmentName&&<div style={{fontSize:11,color:"#8D27EE",marginTop:10}}>📎 {c.attachmentName}</div>}
-        <button type="button" style={{position:"absolute",right:20,top:22,width:46,height:46,border:0,borderRadius:"50%",background:"#F5EDFC",color:"#8D27EE",fontSize:25,cursor:"pointer"}}>{i===1?"≈":"↗"}</button>
+        <button type="button" aria-label={`Открыть ${c.title}`} onClick={e=>{e.stopPropagation();onOpen?.();}} style={{position:"absolute",right:20,top:22,width:46,height:46,border:0,borderRadius:"50%",background:"#F5EDFC",color:"#8D27EE",fontSize:25,cursor:"pointer"}}>{i===1?"≈":"↗"}</button>
       </div>
     </article>
   );
@@ -802,7 +802,7 @@ function ProgressModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fal
     {rank:1,name:"Алексей К.",team:"Backend",value:"87 000 шагов",delta:"+2",avatar:"АК"},
     {rank:2,name:"Мария П.",team:"HR",value:"74 000 шагов",delta:"+1",avatar:"МП"},
     {rank:3,name:"Иван С.",team:"Frontend",value:"68 000 шагов",delta:"—",avatar:"ИС"},
-    {rank:4,name:"Диана",team:"HR",value:"42 000 шагов",delta:"+3",avatar:"Д"},
+    {rank:4,name:"Вы",team:"HR",value:"42 000 шагов",delta:"+3",avatar:"Я"},
     {rank:5,name:"Ольга С.",team:"Design",value:"38 000 шагов",delta:"-1",avatar:"ОС"},
     {rank:6,name:"Никита Р.",team:"Product",value:"36 500 шагов",delta:"+1",avatar:"НР"}
   ];
@@ -857,7 +857,7 @@ function ProgressModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fal
           </div>
           <section style={{...card,padding:"8px 22px 14px",marginTop:14}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,padding:"18px 0 12px"}}><div><div style={{fontSize:11,fontWeight:900,color:"#D97706",letterSpacing:"1.2px"}}>СЕЗОН 2026</div><h2 style={{fontSize:28,margin:"4px 0 0"}}>Общий рейтинг</h2></div><span style={{fontSize:11,color:"#7B7484"}}>обновлено недавно</span></div>
-            {leaderboard.map(r=><div key={r.rank} className="rating-row" style={{display:"grid",gridTemplateColumns:"36px 44px 1fr 140px 80px",gap:12,alignItems:"center",padding:"13px 0",borderTop:"1px solid #EEE7F2",background:r.name==="Диана"?"#FBF7FF":"transparent",borderRadius:r.name==="Диана"?12:0}}>
+            {leaderboard.map(r=><div key={r.rank} className="rating-row" style={{display:"grid",gridTemplateColumns:"36px 44px 1fr 140px 80px",gap:12,alignItems:"center",padding:"13px 0",borderTop:"1px solid #EEE7F2",background:r.name==="Вы"?"#FBF7FF":"transparent",borderRadius:r.name==="Вы"?12:0}}>
               <b style={{fontSize:13,textAlign:"center"}}>{r.rank}</b><div style={{width:38,height:38,borderRadius:"50%",background:colFor(r.name),color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900}}>{r.avatar}</div>
               <div><b style={{fontSize:13}}>{r.name}</b><div style={{fontSize:10.5,color:"#847C8C"}}>{r.team}</div></div><div style={{fontSize:12,fontWeight:800,textAlign:"right"}}>{r.value}</div><div style={{fontSize:11,color:r.delta.startsWith("+")?"#159B66":"#8A8491",textAlign:"right"}}>{r.delta}</div>
             </div>)}
@@ -867,7 +867,7 @@ function ProgressModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fal
         {moduleId==="coins"&&<>
           <section style={{...card,marginTop:16,padding:"28px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,alignItems:"center",background:"linear-gradient(135deg,#10052F,#2D1260)",color:"#fff"}}>
             <div><div style={{fontSize:11,fontWeight:900,letterSpacing:"1.2px",color:"#DCC4F8"}}>ТВОЙ БАЛАНС</div><div style={{fontSize:64,fontWeight:800,letterSpacing:"-3px",marginTop:8}}>{coinBalance}</div><div style={{fontSize:13,color:"#D6C8E4"}}>коинов доступно</div></div>
-            <div style={{fontSize:13,lineHeight:1.6,color:"#E8DEF1"}}>Коины начисляются за участие, регулярность, результаты и поддержку сообщества. Сейчас это MVP-логика — реальные правила начисления подключим к backend.</div>
+            <div style={{fontSize:13,lineHeight:1.6,color:"#E8DEF1"}}>Коины начисляются за участие, регулярность, результаты и поддержку сообщества. Правила начисления будут синхронизироваться автоматически с корпоративной системой.</div>
           </section>
           <div className="coin-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:14,marginTop:16}}>
             {[["Челлендж завершён","+40"],["7 дней активности","+25"],["Помощь команде","+15"],["Новый результат","+10"],["Участие в старте","+30"],["Инициатива сообщества","+20"]].map(([t,v])=><div key={t} style={{...card,padding:"20px"}}><span style={{fontSize:11,color:"#7B7484"}}>{t}</span><strong style={{display:"block",fontSize:23,color:"#D97706",marginTop:8}}>{v}</strong></div>)}
@@ -957,7 +957,7 @@ function SupportModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fals
           <div className="trainer-layout" style={{display:"grid",gridTemplateColumns:"1.05fr .95fr",gap:16,marginTop:16}}>
             <section style={{...card,padding:"24px"}}>
               <div style={{fontSize:11,fontWeight:900,color:"#159B66",letterSpacing:"1.3px"}}>ЗАДАТЬ ВОПРОС</div><h2 style={{fontSize:28,margin:"5px 0 8px"}}>Корпоративный тренер</h2>
-              <p style={{fontSize:12.5,lineHeight:1.5,color:"#756E7E",margin:"0 0 16px"}}>Выбери тему и опиши ситуацию. В MVP вопрос сохраняется локально, а после подключения backend пойдёт в рабочую очередь тренера.</p>
+              <p style={{fontSize:12.5,lineHeight:1.5,color:"#756E7E",margin:"0 0 16px"}}>Выбери тему и опиши ситуацию. После отправки вопрос появится в очереди тренера.</p>
               <select value={topic} onChange={e=>setTopic(e.target.value)} style={{width:"100%",border:"1px solid #E4DCE9",borderRadius:12,padding:"11px 12px",font:"inherit",background:"#fff",marginBottom:9}}>{["Тренировки","Подготовка к старту","Восстановление","Самочувствие","Питание"].map(x=><option key={x}>{x}</option>)}</select>
               <textarea value={question} onChange={e=>setQuestion(e.target.value)} placeholder="Напиши свой вопрос..." style={{width:"100%",minHeight:130,border:"1px solid #E4DCE9",borderRadius:12,padding:"11px 12px",font:"inherit",resize:"vertical",marginBottom:10}}/>
               <button className="primary-btn" onClick={ask}>Отправить тренеру</button>
@@ -1036,7 +1036,7 @@ function ParticipateModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=
   const offline=[...seededOffline,...normalizedEvents.filter(e=>/офлайн|вел|йога/i.test(`${e.kind||""} ${e.title||""}`))];
   const meetups=[...seededMeetups,...normalizedEvents.filter(e=>/митап|лектор|видео|встреч/i.test(`${e.kind||""} ${e.title||""}`))];
   const isRegistered=id=>registeredEvents.includes(id);
-  const register=e=>requireLogin(()=>{onToggleEvent?.(e.id);track(isRegistered(e.id)?"event_unregister":"event_signup",e.id,{kind:e.kind});});
+  const register=e=>requireLogin(()=>{onToggleEvent?.(e.id);});
   const submitForm=()=>requireLogin(()=>{
     if(!form.title.trim())return;
     const item={id:`${showForm}-${Date.now()}`,...form,status:"На рассмотрении",dateCreated:new Date().toISOString()};
@@ -1153,7 +1153,7 @@ function PlatformModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fal
             </div>)}
           </div>
           {!module.target&&<div style={{marginTop:22,borderRadius:22,background:"#fff",border:"1px dashed #D9CDE3",padding:"18px 20px",fontSize:13,lineHeight:1.5,color:"#756E7E"}}>
-            Каркас раздела уже включён в навигацию MVP. Следующим шагом подключаем его рабочие сценарии и данные, не меняя общий дизайн платформы.
+            Раздел уже доступен в навигации. Здесь будут собраны связанные действия и материалы.
           </div>}
         </section>
       </main>
@@ -1284,7 +1284,7 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
           <button onClick={()=>setPage("admin")} className="plain-link">Панель администратора →</button>
         </div>}
         <div className="profile-head" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,marginBottom:28}}>
-          <div style={{display:"flex",alignItems:"center",gap:16}}><div className="avatar">Д</div><div><h1 style={{fontSize:26,margin:0}}>Добрый день, Диана! 👋</h1><div className="muted">Стабильность сегодня — большие победы завтра</div></div></div>
+          <div style={{display:"flex",alignItems:"center",gap:16}}><div className="avatar">Д</div><div><h1 style={{fontSize:26,margin:0}}>Добрый день! 👋</h1><div className="muted">Стабильность сегодня — большие победы завтра</div></div></div>
           <span className="role-pill">Сотрудник право(тех)</span>
         </div>
         <div className="metrics-grid">
@@ -1385,7 +1385,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
   const handleFile=e=>{
     const file=e.target.files?.[0];
     if(!file){setForm(p=>({...p,fileName:"",fileType:"",fileData:""}));return;}
-    if(file.size>2*1024*1024){alert("Для демо выберите файл до 2 МБ.");e.target.value="";return;}
+    if(file.size>2*1024*1024){alert("Выберите файл до 2 МБ.");e.target.value="";return;}
     if(file.type.startsWith("image/")){
       const reader=new FileReader();
       reader.onload=()=>setForm(p=>({...p,fileName:file.name,fileType:file.type,fileData:String(reader.result||"")}));
@@ -1634,7 +1634,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
               <div style={{fontSize:10,fontWeight:800,color:"#8D27EE",letterSpacing:"1px",marginBottom:8}}>УЧАСТНИКИ</div>
               <div style={{fontSize:24,fontWeight:800}}>{managedChallenge.participants||0}</div>
               <div className="muted" style={{fontSize:11}}>общий демо-счётчик</div>
-              {joinedChallenges.includes(managedChallenge.id)&&<div style={{marginTop:10,fontSize:11,fontWeight:700,color:"#159B66"}}>✓ Диана — участвует в текущем MVP</div>}
+              {joinedChallenges.includes(managedChallenge.id)&&<div style={{marginTop:10,fontSize:11,fontWeight:700,color:"#159B66"}}>✓ Текущий пользователь участвует</div>}
               <div style={{marginTop:8,fontSize:9.5,lineHeight:1.4,color:"#AAA2B2"}}>Полный список сотрудников появится после корпоративной авторизации и backend.</div>
             </div>
             <div style={{background:"#F7F1FC",borderRadius:16,padding:"16px"}}>
@@ -1667,7 +1667,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
             <div style={{fontSize:10,fontWeight:800,color:"#8D27EE",letterSpacing:"1px",marginBottom:8}}>РЕГИСТРАЦИИ</div>
             <div style={{fontSize:24,fontWeight:800}}>{registeredEvents.includes(managedEvent.id)?1:0}</div>
             <div className="muted" style={{fontSize:11}}>видно в текущем MVP-браузере</div>
-            {registeredEvents.includes(managedEvent.id)&&<div style={{marginTop:10,fontSize:11,fontWeight:700,color:"#159B66"}}>✓ Диана — зарегистрирована</div>}
+            {registeredEvents.includes(managedEvent.id)&&<div style={{marginTop:10,fontSize:11,fontWeight:700,color:"#159B66"}}>✓ Текущий пользователь зарегистрирован</div>}
             <div style={{marginTop:8,fontSize:9.5,lineHeight:1.4,color:"#AAA2B2"}}>После backend здесь будет полный список сотрудников, дата регистрации и выгрузка участников.</div>
           </div>
           <div style={{display:"flex",gap:10,justifyContent:"space-between",alignItems:"center"}}>
@@ -1771,7 +1771,7 @@ function MinimalHome({setPage}){
     {rank:1,name:"Алексей Ковалёв",team:"Backend",result:"87 000 шагов"},
     {rank:2,name:"Мария Петрова",team:"HR",result:"74 000 шагов"},
     {rank:3,name:"Иван Сидоров",team:"Frontend",result:"68 000 шагов"},
-    {rank:4,name:"Диана",team:"HR",result:"42 000 шагов"},
+    {rank:4,name:"Вы",team:"HR",result:"42 000 шагов"},
     {rank:5,name:"Ольга Смирнова",team:"Design",result:"38 000 шагов"},
   ];
   const STEPS=[
@@ -1987,7 +1987,7 @@ export default function App(){
   };
   const login=role=>{setSignedIn(true);setIsAdmin(role==="admin");setShowLogin(false);setPage(role==="admin"?"admin":"cabinet-light");};
   const addResult=result=>{setResults(p=>[...p,result]);setJoinedChallenges(p=>p.includes(result.challengeId)?p:[...p,result.challengeId]);trackEvent("result_submit",result.challengeId,{value:result.value});notify("Результат сохранён, прогресс обновлён");};
-  const toggleEvent=id=>setRegisteredEvents(p=>{const joined=!p.includes(id);trackEvent(joined?"event_signup":"event_unregister",id);return joined?[...p,id]:p.filter(x=>x!==id);});
+  const toggleEvent=id=>setRegisteredEvents(p=>{const joined=!p.includes(id);trackEvent(joined?"event_signup":"event_unregister",id,{source:"user_action"});return joined?[...p,id]:p.filter(x=>x!==id);});
   const adminAddChallenge=form=>{setAppChallenges(p=>[{id:`c${Date.now()}`,emoji:form.emoji||"🏃",title:form.title,desc:form.desc||"Новый корпоративный челлендж",participants:0,status:"active",statusLabel:"Активный",color:BP,daysLeft:30,type:"steps",attachmentName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||"",bg:"linear-gradient(135deg,#EDE1FB,#D9E8FB)"},...p]);notify("Челлендж запущен");};
   const adminUpdateChallenge=(id,patch)=>{
     setAppChallenges(p=>p.map(ch=>ch.id===id?{...ch,...patch}:ch));
@@ -2028,6 +2028,8 @@ export default function App(){
         @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
         @keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
         @keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid rgba(141,39,238,.22);outline-offset:2px}
+        button:disabled{cursor:not-allowed}
         .hov-card{transition:transform .25s ease,box-shadow .25s ease;}
         .hov-card:hover{transform:translateY(-5px) scale(1.01);box-shadow:0 20px 40px rgba(0,0,0,0.4);}
         .hov-btn{transition:all .15s ease;}
