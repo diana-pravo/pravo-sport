@@ -8,6 +8,21 @@ const CHALLENGES=[
   {id:"c3",emoji:"🚴",title:"Велогонка",desc:"Корп. велопробег — июль",participants:12,status:"soon",statusLabel:"Скоро",color:"#D97706",daysLeft:44,type:"bike",bg:"linear-gradient(135deg,#292524 0%,#431407 50%,#78350f 100%)"},
   {id:"c4",emoji:"🏊",title:"Плавание",desc:"Открытая вода — август",participants:9,status:"soon",statusLabel:"Анонс",color:"#0891B2",daysLeft:72,type:"swim",bg:"linear-gradient(135deg,#0c1445 0%,#0e3a5e 50%,#164e63 100%)"},
 ];
+
+const DEFAULT_EVENTS=[
+  {id:"e1",date:"17",day:"СБ",title:"Утренний забег",place:"Парк Горького",kind:"Офлайн",stream:"offline",meta:"Лёгкий темп · 5 км"},
+  {id:"e2",date:"20",day:"ВТ",title:"Йога онлайн",place:"Zoom",kind:"Видеовстреча",stream:"meetups",meta:"Мягкая практика · 45 минут"},
+  {id:"e3",date:"24",day:"СБ",title:"Велопрогулка",place:"Воробьёвы горы",kind:"Офлайн",stream:"offline",meta:"15–20 км · любой уровень"},
+  {id:"start-1",date:"25",day:"СБ",title:"Московский полумарафон",place:"Москва",kind:"Забег",stream:"starts",meta:"21,1 км · регистрация до 10 мая"},
+  {id:"start-2",date:"07",day:"ВС",title:"Белые ночи",place:"Санкт-Петербург",kind:"Забег",stream:"starts",meta:"10 км / 42,2 км"},
+  {id:"start-3",date:"14",day:"ВС",title:"Летний заплыв право(спорт)",place:"Серебряный Бор",kind:"Заплыв",stream:"starts",meta:"500 м / 1 км"},
+  {id:"off-1",date:"23",day:"ПТ",title:"Вечерняя пробежка",place:"Парк Горького",kind:"Офлайн",stream:"offline",meta:"Лёгкий темп · 5 км"},
+  {id:"off-2",date:"30",day:"ПТ",title:"Велопрогулка по набережной",place:"Москва",kind:"Офлайн",stream:"offline",meta:"15–20 км · любой уровень"},
+  {id:"off-3",date:"06",day:"СБ",title:"Йога в парке",place:"Музеон",kind:"Офлайн",stream:"offline",meta:"Коврик с собой"},
+  {id:"meet-1",date:"27",day:"ВТ",title:"Как подготовиться к первому забегу",place:"Онлайн",kind:"Лекторий",stream:"meetups",meta:"Спикер: амбассадор бега"},
+  {id:"meet-2",date:"03",day:"ВТ",title:"Сон и восстановление спортсмена",place:"Онлайн",kind:"Митап",stream:"meetups",meta:"Вопросы тренеру в прямом эфире"},
+  {id:"meet-3",date:"12",day:"ЧТ",title:"История: от нуля до триатлона",place:"Офис / онлайн",kind:"История",stream:"meetups",meta:"Герой встречи — коллега из Product"}
+];
 const INIT_NEWS=[
   {id:1,title:"Старт Шагового мая!",cat:"Анонс",date:"1 мая 2025",text:"Открываем сезон! 10 дней — 6 000 шагов ежедневно.",bg:"linear-gradient(160deg,#1a0533,#2D1B69)",emoji:"👟"},
   {id:2,title:"Алексей К. — лидер недели",cat:"Результаты",date:"8 мая 2025",text:"87 000 шагов за неделю — рекорд сезона!",bg:"linear-gradient(160deg,#0d2200,#1a4000)",emoji:"🥇"},
@@ -31,8 +46,9 @@ const MVP_ICE="/assets/challenge-ice.webp";
 const MVP_SURF="/assets/team-surf.webp";
 const MVP_SPLASH=IMG4;
 
-function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false}){
-  const [activeGroup,setActiveGroup]=useState("block-participate");
+function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false,activeGroup:activeGroupProp=""}){
+  const [activeGroup,setActiveGroup]=useState(activeGroupProp);
+  useEffect(()=>setActiveGroup(activeGroupProp),[activeGroupProp]);
   const go=id=>{
     setActiveGroup(id);
     setPage("light");
@@ -124,8 +140,8 @@ const PLATFORM_BLOCKS=[
     accent:"#159B66",soft:"#EAF8F2",image:LIGHT_SWIM,
     modules:[
       {id:"trainer",icon:"💬",title:"Консультации с тренером",text:"Задай вопрос корпоративному тренеру.",features:["Задать вопрос","Перечень тем","Ответ корпоративного тренера"]},
-      {id:"sport-news",icon:"▤",title:"Новости спорта",text:"Сводка спортивной жизни компании.",target:"news",features:["Новости компании","Истории коллег","Добавить новость","Модерация"]},
-      {id:"announcements",icon:"📣",title:"Анонсы",text:"Единая лента будущих событий.",target:"news",features:["Будущие события","Календарь","Переход в нужный раздел"]}
+      {id:"sport-news",icon:"▤",title:"Новости спорта",text:"Сводка спортивной жизни компании.",features:["Новости компании","Истории коллег","Добавить новость","Модерация"]},
+      {id:"announcements",icon:"📣",title:"Анонсы",text:"Единая лента будущих событий.",features:["Будущие события","Календарь","Переход в нужный раздел"]}
     ]
   }
 ];
@@ -417,7 +433,7 @@ function CommunityModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fa
   const cardStyle={background:"#fff",border:"1px solid #E7E0EC",borderRadius:24,boxShadow:"0 10px 28px rgba(50,25,80,.045)"};
   return(
     <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
-      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin} activeGroup="block-community"/>
       <main className="light-main community-main" style={{maxWidth:1450,margin:"0 auto",padding:"38px 42px 80px"}}>
         <section className="community-hero" style={{...cardStyle,position:"relative",overflow:"hidden",padding:"38px",background:"linear-gradient(115deg,#EAF7FB 0%,#F7F3FC 58%,#fff 100%)"}}>
           <img src={MVP_SURF} alt="" style={{position:"absolute",right:0,top:0,width:"39%",height:"100%",objectFit:"cover",opacity:.86,maskImage:"linear-gradient(90deg,transparent,#000 32%)",WebkitMaskImage:"linear-gradient(90deg,transparent,#000 32%)"}}/>
@@ -558,7 +574,7 @@ function ProgressModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fal
   const card={background:"#fff",border:"1px solid #E8E1ED",borderRadius:24,boxShadow:"0 10px 28px rgba(50,25,80,.045)"};
   return(
     <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
-      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin} activeGroup="block-motivation"/>
       <main className="light-main progress-main" style={{maxWidth:1450,margin:"0 auto",padding:"38px 42px 80px"}}>
         <section className="progress-hero" style={{...card,position:"relative",overflow:"hidden",padding:"38px",background:"linear-gradient(115deg,#FFF4E5 0%,#F7F1FC 56%,#fff 100%)"}}>
           <img src={MVP_ICE} alt="" style={{position:"absolute",right:0,top:0,width:"38%",height:"100%",objectFit:"cover",opacity:.78,maskImage:"linear-gradient(90deg,transparent,#000 35%)",WebkitMaskImage:"linear-gradient(90deg,transparent,#000 35%)"}}/>
@@ -660,7 +676,7 @@ function SupportModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fals
   };
   return(
     <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
-      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin} activeGroup="block-support"/>
       <main className="light-main support-main" style={{maxWidth:1450,margin:"0 auto",padding:"38px 42px 80px"}}>
         <section className="support-hero" style={{...card,position:"relative",overflow:"hidden",padding:"38px",background:"linear-gradient(115deg,#EAF8F2 0%,#F7F3FC 56%,#fff 100%)"}}>
           <img src={LIGHT_SWIM} alt="" style={{position:"absolute",right:0,top:0,width:"39%",height:"100%",objectFit:"cover",opacity:.8,maskImage:"linear-gradient(90deg,transparent,#000 35%)",WebkitMaskImage:"linear-gradient(90deg,transparent,#000 35%)"}}/>
@@ -738,25 +754,10 @@ function ParticipateModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=
   const track=(name,id,meta={})=>sendAnalyticsEvent(createAnalyticsEvent(name,id,meta));
   const save=(key,value)=>{writeData(key,value);return value;};
   const card={background:"#fff",border:"1px solid #E8E1ED",borderRadius:24,boxShadow:"0 10px 28px rgba(50,25,80,.045)"};
-  const seededStarts=[
-    {id:"start-1",date:"25",day:"СБ",title:"Московский полумарафон",place:"Москва",kind:"Забег",meta:"21,1 км · регистрация до 10 мая"},
-    {id:"start-2",date:"07",day:"ВС",title:"Белые ночи",place:"Санкт-Петербург",kind:"Забег",meta:"10 км / 42,2 км"},
-    {id:"start-3",date:"14",day:"ВС",title:"Летний заплыв право(спорт)",place:"Серебряный Бор",kind:"Заплыв",meta:"500 м / 1 км"}
-  ];
-  const seededOffline=[
-    {id:"off-1",date:"23",day:"ПТ",title:"Вечерняя пробежка",place:"Парк Горького",kind:"Офлайн",meta:"Лёгкий темп · 5 км"},
-    {id:"off-2",date:"30",day:"ПТ",title:"Велопрогулка по набережной",place:"Москва",kind:"Офлайн",meta:"15–20 км · любой уровень"},
-    {id:"off-3",date:"06",day:"СБ",title:"Йога в парке",place:"Музеон",kind:"Офлайн",meta:"Коврик с собой"}
-  ];
-  const seededMeetups=[
-    {id:"meet-1",date:"27",day:"ВТ",title:"Как подготовиться к первому забегу",place:"Онлайн",kind:"Лекторий",meta:"Спикер: амбассадор бега"},
-    {id:"meet-2",date:"03",day:"ВТ",title:"Сон и восстановление спортсмена",place:"Онлайн",kind:"Митап",meta:"Вопросы тренеру в прямом эфире"},
-    {id:"meet-3",date:"12",day:"ЧТ",title:"История: от нуля до триатлона",place:"Офис / онлайн",kind:"История",meta:"Герой встречи — коллега из Product"}
-  ];
   const normalizedEvents=(events||[]).filter(e=>!e.archived);
-  const starts=[...seededStarts,...normalizedEvents.filter(e=>/забег|старт|заплыв|марафон/i.test(`${e.kind||""} ${e.title||""}`))];
-  const offline=[...seededOffline,...normalizedEvents.filter(e=>/офлайн|вел|йога/i.test(`${e.kind||""} ${e.title||""}`))];
-  const meetups=[...seededMeetups,...normalizedEvents.filter(e=>/митап|лектор|видео|встреч/i.test(`${e.kind||""} ${e.title||""}`))];
+  const starts=normalizedEvents.filter(e=>e.stream==="starts"||/забег|старт|заплыв|марафон/i.test(`${e.kind||""} ${e.title||""}`));
+  const offline=normalizedEvents.filter(e=>e.stream==="offline"||/офлайн|вел|йога/i.test(`${e.kind||""} ${e.title||""}`));
+  const meetups=normalizedEvents.filter(e=>e.stream==="meetups"||/митап|лектор|видео|встреч|история/i.test(`${e.kind||""} ${e.title||""}`));
   const isRegistered=id=>registeredEvents.includes(id);
   const register=e=>requireLogin(()=>{onToggleEvent?.(e.id);});
   const submitForm=()=>requireLogin(()=>{
@@ -775,7 +776,7 @@ function ParticipateModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=
   </article>;
   return(
     <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
-      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin} activeGroup="block-participate"/>
       <main className="light-main participate-main" style={{maxWidth:1450,margin:"0 auto",padding:"38px 42px 80px"}}>
         <section className="participate-hero" style={{...card,position:"relative",overflow:"hidden",padding:"38px",background:"linear-gradient(115deg,#F2E7FD 0%,#F9F6FC 58%,#fff 100%)"}}>
           <img src={MVP_SPLASH} alt="" style={{position:"absolute",right:0,top:0,width:"40%",height:"100%",objectFit:"cover",opacity:.82,maskImage:"linear-gradient(90deg,transparent,#000 34%)",WebkitMaskImage:"linear-gradient(90deg,transparent,#000 34%)"}}/>
@@ -903,7 +904,7 @@ function LightChallengesPage({setPage,challenges=CHALLENGES,signedIn=false,onLog
   };
   return(
     <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
-      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin} activeGroup="block-participate"/>
       <main className="light-main light-list-main" style={{maxWidth:1450,margin:"0 auto",padding:"48px 42px 72px"}}>
         <div style={{fontSize:13,fontWeight:800,letterSpacing:"2px",color:"#8D27EE",marginBottom:16}}>ВЫБИРАЙ СВОЙ ТЕМП</div>
         <div className="light-section-head" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:20}}>
@@ -952,7 +953,7 @@ function LightNewsPage({setPage,news=INIT_NEWS,signedIn=false,onLogin,isAdmin=fa
   const visibleNews=news.filter(n=>!n.archived);
   return(
     <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
-      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin} activeGroup="block-support"/>
       <main className="light-main light-list-main" style={{maxWidth:1450,margin:"0 auto",padding:"48px 42px 72px"}}>
         <div style={{fontSize:13,fontWeight:800,letterSpacing:"2px",color:"#8D27EE",marginBottom:16}}>БУДЬ В КУРСЕ</div>
         <div className="light-section-head" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:20,marginBottom:34}}>
@@ -1020,7 +1021,7 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
             <section style={card}><div className="section-title">Последняя активность</div>{results.length===0?<div className="empty-state">После внесения результата здесь появится история активности.</div>:results.slice().reverse().slice(0,6).map(r=><div key={r.id} className="activity-row"><div className="activity-icon">✓</div><div style={{flex:1}}><b>{r.challengeTitle}</b><div className="muted" style={{fontSize:11}}>{r.date}{r.proofName?` · 📎 ${r.proofName}`:""}</div></div><strong style={{color:BP}}>{Number(r.value).toLocaleString("ru-RU")}</strong></div>)}</section>
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:20}}>
-            <section style={card}><div className="section-title">Ближайшие события</div>{visibleEvents.map((e,i)=>{const joined=registeredEvents.includes(e.id);return <div key={e.id} className="event-row" style={{borderTop:i?"1px solid #ece4f5":"none"}}><div className="event-date"><small>{e.day}</small><b>{e.date}</b></div><div style={{flex:1}}><b>{e.title}</b><div className="muted" style={{fontSize:11}}>{e.place} · {e.kind||"Событие"}{e.attachmentName?" · 📎 "+e.attachmentName:""}</div></div><button className={joined?"mini-btn active":"mini-btn"} onClick={()=>onToggleEvent(e.id)}>{joined?"Записана ✓":"Записаться"}</button></div>})}</section>
+            <section style={card}><div className="section-title">Ближайшие события</div>{visibleEvents.map((e,i)=>{const joined=registeredEvents.includes(e.id);return <div key={e.id} className="event-row" style={{borderTop:i?"1px solid #ece4f5":"none"}}><div className="event-date"><small>{e.day}</small><b>{e.date}</b></div><div style={{flex:1}}><b>{e.title}</b><div className="muted" style={{fontSize:11}}>{e.place} · {e.kind||"Событие"}{e.attachmentName?" · 📎 "+e.attachmentName:""}</div></div><button className={joined?"mini-btn active":"mini-btn"} onClick={()=>onToggleEvent(e.id)}>{joined?"Вы записаны ✓":"Записаться"}</button></div>})}</section>
             <section style={card}><div className="section-title">Достижения</div><div className="achievement-grid">{[{e:"🔥",l:"7 дней подряд"},{e:"🏊",l:"10 км плавания"},{e:"👟",l:"Первый результат"},{e:"🚴",l:"Велопрогулка"}].map((a,i)=><div key={i} className="achievement"><span>{a.e}</span><small>{a.l}</small></div>)}</div></section>
           </div>
         </div>
@@ -1437,11 +1438,11 @@ export default function App(){
   const load=(key,fallback)=>readData(key,fallback);
   const [news,setNews]=useState(()=>load(STORAGE_KEYS.news,INIT_NEWS));
   const [appChallenges,setAppChallenges]=useState(()=>load(STORAGE_KEYS.challenges,CHALLENGES));
-  const [events,setEvents]=useState(()=>load(STORAGE_KEYS.events,[
-    {id:"e1",date:"17",day:"СБ",title:"Утренний забег",place:"Парк Горького",kind:"Офлайн"},
-    {id:"e2",date:"20",day:"ВТ",title:"Йога онлайн",place:"Zoom",kind:"Видеовстреча"},
-    {id:"e3",date:"24",day:"СБ",title:"Велопрогулка",place:"Воробьёвы горы",kind:"Челлендж"},
-  ]));
+  const [events,setEvents]=useState(()=>{
+    const saved=load(STORAGE_KEYS.events,[]);
+    const current=Array.isArray(saved)?saved:[];
+    return [...current,...DEFAULT_EVENTS.filter(base=>!current.some(item=>item.id===base.id))];
+  });
   const [results,setResults]=useState(()=>load(STORAGE_KEYS.results,[]));
   const [joinedChallenges,setJoinedChallenges]=useState(()=>load(STORAGE_KEYS.joinedChallenges,["c1"]));
   const [eventLog,setEventLog]=useState(()=>load(STORAGE_KEYS.eventLog,[]));
