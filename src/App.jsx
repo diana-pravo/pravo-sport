@@ -790,7 +790,127 @@ function CommunityModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fa
   );
 }
 
+function ProgressModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=false}){
+  const tabs=[["ratings","Рейтинги"],["coins","Коины"],["benefits","Бенефиты"],["achievement","Достижения"]];
+  const [redemptions,setRedemptions]=useState(()=>readData(STORAGE_KEYS.rewardRedemptions,[]));
+  const [claims,setClaims]=useState(()=>readData(STORAGE_KEYS.achievementClaims,[]));
+  const [claimTitle,setClaimTitle]=useState("");
+  const [claimText,setClaimText]=useState("");
+  const requireLogin=fn=>{if(!signedIn){onLogin?.();return;}fn();};
+  const track=(name,id,meta={})=>sendAnalyticsEvent(createAnalyticsEvent(name,id,meta));
+  const leaderboard=[
+    {rank:1,name:"Алексей К.",team:"Backend",value:"87 000 шагов",delta:"+2",avatar:"АК"},
+    {rank:2,name:"Мария П.",team:"HR",value:"74 000 шагов",delta:"+1",avatar:"МП"},
+    {rank:3,name:"Иван С.",team:"Frontend",value:"68 000 шагов",delta:"—",avatar:"ИС"},
+    {rank:4,name:"Диана",team:"HR",value:"42 000 шагов",delta:"+3",avatar:"Д"},
+    {rank:5,name:"Ольга С.",team:"Design",value:"38 000 шагов",delta:"-1",avatar:"ОС"},
+    {rank:6,name:"Никита Р.",team:"Product",value:"36 500 шагов",delta:"+1",avatar:"НР"}
+  ];
+  const rewards=[
+    {id:"fitmost",title:"Fitmost",text:"Доступ к спортивным студиям и тренировкам.",cost:120,emoji:"🏋️"},
+    {id:"merch",title:"Спортивный мерч",text:"Футболка или аксессуар право(спорт).",cost:90,emoji:"👕"},
+    {id:"consult",title:"Персональная консультация",text:"30 минут с корпоративным тренером.",cost:70,emoji:"💬"},
+    {id:"start",title:"Компенсация старта",text:"Часть стоимости участия в согласованном старте.",cost:180,emoji:"🏁"}
+  ];
+  const earned=[
+    {id:"streak",icon:"⚡",title:"Серия 14 дней",text:"Активность 14 дней подряд",done:true},
+    {id:"team",icon:"♥",title:"Командный игрок",text:"Поддержка коллег и командные активности",done:true},
+    {id:"starter",icon:"🏁",title:"Первый старт",text:"Первый подтверждённый результат",done:true},
+    {id:"leader",icon:"🏆",title:"Топ-3 сезона",text:"Попади в тройку рейтинга",done:false}
+  ];
+  const coinBalance=145-redemptions.reduce((sum,id)=>sum+(rewards.find(r=>r.id===id)?.cost||0),0);
+  const redeem=reward=>requireLogin(()=>{
+    if(redemptions.includes(reward.id)||coinBalance<reward.cost)return;
+    const next=[...redemptions,reward.id];
+    setRedemptions(next);writeData(STORAGE_KEYS.rewardRedemptions,next);
+    track("reward_redeem",reward.id,{cost:reward.cost});
+  });
+  const submitClaim=()=>requireLogin(()=>{
+    if(!claimTitle.trim()||!claimText.trim())return;
+    const item={id:`ach-${Date.now()}`,title:claimTitle.trim(),text:claimText.trim(),status:"На модерации",date:new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"long"})};
+    const next=[item,...claims];
+    setClaims(next);writeData(STORAGE_KEYS.achievementClaims,next);
+    track("achievement_claim_submit",item.id);
+    setClaimTitle("");setClaimText("");
+  });
+  const card={background:"#fff",border:"1px solid #E8E1ED",borderRadius:24,boxShadow:"0 10px 28px rgba(50,25,80,.045)"};
+  return(
+    <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
+      <main className="light-main progress-main" style={{maxWidth:1450,margin:"0 auto",padding:"38px 42px 80px"}}>
+        <section className="progress-hero" style={{...card,position:"relative",overflow:"hidden",padding:"38px",background:"linear-gradient(115deg,#FFF4E5 0%,#F7F1FC 56%,#fff 100%)"}}>
+          <img src={MVP_ICE} alt="" style={{position:"absolute",right:0,top:0,width:"38%",height:"100%",objectFit:"cover",opacity:.78,maskImage:"linear-gradient(90deg,transparent,#000 35%)",WebkitMaskImage:"linear-gradient(90deg,transparent,#000 35%)"}}/>
+          <div style={{position:"relative",zIndex:2,maxWidth:760}}>
+            <div style={{fontSize:11,fontWeight:900,letterSpacing:"1.6px",color:"#D97706",marginBottom:10}}>ПРОГРЕСС И НАГРАДЫ</div>
+            <h1 className="light-page-title" style={{fontSize:58,lineHeight:1,letterSpacing:"-2.8px",margin:"0 0 12px",fontWeight:800}}>Делай прогресс видимым</h1>
+            <p style={{fontSize:16,lineHeight:1.55,color:"#6E6877",margin:0,maxWidth:650}}>Рейтинг, коины, достижения и спортивные бенефиты — в одном месте и с понятной логикой.</p>
+          </div>
+        </section>
+
+        <nav className="progress-tabs" style={{display:"flex",gap:8,overflowX:"auto",padding:"18px 0 8px",scrollbarWidth:"none"}}>
+          {tabs.map(([id,label])=><button key={id} type="button" onClick={()=>setPage(`module:${id}`)} style={{flex:"0 0 auto",border:moduleId===id?0:"1px solid #E5DCEB",background:moduleId===id?"#10052F":"#fff",color:moduleId===id?"#fff":"#554C62",borderRadius:18,padding:"10px 15px",fontSize:12.5,fontWeight:800,cursor:"pointer"}}>{label}</button>)}
+        </nav>
+
+        {moduleId==="ratings"&&<>
+          <div className="progress-kpis" style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:12,margin:"16px 0"}}>
+            {[["4","место сейчас"],["42 000","шагов в сезоне"],["+3","позиции за неделю"],["7","активных дней"]].map(([v,l])=><div key={l} style={{...card,padding:"20px"}}><strong style={{display:"block",fontSize:30,letterSpacing:"-1.3px"}}>{v}</strong><span style={{fontSize:11,color:"#7B7484"}}>{l}</span></div>)}
+          </div>
+          <section style={{...card,padding:"8px 22px 14px",marginTop:14}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,padding:"18px 0 12px"}}><div><div style={{fontSize:11,fontWeight:900,color:"#D97706",letterSpacing:"1.2px"}}>СЕЗОН 2026</div><h2 style={{fontSize:28,margin:"4px 0 0"}}>Общий рейтинг</h2></div><span style={{fontSize:11,color:"#7B7484"}}>обновлено недавно</span></div>
+            {leaderboard.map(r=><div key={r.rank} className="rating-row" style={{display:"grid",gridTemplateColumns:"36px 44px 1fr 140px 80px",gap:12,alignItems:"center",padding:"13px 0",borderTop:"1px solid #EEE7F2",background:r.name==="Диана"?"#FBF7FF":"transparent",borderRadius:r.name==="Диана"?12:0}}>
+              <b style={{fontSize:13,textAlign:"center"}}>{r.rank}</b><div style={{width:38,height:38,borderRadius:"50%",background:colFor(r.name),color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900}}>{r.avatar}</div>
+              <div><b style={{fontSize:13}}>{r.name}</b><div style={{fontSize:10.5,color:"#847C8C"}}>{r.team}</div></div><div style={{fontSize:12,fontWeight:800,textAlign:"right"}}>{r.value}</div><div style={{fontSize:11,color:r.delta.startsWith("+")?"#159B66":"#8A8491",textAlign:"right"}}>{r.delta}</div>
+            </div>)}
+          </section>
+        </>}
+
+        {moduleId==="coins"&&<>
+          <section style={{...card,marginTop:16,padding:"28px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,alignItems:"center",background:"linear-gradient(135deg,#10052F,#2D1260)",color:"#fff"}}>
+            <div><div style={{fontSize:11,fontWeight:900,letterSpacing:"1.2px",color:"#DCC4F8"}}>ТВОЙ БАЛАНС</div><div style={{fontSize:64,fontWeight:800,letterSpacing:"-3px",marginTop:8}}>{coinBalance}</div><div style={{fontSize:13,color:"#D6C8E4"}}>коинов доступно</div></div>
+            <div style={{fontSize:13,lineHeight:1.6,color:"#E8DEF1"}}>Коины начисляются за участие, регулярность, результаты и поддержку сообщества. Сейчас это MVP-логика — реальные правила начисления подключим к backend.</div>
+          </section>
+          <div className="coin-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:14,marginTop:16}}>
+            {[["Челлендж завершён","+40"],["7 дней активности","+25"],["Помощь команде","+15"],["Новый результат","+10"],["Участие в старте","+30"],["Инициатива сообщества","+20"]].map(([t,v])=><div key={t} style={{...card,padding:"20px"}}><span style={{fontSize:11,color:"#7B7484"}}>{t}</span><strong style={{display:"block",fontSize:23,color:"#D97706",marginTop:8}}>{v}</strong></div>)}
+          </div>
+        </>}
+
+        {moduleId==="benefits"&&<>
+          <div className="progress-section-head" style={{margin:"28px 0 16px"}}><div style={{fontSize:11,fontWeight:900,color:"#D97706",letterSpacing:"1.3px"}}>БЕНЕФИТЫ</div><h2 style={{fontSize:31,margin:"5px 0 0",letterSpacing:"-1.2px"}}>На что можно потратить коины</h2></div>
+          <div className="benefit-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:14}}>
+            {rewards.map(r=>{const used=redemptions.includes(r.id);const disabled=used||coinBalance<r.cost;return <article key={r.id} style={{...card,padding:"22px",display:"grid",gridTemplateColumns:"58px 1fr auto",gap:16,alignItems:"center"}}>
+              <div style={{width:58,height:58,borderRadius:18,background:"#FFF4E5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:27}}>{r.emoji}</div>
+              <div><h3 style={{fontSize:18,margin:"0 0 5px"}}>{r.title}</h3><p style={{fontSize:12,color:"#756E7E",margin:0,lineHeight:1.45}}>{r.text}</p><div style={{fontSize:11,fontWeight:900,color:"#D97706",marginTop:8}}>{r.cost} коинов</div></div>
+              <button onClick={()=>redeem(r)} disabled={disabled} type="button" style={{border:0,background:used?"#E9F8EF":disabled?"#F2EEF4":"#10052F",color:used?"#08783F":disabled?"#9991A0":"#fff",borderRadius:14,padding:"9px 12px",fontWeight:800,cursor:disabled?"default":"pointer"}}>{used?"✓ Выбрано":coinBalance<r.cost?"Не хватает":"Выбрать"}</button>
+            </article>})}
+          </div>
+        </>}
+
+        {moduleId==="achievement"&&<>
+          <div className="achievement-layout" style={{display:"grid",gridTemplateColumns:"1.15fr .85fr",gap:16,marginTop:16}}>
+            <section style={{...card,padding:"24px"}}>
+              <div style={{fontSize:11,fontWeight:900,color:"#D97706",letterSpacing:"1.3px"}}>МОИ ДОСТИЖЕНИЯ</div><h2 style={{fontSize:28,margin:"5px 0 20px"}}>Открытые бейджи</h2>
+              <div className="achievement-showcase" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:10}}>
+                {earned.map(a=><div key={a.id} style={{border:"1px solid #EEE7F2",borderRadius:18,padding:"18px",opacity:a.done?1:.45,background:a.done?"#fff":"#FAF8FB"}}>
+                  <div style={{fontSize:32}}>{a.icon}</div><b style={{display:"block",fontSize:14,margin:"10px 0 4px"}}>{a.title}</b><span style={{fontSize:11,color:"#7B7484"}}>{a.text}</span>
+                </div>)}
+              </div>
+            </section>
+            <section style={{...card,padding:"24px"}}>
+              <div style={{fontSize:11,fontWeight:900,color:"#D97706",letterSpacing:"1.3px"}}>ЗАЯВИ О ДОСТИЖЕНИИ</div><h2 style={{fontSize:25,margin:"5px 0 8px"}}>Поделись результатом</h2><p style={{fontSize:12.5,color:"#756E7E",lineHeight:1.5,margin:"0 0 16px"}}>Например: первый полумарафон, личный рекорд или спортивный результат вне корпоративного челленджа.</p>
+              <input value={claimTitle} onChange={e=>setClaimTitle(e.target.value)} placeholder="Название достижения" style={{width:"100%",border:"1px solid #E4DCE9",borderRadius:12,padding:"11px 12px",font:"inherit",marginBottom:9}}/>
+              <textarea value={claimText} onChange={e=>setClaimText(e.target.value)} placeholder="Расскажи коротко о результате" style={{width:"100%",minHeight:92,border:"1px solid #E4DCE9",borderRadius:12,padding:"11px 12px",font:"inherit",resize:"vertical",marginBottom:10}}/>
+              <button className="primary-btn" onClick={submitClaim}>Отправить на модерацию</button>
+            </section>
+          </div>
+          {claims.length>0&&<section style={{...card,padding:"22px",marginTop:16}}><h3 style={{margin:"0 0 12px"}}>Мои заявки</h3>{claims.map(x=><div key={x.id} style={{display:"grid",gridTemplateColumns:"1fr auto",gap:14,padding:"12px 0",borderTop:"1px solid #EEE7F2"}}><div><b style={{fontSize:13}}>{x.title}</b><div style={{fontSize:11,color:"#7B7484",marginTop:3}}>{x.text}</div></div><span style={{fontSize:10,fontWeight:800,color:"#8D27EE",background:"#F4EEF8",borderRadius:999,padding:"6px 9px",alignSelf:"start"}}>{x.status}</span></div>)}</section>}
+        </>}
+      </main>
+    </div>
+  );
+}
+
 function PlatformModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=false}){
+  if(["ratings","coins","benefits","achievement"].includes(moduleId)) return <ProgressModulePage setPage={setPage} moduleId={moduleId} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>;
   if(["city-sport","teams","buddy","ambassadors","athlete-card"].includes(moduleId)) return <CommunityModulePage setPage={setPage} moduleId={moduleId} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>;
   const module=PLATFORM_MODULES.find(item=>item.id===moduleId);
   if(!module){setTimeout(()=>setPage("light"),0);return null;}
@@ -1727,6 +1847,9 @@ export default function App(){
         .platform-module-btn:hover{transform:translateY(-2px);border-color:#D8CBE3!important;box-shadow:0 10px 24px rgba(50,25,80,.07)}
         .module-feature-grid>div{transition:transform .18s ease}.module-feature-grid>div:hover{transform:translateY(-2px)}
         .community-tabs::-webkit-scrollbar{display:none}.community-main select,.community-main input{color:#10052F}
+        .progress-tabs::-webkit-scrollbar{display:none}.progress-main input,.progress-main textarea{color:#10052F;outline:none}
+        @media(max-width:1000px){.progress-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.coin-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.benefit-grid{grid-template-columns:1fr!important}.achievement-layout{grid-template-columns:1fr!important}}
+        @media(max-width:620px){.progress-main{padding-top:24px!important}.progress-hero{padding:26px!important}.progress-hero>img{width:58%!important;opacity:.5!important}.progress-hero>div{max-width:78%!important}.progress-kpis,.coin-grid{grid-template-columns:1fr!important}.rating-row{grid-template-columns:28px 38px 1fr auto!important}.rating-row>div:nth-child(4){grid-column:3/5;text-align:left!important}.rating-row>div:nth-child(5){display:none}.benefit-grid article{grid-template-columns:52px 1fr!important}.benefit-grid article>button{grid-column:1/-1!important;width:100%!important}.achievement-showcase{grid-template-columns:1fr!important}}
         @media(max-width:1000px){.community-people-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.community-filters{grid-template-columns:1fr 1fr!important}.community-filters input{grid-column:1/-1}.community-grid{grid-template-columns:1fr!important}}
         @media(max-width:620px){.community-main{padding-top:24px!important}.community-hero{padding:26px!important}.community-hero>img{width:58%!important;opacity:.55!important}.community-hero>div{max-width:78%!important}.community-people-grid{grid-template-columns:1fr!important}.community-filters{grid-template-columns:1fr!important}.community-filters input{grid-column:auto}.community-section-head{align-items:flex-start!important;flex-direction:column!important}.community-grid article[style*="grid-template-columns"]{grid-template-columns:52px 1fr!important}.community-grid article[style*="grid-template-columns"]>button{grid-column:1/-1!important;width:100%!important}}
         @media(max-width:1100px){.module-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
