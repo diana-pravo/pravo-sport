@@ -344,6 +344,55 @@ function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false}){
 
 const lightPageBg="radial-gradient(circle at 0% 8%,#F0DEFF 0,transparent 25%),radial-gradient(circle at 100% 42%,#FFE8EF 0,transparent 24%),linear-gradient(180deg,#FAF7FF 0%,#FBF9FF 100%)";
 
+const PLATFORM_BLOCKS=[
+  {
+    id:"participate",n:"01",title:"Участвовать",eyebrow:"ВКЛЮЧАЙСЯ В ДВИЖЕНИЕ",
+    description:"Выбирай формат, регистрируйся и участвуй — от челленджей до живых встреч.",
+    accent:"#8D27EE",soft:"#F3EAFE",image:MVP_SPLASH,
+    modules:[
+      {id:"challenges",icon:"🏆",title:"Челленджи",text:"Активные, будущие и прошедшие челленджи.",target:"challenges",features:["Активные челленджи","Будущие анонсы","Прошедшие челленджи","Рейтинг"]},
+      {id:"starts",icon:"🏃",title:"Забеги / старты",text:"Твои старты, календарь и заявки.",features:["Твои старты","Календарь ПравоТех","Заявка на компенсацию","Новости стартов"]},
+      {id:"offline",icon:"📍",title:"Офлайн-активности",text:"Предложения коллег и встречи рядом.",features:["Предложения коллег","Анонсы мероприятий","Отчёты об активностях"]},
+      {id:"meetups",icon:"🎙",title:"Митапы / лектории",text:"Встречи, темы и истории коллег.",features:["Календарь встреч","Предложить тему","Стать героем лектория"]}
+    ]
+  },
+  {
+    id:"community",n:"02",title:"Люди и сообщество",eyebrow:"НАХОДИ СВОИХ",
+    description:"Ищи коллег по интересам, присоединяйся к командам и находи спортивного партнёра.",
+    accent:"#1699C4",soft:"#EAF7FB",image:MVP_SURF,
+    modules:[
+      {id:"city-sport",icon:"⌖",title:"Спорт по городам",text:"Поиск по городу и виду спорта.",features:["Поиск по городу и виду спорта","Добавление своей активности","Присоединиться к коллеге"]},
+      {id:"ambassadors",icon:"★",title:"Амбассадоры спорта",text:"Лидеры сообщества и новые инициативы.",features:["Наши амбассадоры","Стать амбассадором","Инициировать мероприятие"]},
+      {id:"athlete-card",icon:"◉",title:"Карточка спортсмена",text:"Истории, интервью и спортивный профиль.",features:["Интервью коллег","История спортсмена","Заявка «Хочу стать героем»"]},
+      {id:"teams",icon:"👥",title:"Команды",text:"Составы команд и заявки на вступление.",features:["Действующие команды","Текущие составы","Заявка на присоединение"]},
+      {id:"buddy",icon:"♥",title:"Спортивный бадди",text:"Найди партнёра для совместной активности.",features:["Поиск партнёра","Онлайн и офлайн формат","Заявки и подтверждения"]}
+    ]
+  },
+  {
+    id:"motivation",n:"03",title:"Мотивация и признание",eyebrow:"ДЕЛАЙ ПРОГРЕСС ВИДИМЫМ",
+    description:"Участие превращается в результат, признание и понятную систему наград.",
+    accent:"#10052F",soft:"#F8F2DD",image:MVP_ICE,
+    modules:[
+      {id:"ratings",icon:"▥",title:"Рейтинги",text:"Сравнивай прогресс и следи за результатами.",features:["Рейтинг челленджей","Спортивные соревнования","Рейтинг амбассадоров"]},
+      {id:"coins",icon:"◉",title:"Коины",text:"Начисления за спортивную активность.",features:["Баланс коинов","История начислений","Начисления за активности"]},
+      {id:"benefits",icon:"🎁",title:"Бенефиты",text:"Спортивные сервисы и доступные преимущества.",features:["Спортивные сервисы","Fitmost","Корпоративные предложения"]},
+      {id:"achievement",icon:"⚑",title:"Заяви о достижении",text:"Поделись результатом и получи признание.",features:["Заявка о достижении","Подтверждение результата","Публикация достижения"]}
+    ]
+  },
+  {
+    id:"support",n:"04",title:"Поддержка и информация",eyebrow:"ВСЁ НУЖНОЕ В ОДНОМ МЕСТЕ",
+    description:"Получай помощь, читай новости и не пропускай будущие спортивные события.",
+    accent:"#159B66",soft:"#EAF8F2",image:MVP_HERO,
+    modules:[
+      {id:"trainer",icon:"💬",title:"Консультации с тренером",text:"Задай вопрос корпоративному тренеру.",features:["Задать вопрос","Перечень тем","Ответ корпоративного тренера"]},
+      {id:"sport-news",icon:"▤",title:"Новости спорта",text:"Сводка спортивной жизни компании.",target:"news",features:["Новости компании","Истории коллег","Добавить новость","Модерация"]},
+      {id:"announcements",icon:"📣",title:"Анонсы",text:"Единая лента будущих событий.",target:"news",features:["Будущие события","Календарь","Переход в нужный раздел"]}
+    ]
+  }
+];
+
+const PLATFORM_MODULES=PLATFORM_BLOCKS.flatMap(block=>block.modules.map(module=>({...module,blockId:block.id,blockTitle:block.title,accent:block.accent,soft:block.soft,image:block.image})));
+
 function LightChallengeCard({c,i,onOpen}){
   const isDaily=c.title==="Движение каждый день";
   const fallbackPhoto=
@@ -417,28 +466,39 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
           </div>
         </section>
 
-        <section className="scenario-section" style={{padding:"16px 0 78px"}}>
-          <div style={{fontSize:13,fontWeight:800,letterSpacing:"2px",color:"#8D27EE",marginBottom:14}}>ОДНА ТОЧКА ВХОДА</div>
-          <div className="light-section-head" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:22,marginBottom:28}}>
+        <section className="scenario-section" id="possibilities" style={{padding:"16px 0 78px",scrollMarginTop:110}}>
+          <div style={{fontSize:13,fontWeight:800,letterSpacing:"2px",color:"#8D27EE",marginBottom:14}}>16 ВОЗМОЖНОСТЕЙ · 4 НАПРАВЛЕНИЯ</div>
+          <div className="light-section-head" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:22,marginBottom:30}}>
             <div>
               <h2 className="light-section-title" style={{fontSize:58,lineHeight:1,letterSpacing:"-3px",margin:"0 0 12px",fontWeight:800}}>Что ты хочешь сделать?</h2>
-              <p style={{fontSize:15,color:"#746D7E",margin:0,maxWidth:650,lineHeight:1.55}}>Выбери сценарий — платформа приведёт к нужной активности, людям, прогрессу или поддержке.</p>
+              <p style={{fontSize:15,color:"#746D7E",margin:0,maxWidth:760,lineHeight:1.55}}>Не каталог сервисов, а четыре понятных маршрута: участвовать, находить людей, видеть свой прогресс и получать поддержку.</p>
             </div>
           </div>
-          <div className="scenario-grid" style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:14}}>
-            {[
-              {n:"01",title:"Участвовать",text:"Челленджи · старты · офлайн · лектории",accent:"#8D27EE",bg:"#fff",action:()=>setPage("challenges"),cta:"Открыть"},
-              {n:"02",title:"Найти людей",text:"Города · команды · бадди · амбассадоры",accent:"#139CC0",bg:"#fff",action:null,cta:"Следующий этап"},
-              {n:"03",title:"Видеть прогресс",text:"Рейтинг · достижения · награды · бенефиты",accent:"#10052F",bg:"#E9FF1F",action:participate,cta:"Мой прогресс"},
-              {n:"04",title:"Получить поддержку",text:"Тренер · новости · анонсы",accent:"#159B66",bg:"#fff",action:()=>setPage("news"),cta:"Перейти"}
-            ].map(s=><button key={s.n} type="button" onClick={s.action||undefined} className="scenario-card" style={{appearance:"none",textAlign:"left",border:"1px solid #E5DDEB",background:s.bg,borderRadius:26,padding:"24px",minHeight:205,display:"flex",flexDirection:"column",cursor:s.action?"pointer":"default",color:"#10052F",boxShadow:"0 10px 28px rgba(50,25,80,.04)"}}>
-              <div style={{fontSize:12,fontWeight:900,color:s.accent}}>{s.n}</div>
-              <div style={{marginTop:"auto"}}>
-                <h3 style={{fontSize:24,lineHeight:1.05,letterSpacing:"-.8px",margin:"0 0 10px",fontWeight:800}}>{s.title}</h3>
-                <p style={{fontSize:13,lineHeight:1.5,color:"#746D7E",margin:"0 0 18px"}}>{s.text}</p>
-                <span style={{fontSize:12,fontWeight:800,color:s.action?s.accent:"#9B93A4"}}>{s.cta} {s.action?"↗":""}</span>
+          <div className="platform-block-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:18}}>
+            {PLATFORM_BLOCKS.map(block=><article key={block.id} className="platform-block-card" style={{position:"relative",overflow:"hidden",border:"1px solid #E7E0EC",borderRadius:30,background:"#fff",boxShadow:"0 12px 34px rgba(50,25,80,.055)"}}>
+              <div className="platform-block-hero" style={{position:"relative",minHeight:205,padding:"28px 30px",background:`linear-gradient(105deg,${block.soft} 0%,${block.soft}F2 55%,rgba(255,255,255,.15) 100%)`,overflow:"hidden"}}>
+                <img src={block.image} alt="" onError={e=>{e.currentTarget.style.display="none";}} style={{position:"absolute",right:0,top:0,width:"43%",height:"100%",objectFit:"cover",objectPosition:"center",opacity:.88,maskImage:"linear-gradient(90deg,transparent 0%,#000 38%)",WebkitMaskImage:"linear-gradient(90deg,transparent 0%,#000 38%)"}}/>
+                <div style={{position:"relative",zIndex:2,maxWidth:"62%"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:28}}>
+                    <span style={{width:42,height:42,borderRadius:14,display:"inline-flex",alignItems:"center",justifyContent:"center",background:block.accent,color:"#fff",fontSize:13,fontWeight:900}}>{block.n}</span>
+                    <span style={{borderRadius:999,padding:"7px 11px",background:"#fff",color:block.accent,fontSize:11,fontWeight:800,boxShadow:"0 6px 18px rgba(30,10,60,.05)"}}>{block.modules.length} {block.modules.length===5?"разделов":"раздела"}</span>
+                  </div>
+                  <div style={{fontSize:10,fontWeight:900,letterSpacing:"1.4px",color:block.accent,marginBottom:7}}>{block.eyebrow}</div>
+                  <h3 style={{fontSize:31,lineHeight:1.02,letterSpacing:"-1.4px",margin:"0 0 10px",fontWeight:800}}>{block.title}</h3>
+                  <p style={{fontSize:13,lineHeight:1.5,color:"#6F687A",margin:0}}>{block.description}</p>
+                </div>
               </div>
-            </button>)}
+              <div className="platform-module-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:10,padding:14}}>
+                {block.modules.map(module=><button key={module.id} type="button" className="platform-module-btn" onClick={()=>module.target?setPage(module.target):setPage(`module:${module.id}`)} style={{appearance:"none",border:"1px solid #EEE8F2",borderRadius:20,background:"#fff",padding:"17px 16px",display:"grid",gridTemplateColumns:"40px 1fr 20px",gap:11,alignItems:"center",textAlign:"left",color:"#10052F",cursor:"pointer",minHeight:96}}>
+                  <span style={{width:40,height:40,borderRadius:13,display:"flex",alignItems:"center",justifyContent:"center",background:block.soft,color:block.accent,fontSize:19,fontWeight:900}}>{module.icon}</span>
+                  <span>
+                    <b style={{display:"block",fontSize:14,lineHeight:1.25,marginBottom:4}}>{module.title}</b>
+                    <small style={{display:"block",fontSize:11,lineHeight:1.35,color:"#7A7383"}}>{module.text}</small>
+                  </span>
+                  <span style={{fontSize:18,color:block.accent}}>›</span>
+                </button>)}
+              </div>
+            </article>)}
           </div>
         </section>
 
@@ -527,6 +587,55 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
               </article>;
             })}
           </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+function PlatformModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=false}){
+  const module=PLATFORM_MODULES.find(item=>item.id===moduleId);
+  if(!module){setTimeout(()=>setPage("light"),0);return null;}
+  const primary=()=>{
+    if(module.target){setPage(module.target);return;}
+    if(["athlete-card","coins","achievement"].includes(module.id)){
+      if(!signedIn){onLogin?.();return;}
+      setPage("cabinet-light");
+      return;
+    }
+    setPage("light");
+    setTimeout(()=>document.getElementById("possibilities")?.scrollIntoView({behavior:"smooth",block:"start"}),40);
+  };
+  return(
+    <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
+      <main className="light-main module-main" style={{maxWidth:1450,margin:"0 auto",padding:"48px 42px 80px"}}>
+        <button type="button" onClick={()=>{setPage("light");setTimeout(()=>document.getElementById("possibilities")?.scrollIntoView({behavior:"smooth",block:"start"}),40);}} style={{border:0,background:"transparent",color:"#8D27EE",fontSize:13,fontWeight:800,padding:0,cursor:"pointer",marginBottom:26}}>← Все возможности</button>
+        <section className="module-hero" style={{position:"relative",overflow:"hidden",minHeight:390,borderRadius:34,background:`linear-gradient(110deg,${module.soft} 0%,#fff 72%)`,border:"1px solid #E8E0EE",padding:"46px",display:"flex",alignItems:"center"}}>
+          <img src={module.image} alt="" onError={e=>{e.currentTarget.style.display="none";}} style={{position:"absolute",right:0,top:0,width:"46%",height:"100%",objectFit:"cover",opacity:.88,maskImage:"linear-gradient(90deg,transparent,#000 35%)",WebkitMaskImage:"linear-gradient(90deg,transparent,#000 35%)"}}/>
+          <div style={{position:"relative",zIndex:2,maxWidth:650}}>
+            <div style={{fontSize:11,fontWeight:900,letterSpacing:"1.7px",color:module.accent,marginBottom:14}}>{module.blockTitle.toUpperCase()}</div>
+            <div style={{width:54,height:54,borderRadius:18,display:"flex",alignItems:"center",justifyContent:"center",background:module.accent,color:"#fff",fontSize:25,fontWeight:900,marginBottom:22}}>{module.icon}</div>
+            <h1 className="light-page-title" style={{fontSize:62,lineHeight:.98,letterSpacing:"-3.2px",margin:"0 0 16px",fontWeight:800}}>{module.title}</h1>
+            <p style={{fontSize:17,lineHeight:1.55,color:"#6F687A",margin:"0 0 26px",maxWidth:560}}>{module.text}</p>
+            <button type="button" onClick={primary} style={{border:0,borderRadius:25,background:module.accent,color:"#fff",padding:"13px 20px",fontSize:13,fontWeight:800,cursor:"pointer"}}>
+              {module.target?"Перейти в раздел":(["athlete-card","coins","achievement"].includes(module.id)?"Открыть личный кабинет":"Вернуться к возможностям")} ↗
+            </button>
+          </div>
+        </section>
+
+        <section style={{padding:"42px 0 0"}}>
+          <div style={{fontSize:11,fontWeight:900,letterSpacing:"1.7px",color:module.accent,marginBottom:10}}>ВНУТРИ РАЗДЕЛА</div>
+          <h2 style={{fontSize:38,lineHeight:1.02,letterSpacing:"-1.8px",margin:"0 0 24px",fontWeight:800}}>Что здесь можно сделать</h2>
+          <div className="module-feature-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:14}}>
+            {module.features.map((feature,i)=><div key={feature} style={{minHeight:150,borderRadius:24,background:"#fff",border:"1px solid #E8E1ED",padding:"22px",display:"flex",flexDirection:"column",boxShadow:"0 9px 26px rgba(50,25,80,.04)"}}>
+              <span style={{fontSize:11,fontWeight:900,color:module.accent}}>0{i+1}</span>
+              <b style={{fontSize:17,lineHeight:1.25,marginTop:"auto"}}>{feature}</b>
+            </div>)}
+          </div>
+          {!module.target&&<div style={{marginTop:22,borderRadius:22,background:"#fff",border:"1px dashed #D9CDE3",padding:"18px 20px",fontSize:13,lineHeight:1.5,color:"#756E7E"}}>
+            Каркас раздела уже включён в навигацию MVP. Следующим шагом подключаем его рабочие сценарии и данные, не меняя общий дизайн платформы.
+          </div>}
         </section>
       </main>
     </div>
@@ -1412,6 +1521,13 @@ export default function App(){
         .modal-backdrop{position:fixed;inset:0;background:rgba(13,6,40,.48);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(7px)}.light-modal{position:relative;width:min(480px,100%);background:#fff;border-radius:24px;padding:28px;box-shadow:0 30px 90px rgba(13,6,40,.25);display:flex;flex-direction:column;gap:14px}.light-modal h2{margin:0}.light-modal label,.admin-form label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700}.light-modal input,.light-modal textarea,.admin-form input,.admin-form textarea{width:100%;border:1px solid #e3d9ed;border-radius:11px;padding:11px 12px;font:inherit;outline:none}.light-modal textarea,.admin-form textarea{min-height:86px;resize:vertical}.modal-close{position:absolute;top:14px;right:16px;border:0;background:none;font-size:25px;cursor:pointer;color:#817989}.upload-box{border:1px dashed #cdb8df!important;border-radius:12px;padding:13px;color:#8C26EA;cursor:pointer}.upload-box input{display:none}.points-preview{background:#f5edfc;border-radius:10px;padding:10px;color:#8C26EA;font-size:12px;font-weight:700}.primary-btn{border:0;border-radius:12px;background:#8C26EA;color:#fff;padding:12px 18px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px rgba(140,38,234,.25)}
         .admin-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}.admin-head h1{margin:18px 0 4px;font-size:32px}.admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}.stat-card,.admin-form,.admin-list{background:#fff;border:1px solid #eadff5;border-radius:20px;padding:22px;box-shadow:0 10px 35px rgba(76,29,149,.06)}.stat-card strong{display:block;color:#8C26EA;font-size:29px}.stat-card span{font-size:12px;color:#756f7e}.admin-grid{display:grid;grid-template-columns:1.4fr .8fr;gap:20px}.admin-form{display:flex;flex-direction:column;gap:14px}.admin-form h2,.admin-list h2{margin:4px 0 8px}.admin-tabs{display:flex;gap:6px;flex-wrap:wrap}.admin-tabs button{border:0;border-radius:999px;padding:8px 12px;background:#f3eef8;color:#6d6476;font-weight:700;cursor:pointer}.admin-tabs button.active{background:#8C26EA;color:#fff}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-list-row{display:flex;gap:12px;padding:12px 0;border-top:1px solid #eee7f5}.admin-list-row>span{font-size:23px}.admin-list-row b,.admin-list-row small{display:block}.admin-list-row small{margin-top:3px;color:#8a8494}.login-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.login-choice{border:1px solid #e3d9ed;border-radius:16px;background:#fff;padding:18px;text-align:left;cursor:pointer}.login-choice b{display:block;margin-bottom:5px}.login-choice span{font-size:12px;color:#756f7e}
         @media(max-width:820px){.metrics-grid,.admin-stats{grid-template-columns:repeat(2,1fr)}.cabinet-grid,.admin-grid{grid-template-columns:1fr}.profile-head,.admin-head{align-items:flex-start;flex-direction:column}.achievement-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}.login-actions{grid-template-columns:1fr}}
+        .platform-block-card,.platform-module-btn{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+        .platform-block-card:hover{transform:translateY(-2px);box-shadow:0 18px 42px rgba(50,25,80,.08)!important}
+        .platform-module-btn:hover{transform:translateY(-2px);border-color:#D8CBE3!important;box-shadow:0 10px 24px rgba(50,25,80,.07)}
+        .module-feature-grid>div{transition:transform .18s ease}.module-feature-grid>div:hover{transform:translateY(-2px)}
+        @media(max-width:1100px){.module-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+        @media(max-width:760px){.platform-block-grid{grid-template-columns:1fr!important}.platform-block-hero{min-height:190px!important;padding:24px!important}.platform-block-hero>div{max-width:70%!important}.module-hero{min-height:330px!important;padding:30px!important}.module-hero>div{max-width:72%!important}.module-feature-grid{grid-template-columns:1fr!important}}
+        @media(max-width:520px){.platform-module-grid{grid-template-columns:1fr!important}.platform-block-hero{min-height:220px!important}.platform-block-hero>img{width:48%!important;opacity:.72!important}.platform-block-hero>div{max-width:78%!important}.platform-module-btn{min-height:82px!important;padding:14px!important}.module-hero{min-height:390px!important;padding:24px!important;align-items:flex-end!important}.module-hero>img{width:100%!important;height:48%!important;mask-image:linear-gradient(180deg,#000,transparent)!important;-webkit-mask-image:linear-gradient(180deg,#000,transparent)!important}.module-hero>div{max-width:100%!important}.module-hero h1{font-size:42px!important}}
         /* Responsive MVP: desktop/tablet/mobile. Desktop styles stay unchanged. */
         .scenario-card{transition:transform .18s ease,box-shadow .18s ease}.scenario-card:hover{transform:translateY(-3px);box-shadow:0 16px 38px rgba(50,25,80,.08)!important}.analytics-card{min-width:0}
         @media(max-width:1100px){
@@ -1628,6 +1744,7 @@ export default function App(){
 
       {/* ── СВЕТЛАЯ ВЕРСИЯ (продакшн-синтез референсов) ── */}
       {page==="light"&&<LightHome setPage={setPage} challenges={appChallenges} news={news} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
+      {page.startsWith("module:")&&<PlatformModulePage setPage={setPage} moduleId={page.slice(7)} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
       {page==="challenges"&&<LightChallengesPage setPage={setPage} challenges={appChallenges} signedIn={signedIn} isAdmin={isAdmin} joinedChallenges={joinedChallenges} onJoin={joinChallenge} onLogin={()=>setShowLogin(true)}/>}
       {page==="news"&&<LightNewsPage setPage={setPage} news={news} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
       {page==="cabinet-light"&&<LightCabinet setPage={setPage} challenges={appChallenges} events={events} results={results} registeredEvents={registeredEvents} joinedChallenges={joinedChallenges} onSubmitResult={addResult} onToggleEvent={toggleEvent} isAdmin={isAdmin}/>}
