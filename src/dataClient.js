@@ -14,6 +14,8 @@ export const STORAGE_KEYS = Object.freeze({
   communityTeams: "pravo-sport-community-teams",
   communityBuddyRequests: "pravo-sport-community-buddy-requests",
   communityApplications: "pravo-sport-community-applications",
+  communityActivityJoins: "pravo-sport-community-activity-joins",
+  ambassadorApplications: "pravo-sport-ambassador-applications",
   rewardRedemptions: "pravo-sport-reward-redemptions",
   achievementClaims: "pravo-sport-achievement-claims",
   trainerQuestions: "pravo-sport-trainer-questions",
