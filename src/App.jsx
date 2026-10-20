@@ -1004,8 +1004,113 @@ function SupportModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fals
   );
 }
 
-function PlatformModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=false}){
-  if(["trainer","sport-news","announcements"].includes(moduleId)) return <SupportModulePage setPage={setPage} moduleId={moduleId} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>;
+function ParticipateModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=false,events=[],registeredEvents=[],onToggleEvent}){
+  const tabs=[["challenges","Челленджи"],["starts","Забеги / старты"],["offline","Офлайн-активности"],["meetups","Митапы / лектории"]];
+  const [reimbursements,setReimbursements]=useState(()=>readData(STORAGE_KEYS.startReimbursements,[]));
+  const [offlineProposals,setOfflineProposals]=useState(()=>readData(STORAGE_KEYS.offlineProposals,[]));
+  const [meetupTopics,setMeetupTopics]=useState(()=>readData(STORAGE_KEYS.meetupTopicProposals,[]));
+  const [heroApplications,setHeroApplications]=useState(()=>readData(STORAGE_KEYS.meetupHeroApplications,[]));
+  const [showForm,setShowForm]=useState("");
+  const [form,setForm]=useState({title:"",date:"",place:"",comment:""});
+  const requireLogin=fn=>{if(!signedIn){onLogin?.();return;}fn();};
+  const track=(name,id,meta={})=>sendAnalyticsEvent(createAnalyticsEvent(name,id,meta));
+  const save=(key,value)=>{writeData(key,value);return value;};
+  const card={background:"#fff",border:"1px solid #E8E1ED",borderRadius:24,boxShadow:"0 10px 28px rgba(50,25,80,.045)"};
+  const seededStarts=[
+    {id:"start-1",date:"25",day:"СБ",title:"Московский полумарафон",place:"Москва",kind:"Забег",meta:"21,1 км · регистрация до 10 мая"},
+    {id:"start-2",date:"07",day:"ВС",title:"Белые ночи",place:"Санкт-Петербург",kind:"Забег",meta:"10 км / 42,2 км"},
+    {id:"start-3",date:"14",day:"ВС",title:"Летний заплыв право(спорт)",place:"Серебряный Бор",kind:"Заплыв",meta:"500 м / 1 км"}
+  ];
+  const seededOffline=[
+    {id:"off-1",date:"23",day:"ПТ",title:"Вечерняя пробежка",place:"Парк Горького",kind:"Офлайн",meta:"Лёгкий темп · 5 км"},
+    {id:"off-2",date:"30",day:"ПТ",title:"Велопрогулка по набережной",place:"Москва",kind:"Офлайн",meta:"15–20 км · любой уровень"},
+    {id:"off-3",date:"06",day:"СБ",title:"Йога в парке",place:"Музеон",kind:"Офлайн",meta:"Коврик с собой"}
+  ];
+  const seededMeetups=[
+    {id:"meet-1",date:"27",day:"ВТ",title:"Как подготовиться к первому забегу",place:"Онлайн",kind:"Лекторий",meta:"Спикер: амбассадор бега"},
+    {id:"meet-2",date:"03",day:"ВТ",title:"Сон и восстановление спортсмена",place:"Онлайн",kind:"Митап",meta:"Вопросы тренеру в прямом эфире"},
+    {id:"meet-3",date:"12",day:"ЧТ",title:"История: от нуля до триатлона",place:"Офис / онлайн",kind:"История",meta:"Герой встречи — коллега из Product"}
+  ];
+  const normalizedEvents=(events||[]).filter(e=>!e.archived);
+  const starts=[...seededStarts,...normalizedEvents.filter(e=>/забег|старт|заплыв|марафон/i.test(`${e.kind||""} ${e.title||""}`))];
+  const offline=[...seededOffline,...normalizedEvents.filter(e=>/офлайн|вел|йога/i.test(`${e.kind||""} ${e.title||""}`))];
+  const meetups=[...seededMeetups,...normalizedEvents.filter(e=>/митап|лектор|видео|встреч/i.test(`${e.kind||""} ${e.title||""}`))];
+  const isRegistered=id=>registeredEvents.includes(id);
+  const register=e=>requireLogin(()=>{onToggleEvent?.(e.id);track(isRegistered(e.id)?"event_unregister":"event_signup",e.id,{kind:e.kind});});
+  const submitForm=()=>requireLogin(()=>{
+    if(!form.title.trim())return;
+    const item={id:`${showForm}-${Date.now()}`,...form,status:"На рассмотрении",dateCreated:new Date().toISOString()};
+    if(showForm==="reimbursement"){const next=[item,...reimbursements];setReimbursements(next);save(STORAGE_KEYS.startReimbursements,next);track("start_reimbursement_submit",item.id);}
+    if(showForm==="offline"){const next=[item,...offlineProposals];setOfflineProposals(next);save(STORAGE_KEYS.offlineProposals,next);track("offline_proposal_submit",item.id);}
+    if(showForm==="topic"){const next=[item,...meetupTopics];setMeetupTopics(next);save(STORAGE_KEYS.meetupTopicProposals,next);track("meetup_topic_submit",item.id);}
+    if(showForm==="hero"){const next=[item,...heroApplications];setHeroApplications(next);save(STORAGE_KEYS.meetupHeroApplications,next);track("meetup_hero_apply",item.id);}
+    setForm({title:"",date:"",place:"",comment:""});setShowForm("");
+  });
+  const EventCard=({e,accent="#8D27EE"})=><article style={{...card,padding:"18px 20px",display:"grid",gridTemplateColumns:"72px 1fr auto",gap:16,alignItems:"center"}}>
+    <div style={{width:60,height:60,borderRadius:18,background:"#F4EEF9",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}><b style={{fontSize:22,lineHeight:1}}>{e.date||"—"}</b><span style={{fontSize:10,color:accent,fontWeight:900,marginTop:4}}>{e.day||""}</span></div>
+    <div><div style={{fontSize:10,fontWeight:900,color:accent,letterSpacing:".8px"}}>{String(e.kind||"СОБЫТИЕ").toUpperCase()}</div><h3 style={{fontSize:18,margin:"5px 0 4px"}}>{e.title}</h3><div style={{fontSize:11,color:"#7B7484"}}>{e.place||"Онлайн"}{e.meta?` · ${e.meta}`:""}</div></div>
+    <button type="button" onClick={()=>register(e)} style={{border:isRegistered(e.id)?0:"1px solid #D9CCE5",background:isRegistered(e.id)?"#E9F8EF":"#fff",color:isRegistered(e.id)?"#08783F":"#7C2BD0",borderRadius:14,padding:"9px 12px",fontWeight:800,cursor:"pointer"}}>{isRegistered(e.id)?"✓ Записан":"Записаться"}</button>
+  </article>;
+  return(
+    <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
+      <main className="light-main participate-main" style={{maxWidth:1450,margin:"0 auto",padding:"38px 42px 80px"}}>
+        <section className="participate-hero" style={{...card,position:"relative",overflow:"hidden",padding:"38px",background:"linear-gradient(115deg,#F2E7FD 0%,#F9F6FC 58%,#fff 100%)"}}>
+          <img src={MVP_SPLASH} alt="" style={{position:"absolute",right:0,top:0,width:"40%",height:"100%",objectFit:"cover",opacity:.82,maskImage:"linear-gradient(90deg,transparent,#000 34%)",WebkitMaskImage:"linear-gradient(90deg,transparent,#000 34%)"}}/>
+          <div style={{position:"relative",zIndex:2,maxWidth:760}}>
+            <div style={{fontSize:11,fontWeight:900,letterSpacing:"1.6px",color:"#8D27EE",marginBottom:10}}>УЧАСТВОВАТЬ</div>
+            <h1 className="light-page-title" style={{fontSize:58,lineHeight:1,letterSpacing:"-2.8px",margin:"0 0 12px",fontWeight:800}}>Выбирай формат и включайся</h1>
+            <p style={{fontSize:16,lineHeight:1.55,color:"#6E6877",margin:0,maxWidth:650}}>Челленджи, старты, офлайн-встречи и лектории — теперь собраны в одном понятном маршруте.</p>
+          </div>
+        </section>
+        <nav className="participate-tabs" style={{display:"flex",gap:8,overflowX:"auto",padding:"18px 0 8px",scrollbarWidth:"none"}}>
+          {tabs.map(([id,label])=><button key={id} type="button" onClick={()=>id==="challenges"?setPage("challenges"):setPage(`module:${id}`)} style={{flex:"0 0 auto",border:moduleId===id?0:"1px solid #E5DCEB",background:moduleId===id?"#10052F":"#fff",color:moduleId===id?"#fff":"#554C62",borderRadius:18,padding:"10px 15px",fontSize:12.5,fontWeight:800,cursor:"pointer"}}>{label}</button>)}
+        </nav>
+
+        {moduleId==="starts"&&<>
+          <div className="participate-section-head" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,margin:"28px 0 16px"}}>
+            <div><div style={{fontSize:11,fontWeight:900,color:"#8D27EE",letterSpacing:"1.3px"}}>ЗАБЕГИ И СТАРТЫ</div><h2 style={{fontSize:31,margin:"5px 0 0",letterSpacing:"-1.2px"}}>Календарь ПравоТех</h2></div>
+            <button type="button" onClick={()=>requireLogin(()=>setShowForm("reimbursement"))} style={{border:0,background:"#8D27EE",color:"#fff",borderRadius:16,padding:"10px 14px",fontWeight:800,cursor:"pointer"}}>Заявка на компенсацию</button>
+          </div>
+          <div className="participate-list" style={{display:"grid",gap:12}}>{starts.map(e=><EventCard key={e.id} e={e}/>)}</div>
+          {reimbursements.length>0&&<section style={{...card,padding:"20px",marginTop:16}}><h3 style={{margin:"0 0 10px"}}>Мои заявки на компенсацию</h3>{reimbursements.map(x=><div key={x.id} style={{display:"grid",gridTemplateColumns:"1fr auto",gap:12,padding:"10px 0",borderTop:"1px solid #EEE7F2"}}><div><b style={{fontSize:12}}>{x.title}</b><div style={{fontSize:11,color:"#7B7484"}}>{x.date||"Дата не указана"} · {x.comment||"Без комментария"}</div></div><span style={{fontSize:10,fontWeight:800,color:"#8D27EE",background:"#F4EEF8",padding:"6px 9px",borderRadius:999,alignSelf:"start"}}>{x.status}</span></div>)}</section>}
+        </>}
+
+        {moduleId==="offline"&&<>
+          <div className="participate-section-head" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,margin:"28px 0 16px"}}>
+            <div><div style={{fontSize:11,fontWeight:900,color:"#8D27EE",letterSpacing:"1.3px"}}>ОФЛАЙН-АКТИВНОСТИ</div><h2 style={{fontSize:31,margin:"5px 0 0",letterSpacing:"-1.2px"}}>Встречайся и двигайся вместе</h2></div>
+            <button type="button" onClick={()=>requireLogin(()=>setShowForm("offline"))} style={{border:0,background:"#8D27EE",color:"#fff",borderRadius:16,padding:"10px 14px",fontWeight:800,cursor:"pointer"}}>+ Предложить активность</button>
+          </div>
+          <div className="participate-list" style={{display:"grid",gap:12}}>{offline.map(e=><EventCard key={e.id} e={e}/>)}</div>
+          {offlineProposals.length>0&&<section style={{...card,padding:"20px",marginTop:16}}><h3 style={{margin:"0 0 10px"}}>Мои предложения</h3>{offlineProposals.map(x=><div key={x.id} style={{display:"grid",gridTemplateColumns:"1fr auto",gap:12,padding:"10px 0",borderTop:"1px solid #EEE7F2"}}><div><b style={{fontSize:12}}>{x.title}</b><div style={{fontSize:11,color:"#7B7484"}}>{x.place||"Место не указано"} · {x.date||"Дата не указана"}</div></div><span style={{fontSize:10,fontWeight:800,color:"#159B66",background:"#EAF8F2",padding:"6px 9px",borderRadius:999,alignSelf:"start"}}>{x.status}</span></div>)}</section>}
+        </>}
+
+        {moduleId==="meetups"&&<>
+          <div className="participate-section-head" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,margin:"28px 0 16px"}}>
+            <div><div style={{fontSize:11,fontWeight:900,color:"#8D27EE",letterSpacing:"1.3px"}}>МИТАПЫ И ЛЕКТОРИИ</div><h2 style={{fontSize:31,margin:"5px 0 0",letterSpacing:"-1.2px"}}>Встречи, знания и истории коллег</h2></div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button type="button" onClick={()=>requireLogin(()=>setShowForm("topic"))} style={{border:"1px solid #D9CCE5",background:"#fff",color:"#7C2BD0",borderRadius:16,padding:"10px 14px",fontWeight:800,cursor:"pointer"}}>Предложить тему</button><button type="button" onClick={()=>requireLogin(()=>setShowForm("hero"))} style={{border:0,background:"#10052F",color:"#fff",borderRadius:16,padding:"10px 14px",fontWeight:800,cursor:"pointer"}}>Стать героем</button></div>
+          </div>
+          <div className="participate-list" style={{display:"grid",gap:12}}>{meetups.map(e=><EventCard key={e.id} e={e}/>)}</div>
+          {(meetupTopics.length>0||heroApplications.length>0)&&<section style={{...card,padding:"20px",marginTop:16}}><h3 style={{margin:"0 0 10px"}}>Мои заявки</h3>{[...meetupTopics,...heroApplications].map(x=><div key={x.id} style={{display:"grid",gridTemplateColumns:"1fr auto",gap:12,padding:"10px 0",borderTop:"1px solid #EEE7F2"}}><div><b style={{fontSize:12}}>{x.title}</b><div style={{fontSize:11,color:"#7B7484"}}>{x.comment||"Заявка отправлена"}</div></div><span style={{fontSize:10,fontWeight:800,color:"#8D27EE",background:"#F4EEF8",padding:"6px 9px",borderRadius:999,alignSelf:"start"}}>{x.status}</span></div>)}</section>}
+        </>}
+      </main>
+
+      {showForm&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setShowForm("")}><div className="light-modal">
+        <button className="modal-close" onClick={()=>setShowForm("")}>×</button>
+        <h2>{showForm==="reimbursement"?"Заявка на компенсацию":showForm==="offline"?"Предложить активность":showForm==="topic"?"Предложить тему":"Стать героем лектория"}</h2>
+        <label>Название<input value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))} placeholder={showForm==="reimbursement"?"Название старта":"Короткое название"}/></label>
+        {(showForm==="reimbursement"||showForm==="offline")&&<label>Дата<input type="date" value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value}))}/></label>}
+        {showForm==="offline"&&<label>Место<input value={form.place} onChange={e=>setForm(p=>({...p,place:e.target.value}))} placeholder="Где встречаемся"/></label>}
+        <label>{showForm==="hero"?"О чём хочешь рассказать":"Комментарий"}<textarea value={form.comment} onChange={e=>setForm(p=>({...p,comment:e.target.value}))} placeholder={showForm==="topic"?"Почему эта тема полезна коллегам":showForm==="hero"?"Коротко опиши свою спортивную историю":"Дополнительная информация"}/></label>
+        <button className="primary-btn" onClick={submitForm}>Отправить</button>
+      </div></div>}
+    </div>
+  );
+}
+
+function PlatformModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=false,news=INIT_NEWS,events=[],registeredEvents=[],onToggleEvent}){
+  if(["starts","offline","meetups"].includes(moduleId)) return <ParticipateModulePage setPage={setPage} moduleId={moduleId} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin} events={events} registeredEvents={registeredEvents} onToggleEvent={onToggleEvent}/>;
+  if(["trainer","sport-news","announcements"].includes(moduleId)) return <SupportModulePage setPage={setPage} moduleId={moduleId} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin} news={news} events={events}/>;
   if(["ratings","coins","benefits","achievement"].includes(moduleId)) return <ProgressModulePage setPage={setPage} moduleId={moduleId} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>;
   if(["city-sport","teams","buddy","ambassadors","athlete-card"].includes(moduleId)) return <CommunityModulePage setPage={setPage} moduleId={moduleId} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>;
   const module=PLATFORM_MODULES.find(item=>item.id===moduleId);
@@ -1882,7 +1987,7 @@ export default function App(){
   };
   const login=role=>{setSignedIn(true);setIsAdmin(role==="admin");setShowLogin(false);setPage(role==="admin"?"admin":"cabinet-light");};
   const addResult=result=>{setResults(p=>[...p,result]);setJoinedChallenges(p=>p.includes(result.challengeId)?p:[...p,result.challengeId]);trackEvent("result_submit",result.challengeId,{value:result.value});notify("Результат сохранён, прогресс обновлён");};
-  const toggleEvent=id=>setRegisteredEvents(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);
+  const toggleEvent=id=>setRegisteredEvents(p=>{const joined=!p.includes(id);trackEvent(joined?"event_signup":"event_unregister",id);return joined?[...p,id]:p.filter(x=>x!==id);});
   const adminAddChallenge=form=>{setAppChallenges(p=>[{id:`c${Date.now()}`,emoji:form.emoji||"🏃",title:form.title,desc:form.desc||"Новый корпоративный челлендж",participants:0,status:"active",statusLabel:"Активный",color:BP,daysLeft:30,type:"steps",attachmentName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||"",bg:"linear-gradient(135deg,#EDE1FB,#D9E8FB)"},...p]);notify("Челлендж запущен");};
   const adminUpdateChallenge=(id,patch)=>{
     setAppChallenges(p=>p.map(ch=>ch.id===id?{...ch,...patch}:ch));
@@ -1945,6 +2050,9 @@ export default function App(){
         .community-tabs::-webkit-scrollbar{display:none}.community-main select,.community-main input{color:#10052F}
         .progress-tabs::-webkit-scrollbar{display:none}.progress-main input,.progress-main textarea{color:#10052F;outline:none}
         .support-tabs::-webkit-scrollbar{display:none}.support-main input,.support-main textarea,.support-main select{color:#10052F;outline:none}
+        .participate-tabs::-webkit-scrollbar{display:none}.participate-main input,.participate-main textarea{color:#10052F;outline:none}
+        @media(max-width:760px){.participate-section-head{align-items:flex-start!important;flex-direction:column!important}.participate-list article{grid-template-columns:58px 1fr!important}.participate-list article>button{grid-column:1/-1!important;width:100%!important}}
+        @media(max-width:620px){.participate-main{padding-top:24px!important}.participate-hero{padding:26px!important}.participate-hero>img{width:58%!important;opacity:.5!important}.participate-hero>div{max-width:80%!important}}
         @media(max-width:1000px){.trainer-layout{grid-template-columns:1fr!important}.support-news-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
         @media(max-width:620px){.support-main{padding-top:24px!important}.support-hero{padding:26px!important}.support-hero>img{width:58%!important;opacity:.5!important}.support-hero>div{max-width:80%!important}.support-section-head{align-items:flex-start!important;flex-direction:column!important}.support-section-head input{width:100%!important}.support-news-grid{grid-template-columns:1fr!important}.announcement-list article{grid-template-columns:58px 1fr!important}.announcement-list article>button{grid-column:1/-1!important;width:100%!important}}
         @media(max-width:1000px){.progress-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}.coin-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.benefit-grid{grid-template-columns:1fr!important}.achievement-layout{grid-template-columns:1fr!important}}
@@ -2170,7 +2278,7 @@ export default function App(){
 
       {/* ── СВЕТЛАЯ ВЕРСИЯ (продакшн-синтез референсов) ── */}
       {page==="light"&&<LightHome setPage={setPage} challenges={appChallenges} news={news} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
-      {page.startsWith("module:")&&<PlatformModulePage setPage={setPage} moduleId={page.slice(7)} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
+      {page.startsWith("module:")&&<PlatformModulePage setPage={setPage} moduleId={page.slice(7)} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)} news={news} events={events} registeredEvents={registeredEvents} onToggleEvent={toggleEvent}/>}
       {page==="challenges"&&<LightChallengesPage setPage={setPage} challenges={appChallenges} signedIn={signedIn} isAdmin={isAdmin} joinedChallenges={joinedChallenges} onJoin={joinChallenge} onLogin={()=>setShowLogin(true)}/>}
       {page==="news"&&<LightNewsPage setPage={setPage} news={news} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
       {page==="cabinet-light"&&<LightCabinet setPage={setPage} challenges={appChallenges} events={events} results={results} registeredEvents={registeredEvents} joinedChallenges={joinedChallenges} onSubmitResult={addResult} onToggleEvent={toggleEvent} isAdmin={isAdmin}/>}
