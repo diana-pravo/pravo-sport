@@ -309,35 +309,59 @@ const MagButton=({children,onClick,primary,style})=>{
 
 
 
-function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false}){
+function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false,showQuickNav=false}){
   const go=id=>{
     setPage("light");
-    setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"}),40);
+    setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"}),70);
   };
+  const goModule=id=>setPage(`module:${id}`);
   const account=()=>{
     if(!signedIn){onLogin?.();return;}
     setPage(isAdmin?"admin":"cabinet-light");
   };
+  const groups=[
+    {id:"block-participate",label:"Участвовать",icon:"↗",active:true},
+    {id:"block-community",label:"Люди и сообщество",icon:"♟"},
+    {id:"block-motivation",label:"Прогресс и награды",icon:"◒"},
+    {id:"block-support",label:"Поддержка",icon:"◎"}
+  ];
+  const quick=[
+    {label:"Челленджи",icon:"◇",action:()=>setPage("challenges")},
+    {label:"Забеги",icon:"↗",action:()=>goModule("starts")},
+    {label:"Офлайн",icon:"⌖",action:()=>goModule("offline")},
+    {label:"Лектории",icon:"◉",action:()=>goModule("meetups")},
+    {label:"Команды",icon:"♟",action:()=>goModule("teams")},
+    {label:"Бадди",icon:"♥",action:()=>goModule("buddy")},
+    {label:"Рейтинг",icon:"▥",action:()=>goModule("ratings")},
+    {label:"Новости",icon:"▤",action:()=>setPage("news")}
+  ];
   return(
-    <div className="pravo-header-wrap" style={{position:"relative",zIndex:50,padding:"18px 42px 0"}}>
-      <div className="pravo-header-inner" style={{height:82,maxWidth:1450,margin:"0 auto",background:"#fff",border:"1px solid rgba(29,15,58,.06)",borderRadius:38,display:"flex",alignItems:"center",padding:"0 20px 0 28px",boxShadow:"0 14px 42px rgba(55,25,92,.08)",fontFamily:"'Open Sans',Arial,sans-serif"}}>
-        <button className="pravo-logo" onClick={()=>setPage("light")} style={{border:0,background:"transparent",fontSize:24,fontWeight:800,letterSpacing:"-1.2px",color:"#10052F",cursor:"pointer",marginRight:"auto"}}>
+    <div className="pravo-header-wrap" style={{position:"sticky",top:0,zIndex:50,padding:"12px 42px 0",background:"linear-gradient(180deg,rgba(250,247,255,.96) 0%,rgba(250,247,255,.78) 76%,rgba(250,247,255,0) 100%)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)"}}>
+      <div className="pravo-header-inner" style={{minHeight:74,maxWidth:1450,margin:"0 auto",background:"rgba(255,255,255,.92)",border:"1px solid rgba(29,15,58,.07)",borderRadius:28,display:"flex",alignItems:"center",padding:"10px 14px 10px 24px",boxShadow:"0 16px 46px rgba(55,25,92,.09)",fontFamily:"'Open Sans',Arial,sans-serif"}}>
+        <button className="pravo-logo" onClick={()=>setPage("light")} style={{border:0,background:"transparent",fontSize:24,fontWeight:800,letterSpacing:"-1.2px",color:"#10052F",cursor:"pointer",marginRight:26,whiteSpace:"nowrap"}}>
           право<span style={{color:"#8D27EE"}}>(спорт)</span>
         </button>
-        <div className="pravo-nav" style={{display:"flex",alignItems:"center",gap:24,fontSize:14,fontWeight:700,color:"#686174"}}>
-          <button onClick={()=>setPage("challenges")} style={{border:0,background:"transparent",font:"inherit",color:"#10052F",cursor:"pointer"}}>Челленджи</button>
-          <button onClick={()=>go("company-progress")} style={{border:0,background:"transparent",font:"inherit",color:"inherit",cursor:"pointer"}}>Рейтинг</button>
-          <button onClick={()=>go("rewards")} style={{border:0,background:"transparent",font:"inherit",color:"inherit",cursor:"pointer"}}>Награды</button>
-          <button onClick={()=>setPage("news")} style={{border:0,background:"transparent",font:"inherit",color:"inherit",cursor:"pointer"}}>Новости</button>
+
+        <div className="pravo-nav pravo-group-nav" style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,flex:1,minWidth:0}}>
+          {groups.map(item=><button key={item.id} type="button" onClick={()=>go(item.id)} className={item.active?"group-nav-btn is-active":"group-nav-btn"} style={{border:item.active?0:"1px solid #EEE7F4",background:item.active?"#8D27EE":"#F8F4FC",color:item.active?"#fff":"#10052F",borderRadius:22,padding:"11px 15px",fontSize:12.5,fontWeight:800,cursor:"pointer",whiteSpace:"nowrap",display:"inline-flex",alignItems:"center",gap:7}}>
+            <span style={{fontSize:14,opacity:.9}}>{item.icon}</span>{item.label}
+          </button>)}
         </div>
-        <button className="pravo-account-dot" onClick={account} title={signedIn?(isAdmin?"Панель администратора":"Личный кабинет"):"Войти"} style={{width:43,height:43,borderRadius:"50%",border:0,background:"#F5EDFC",color:"#8D27EE",fontWeight:900,fontSize:16,cursor:"pointer",marginLeft:30}}>•</button>
-        <button className="pravo-participate" onClick={()=>signedIn?setPage("cabinet-light"):onLogin?.()} style={{height:50,border:0,borderRadius:28,background:"#10052F",color:"#fff",fontWeight:800,fontSize:15,padding:"0 26px",cursor:"pointer",marginLeft:12}}>
-          Участвовать&nbsp;&nbsp;↗
+
+        <button className="pravo-account-dot" onClick={()=>go("possibilities")} title="Все возможности" style={{width:42,height:42,borderRadius:"50%",border:"1px solid #EEE7F4",background:"#FAF7FD",color:"#8D27EE",fontWeight:900,fontSize:18,cursor:"pointer",marginLeft:14}}>⌕</button>
+        <button className="pravo-participate" onClick={()=>signedIn?setPage("cabinet-light"):onLogin?.()} style={{height:46,border:0,borderRadius:24,background:"#10052F",color:"#fff",fontWeight:800,fontSize:13,padding:"0 20px",cursor:"pointer",marginLeft:8}}>
+          Мой спорт&nbsp;&nbsp;↗
         </button>
         {signedIn
-          ? <button className="pravo-avatar" onClick={account} style={{width:48,height:48,borderRadius:"50%",border:0,background:"#D90A78",color:"#fff",fontWeight:900,fontSize:19,cursor:"pointer",marginLeft:12}}>Д</button>
-          : <button className="pravo-avatar" onClick={onLogin} style={{width:48,height:48,borderRadius:"50%",border:"1px solid #E9DDF3",background:"#fff",color:"#8D27EE",fontWeight:800,fontSize:12,cursor:"pointer",marginLeft:12}}>Войти</button>}
+          ? <button className="pravo-avatar" onClick={account} style={{width:44,height:44,borderRadius:"50%",border:"3px solid #fff",boxShadow:"0 0 0 1px #E9DDF3",background:"#D90A78",color:"#fff",fontWeight:900,fontSize:17,cursor:"pointer",marginLeft:9}}>Д</button>
+          : <button className="pravo-avatar" onClick={onLogin} style={{width:44,height:44,borderRadius:"50%",border:"1px solid #E9DDF3",background:"#fff",color:"#8D27EE",fontWeight:800,fontSize:11,cursor:"pointer",marginLeft:9}}>Войти</button>}
       </div>
+
+      {showQuickNav&&<div className="pravo-quicknav" style={{maxWidth:1450,margin:"8px auto 0",display:"flex",alignItems:"center",gap:7,overflowX:"auto",padding:"0 2px 6px",scrollbarWidth:"none"}}>
+        {quick.map(item=><button key={item.label} type="button" onClick={item.action} className="quick-nav-btn" style={{flex:"0 0 auto",border:"1px solid #EEE7F4",background:"rgba(255,255,255,.88)",color:"#3F3450",borderRadius:18,padding:"8px 12px",fontSize:11.5,fontWeight:700,cursor:"pointer",display:"inline-flex",gap:6,alignItems:"center",boxShadow:"0 8px 22px rgba(55,25,92,.04)"}}>
+          <span style={{color:"#8D27EE",fontWeight:900}}>{item.icon}</span>{item.label}
+        </button>)}
+      </div>}
     </div>
   );
 }
@@ -348,7 +372,7 @@ const PLATFORM_BLOCKS=[
   {
     id:"participate",n:"01",title:"Участвовать",eyebrow:"ВКЛЮЧАЙСЯ В ДВИЖЕНИЕ",
     description:"Выбирай формат, регистрируйся и участвуй — от челленджей до живых встреч.",
-    accent:"#8D27EE",soft:"#F3EAFE",image:MVP_SPLASH,
+    accent:"#8D27EE",soft:"#F3EAFE",image:MVP_SURF,
     modules:[
       {id:"challenges",icon:"🏆",title:"Челленджи",text:"Активные, будущие и прошедшие челленджи.",target:"challenges",features:["Активные челленджи","Будущие анонсы","Прошедшие челленджи","Рейтинг"]},
       {id:"starts",icon:"🏃",title:"Забеги / старты",text:"Твои старты, календарь и заявки.",features:["Твои старты","Календарь ПравоТех","Заявка на компенсацию","Новости стартов"]},
@@ -369,9 +393,9 @@ const PLATFORM_BLOCKS=[
     ]
   },
   {
-    id:"motivation",n:"03",title:"Мотивация и признание",eyebrow:"ДЕЛАЙ ПРОГРЕСС ВИДИМЫМ",
+    id:"motivation",n:"03",title:"Прогресс и награды",eyebrow:"МОТИВАЦИЯ И ПРИЗНАНИЕ",
     description:"Участие превращается в результат, признание и понятную систему наград.",
-    accent:"#10052F",soft:"#F8F2DD",image:MVP_ICE,
+    accent:"#D97706",soft:"#FFF4E5",image:MVP_ICE,
     modules:[
       {id:"ratings",icon:"▥",title:"Рейтинги",text:"Сравнивай прогресс и следи за результатами.",features:["Рейтинг челленджей","Спортивные соревнования","Рейтинг амбассадоров"]},
       {id:"coins",icon:"◉",title:"Коины",text:"Начисления за спортивную активность.",features:["Баланс коинов","История начислений","Начисления за активности"]},
@@ -382,7 +406,7 @@ const PLATFORM_BLOCKS=[
   {
     id:"support",n:"04",title:"Поддержка и информация",eyebrow:"ВСЁ НУЖНОЕ В ОДНОМ МЕСТЕ",
     description:"Получай помощь, читай новости и не пропускай будущие спортивные события.",
-    accent:"#159B66",soft:"#EAF8F2",image:MVP_HERO,
+    accent:"#159B66",soft:"#EAF8F2",image:LIGHT_SWIM,
     modules:[
       {id:"trainer",icon:"💬",title:"Консультации с тренером",text:"Задай вопрос корпоративному тренеру.",features:["Задать вопрос","Перечень тем","Ответ корпоративного тренера"]},
       {id:"sport-news",icon:"▤",title:"Новости спорта",text:"Сводка спортивной жизни компании.",target:"news",features:["Новости компании","Истории коллег","Добавить новость","Модерация"]},
@@ -452,7 +476,7 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
   ];
   return(
     <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
-      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin} showQuickNav/>
       <main className="light-main light-home-main" style={{maxWidth:1450,margin:"0 auto",padding:"38px 42px 54px"}}>
         <section className="light-hero" style={{display:"grid",gridTemplateColumns:"0.9fr 1.15fr",gap:34,alignItems:"center",minHeight:555}}>
           <div className="light-hero-copy" style={{padding:"20px 0 20px"}}>
@@ -475,10 +499,10 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
             </div>
           </div>
           <div className="platform-block-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:18}}>
-            {PLATFORM_BLOCKS.map(block=><article key={block.id} className="platform-block-card" style={{position:"relative",overflow:"hidden",border:"1px solid #E7E0EC",borderRadius:30,background:"#fff",boxShadow:"0 12px 34px rgba(50,25,80,.055)"}}>
-              <div className="platform-block-hero" style={{position:"relative",minHeight:205,padding:"28px 30px",background:`linear-gradient(105deg,${block.soft} 0%,${block.soft}F2 55%,rgba(255,255,255,.15) 100%)`,overflow:"hidden"}}>
-                <img src={block.image} alt="" onError={e=>{e.currentTarget.style.display="none";}} style={{position:"absolute",right:0,top:0,width:"43%",height:"100%",objectFit:"cover",objectPosition:"center",opacity:.88,maskImage:"linear-gradient(90deg,transparent 0%,#000 38%)",WebkitMaskImage:"linear-gradient(90deg,transparent 0%,#000 38%)"}}/>
-                <div style={{position:"relative",zIndex:2,maxWidth:"62%"}}>
+            {PLATFORM_BLOCKS.map(block=><article key={block.id} id={`block-${block.id}`} className="platform-block-card" style={{position:"relative",overflow:"hidden",border:"1px solid #E7E0EC",borderRadius:30,background:"#fff",boxShadow:"0 14px 38px rgba(50,25,80,.06)",scrollMarginTop:190}}>
+              <div className="platform-block-hero" style={{position:"relative",minHeight:190,padding:"26px 28px",background:`linear-gradient(105deg,${block.soft} 0%,${block.soft}F2 52%,rgba(255,255,255,.12) 100%)`,overflow:"hidden"}}>
+                <img src={block.image} alt="" onError={e=>{e.currentTarget.style.display="none";}} style={{position:"absolute",right:0,top:0,width:"48%",height:"100%",objectFit:"cover",objectPosition:"center",opacity:.94,filter:"saturate(.92) contrast(.98)",maskImage:"linear-gradient(90deg,transparent 0%,#000 30%)",WebkitMaskImage:"linear-gradient(90deg,transparent 0%,#000 30%)"}}/>
+                <div style={{position:"relative",zIndex:2,maxWidth:"64%"}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:28}}>
                     <span style={{width:42,height:42,borderRadius:14,display:"inline-flex",alignItems:"center",justifyContent:"center",background:block.accent,color:"#fff",fontSize:13,fontWeight:900}}>{block.n}</span>
                     <span style={{borderRadius:999,padding:"7px 11px",background:"#fff",color:block.accent,fontSize:11,fontWeight:800,boxShadow:"0 6px 18px rgba(30,10,60,.05)"}}>{block.modules.length} {block.modules.length===5?"разделов":"раздела"}</span>
@@ -489,8 +513,8 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
                 </div>
               </div>
               <div className="platform-module-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:10,padding:14}}>
-                {block.modules.map(module=><button key={module.id} type="button" className="platform-module-btn" onClick={()=>module.target?setPage(module.target):setPage(`module:${module.id}`)} style={{appearance:"none",border:"1px solid #EEE8F2",borderRadius:20,background:"#fff",padding:"17px 16px",display:"grid",gridTemplateColumns:"40px 1fr 20px",gap:11,alignItems:"center",textAlign:"left",color:"#10052F",cursor:"pointer",minHeight:96}}>
-                  <span style={{width:40,height:40,borderRadius:13,display:"flex",alignItems:"center",justifyContent:"center",background:block.soft,color:block.accent,fontSize:19,fontWeight:900}}>{module.icon}</span>
+                {block.modules.map((module,moduleIndex)=><button key={module.id} type="button" className="platform-module-btn" onClick={()=>module.target?setPage(module.target):setPage(`module:${module.id}`)} style={{appearance:"none",border:"1px solid #EEE8F2",borderRadius:18,background:"#fff",padding:"15px 14px",display:"grid",gridTemplateColumns:"38px 1fr 18px",gap:10,alignItems:"center",textAlign:"left",color:"#10052F",cursor:"pointer",minHeight:88,gridColumn:block.modules.length%2===1&&moduleIndex===block.modules.length-1?"1/-1":undefined}}>
+                  <span style={{width:38,height:38,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",background:block.soft,color:block.accent,fontSize:19,fontWeight:900}}>{module.icon}</span>
                   <span>
                     <b style={{display:"block",fontSize:14,lineHeight:1.25,marginBottom:4}}>{module.title}</b>
                     <small style={{display:"block",fontSize:11,lineHeight:1.35,color:"#7A7383"}}>{module.text}</small>
@@ -1521,12 +1545,16 @@ export default function App(){
         .modal-backdrop{position:fixed;inset:0;background:rgba(13,6,40,.48);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(7px)}.light-modal{position:relative;width:min(480px,100%);background:#fff;border-radius:24px;padding:28px;box-shadow:0 30px 90px rgba(13,6,40,.25);display:flex;flex-direction:column;gap:14px}.light-modal h2{margin:0}.light-modal label,.admin-form label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700}.light-modal input,.light-modal textarea,.admin-form input,.admin-form textarea{width:100%;border:1px solid #e3d9ed;border-radius:11px;padding:11px 12px;font:inherit;outline:none}.light-modal textarea,.admin-form textarea{min-height:86px;resize:vertical}.modal-close{position:absolute;top:14px;right:16px;border:0;background:none;font-size:25px;cursor:pointer;color:#817989}.upload-box{border:1px dashed #cdb8df!important;border-radius:12px;padding:13px;color:#8C26EA;cursor:pointer}.upload-box input{display:none}.points-preview{background:#f5edfc;border-radius:10px;padding:10px;color:#8C26EA;font-size:12px;font-weight:700}.primary-btn{border:0;border-radius:12px;background:#8C26EA;color:#fff;padding:12px 18px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px rgba(140,38,234,.25)}
         .admin-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}.admin-head h1{margin:18px 0 4px;font-size:32px}.admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}.stat-card,.admin-form,.admin-list{background:#fff;border:1px solid #eadff5;border-radius:20px;padding:22px;box-shadow:0 10px 35px rgba(76,29,149,.06)}.stat-card strong{display:block;color:#8C26EA;font-size:29px}.stat-card span{font-size:12px;color:#756f7e}.admin-grid{display:grid;grid-template-columns:1.4fr .8fr;gap:20px}.admin-form{display:flex;flex-direction:column;gap:14px}.admin-form h2,.admin-list h2{margin:4px 0 8px}.admin-tabs{display:flex;gap:6px;flex-wrap:wrap}.admin-tabs button{border:0;border-radius:999px;padding:8px 12px;background:#f3eef8;color:#6d6476;font-weight:700;cursor:pointer}.admin-tabs button.active{background:#8C26EA;color:#fff}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-list-row{display:flex;gap:12px;padding:12px 0;border-top:1px solid #eee7f5}.admin-list-row>span{font-size:23px}.admin-list-row b,.admin-list-row small{display:block}.admin-list-row small{margin-top:3px;color:#8a8494}.login-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.login-choice{border:1px solid #e3d9ed;border-radius:16px;background:#fff;padding:18px;text-align:left;cursor:pointer}.login-choice b{display:block;margin-bottom:5px}.login-choice span{font-size:12px;color:#756f7e}
         @media(max-width:820px){.metrics-grid,.admin-stats{grid-template-columns:repeat(2,1fr)}.cabinet-grid,.admin-grid{grid-template-columns:1fr}.profile-head,.admin-head{align-items:flex-start;flex-direction:column}.achievement-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}.login-actions{grid-template-columns:1fr}}
+        .group-nav-btn,.quick-nav-btn,.platform-block-card,.platform-module-btn{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease}
+        .group-nav-btn:hover,.quick-nav-btn:hover{transform:translateY(-1px);box-shadow:0 9px 22px rgba(50,25,80,.08)}
+        .group-nav-btn:not(.is-active):hover{background:#fff!important;border-color:#DCCFE7!important}
+        .quick-nav-btn:hover{background:#fff!important;border-color:#DCCFE7!important}
         .platform-block-card,.platform-module-btn{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
         .platform-block-card:hover{transform:translateY(-2px);box-shadow:0 18px 42px rgba(50,25,80,.08)!important}
         .platform-module-btn:hover{transform:translateY(-2px);border-color:#D8CBE3!important;box-shadow:0 10px 24px rgba(50,25,80,.07)}
         .module-feature-grid>div{transition:transform .18s ease}.module-feature-grid>div:hover{transform:translateY(-2px)}
         @media(max-width:1100px){.module-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-        @media(max-width:760px){.platform-block-grid{grid-template-columns:1fr!important}.platform-block-hero{min-height:190px!important;padding:24px!important}.platform-block-hero>div{max-width:70%!important}.module-hero{min-height:330px!important;padding:30px!important}.module-hero>div{max-width:72%!important}.module-feature-grid{grid-template-columns:1fr!important}}
+        @media(max-width:760px){.pravo-group-nav{order:5;width:100%;justify-content:flex-start!important;overflow-x:auto;padding-top:7px;border-top:1px solid #F0EAF4;scrollbar-width:none}.pravo-group-nav::-webkit-scrollbar,.pravo-quicknav::-webkit-scrollbar{display:none}.group-nav-btn{flex:0 0 auto!important}.pravo-quicknav{padding-left:2px!important;padding-right:2px!important}.platform-block-grid{grid-template-columns:1fr!important}.platform-block-hero{min-height:190px!important;padding:24px!important}.platform-block-hero>div{max-width:70%!important}.module-hero{min-height:330px!important;padding:30px!important}.module-hero>div{max-width:72%!important}.module-feature-grid{grid-template-columns:1fr!important}}
         @media(max-width:520px){.platform-module-grid{grid-template-columns:1fr!important}.platform-block-hero{min-height:220px!important}.platform-block-hero>img{width:48%!important;opacity:.72!important}.platform-block-hero>div{max-width:78%!important}.platform-module-btn{min-height:82px!important;padding:14px!important}.module-hero{min-height:390px!important;padding:24px!important;align-items:flex-end!important}.module-hero>img{width:100%!important;height:48%!important;mask-image:linear-gradient(180deg,#000,transparent)!important;-webkit-mask-image:linear-gradient(180deg,#000,transparent)!important}.module-hero>div{max-width:100%!important}.module-hero h1{font-size:42px!important}}
         /* Responsive MVP: desktop/tablet/mobile. Desktop styles stay unchanged. */
         .scenario-card{transition:transform .18s ease,box-shadow .18s ease}.scenario-card:hover{transform:translateY(-3px);box-shadow:0 16px 38px rgba(50,25,80,.08)!important}.analytics-card{min-width:0}
