@@ -14,6 +14,51 @@ const fmtDate=value=>{
   if(Number.isNaN(d.getTime()))return value;
   return d.toLocaleDateString("ru-RU",{day:"numeric",month:"short"}).replace(".","");
 };
+
+// MVP: demoMode keeps admin tools available for stakeholder testing.
+// Production requirement: demoMode=false and isAdmin must come from SSO;
+// admin access is intended only for Anton Losev.
+const ADMIN_ACCESS_POLICY={demoMode:true,productionOwner:"Антон Лосев"};
+
+const ROUTE_MODULE_GROUPS={
+  participate:["starts","offline","meetups"],
+  community:["city-sport","teams","buddy","ambassadors","athlete-card"],
+  progress:["ratings","coins","benefits","achievement"],
+  support:["trainer","sport-news","announcements"]
+};
+const pageToHash=page=>{
+  if(page==="light")return "#/";
+  if(page==="challenges")return "#/challenges";
+  if(page==="news")return "#/news";
+  if(page==="cabinet-light")return "#/me";
+  if(page==="admin")return "#/admin";
+  if(page==="module:participate-overview")return "#/participate";
+  if(page==="module:community-overview")return "#/community";
+  if(page==="module:progress-overview")return "#/progress";
+  if(page==="module:support-overview")return "#/support";
+  if(page?.startsWith("module:")){
+    const id=page.slice(7);
+    const group=Object.entries(ROUTE_MODULE_GROUPS).find(([,items])=>items.includes(id))?.[0];
+    return group?`#/${group}/${id}`:`#/module/${id}`;
+  }
+  return "#/";
+};
+const hashToPage=hash=>{
+  const raw=String(hash||"").replace(/^#/,"")||"/";
+  const path=raw.startsWith("/")?raw:`/${raw}`;
+  if(path==="/")return "light";
+  if(path==="/challenges")return "challenges";
+  if(path==="/news")return "news";
+  if(path==="/me")return "cabinet-light";
+  if(path==="/admin")return "admin";
+  if(path==="/participate")return "module:participate-overview";
+  if(path==="/community")return "module:community-overview";
+  if(path==="/progress")return "module:progress-overview";
+  if(path==="/support")return "module:support-overview";
+  const parts=path.split("/").filter(Boolean);
+  if(parts.length===2&&["participate","community","progress","support","module"].includes(parts[0]))return `module:${parts[1]}`;
+  return "light";
+};
 const CHALLENGES=[
   {id:"c1",emoji:"👟",title:"Шаговый май",desc:"10 дней — 6 000 шагов",participants:24,status:"active",statusLabel:"Активный",color:"#7C3AED",daysLeft:14,startDate:"2026-10-12",endDate:"2026-10-31",type:"steps",bg:"linear-gradient(135deg,#1a0533 0%,#2D1B69 50%,#4C1D95 100%)"},
   {id:"c2",emoji:"🏃",title:"Бег — Этап 1",desc:"Максимум км за июнь",participants:18,status:"soon",statusLabel:"Скоро",color:"#059669",daysLeft:30,startDate:"2026-11-19",endDate:"2026-12-19",type:"run",bg:"linear-gradient(135deg,#052e16 0%,#064e3b 50%,#065f46 100%)"},
@@ -60,9 +105,12 @@ const MVP_SPLASH=IMG4;
 
 function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false,activeGroup:activeGroupProp=""}){
   const [activeGroup,setActiveGroup]=useState(activeGroupProp);
+  const [mobileMenuOpen,setMobileMenuOpen]=useState(false);
+  const canSeeAdmin=signedIn&&(isAdmin||ADMIN_ACCESS_POLICY.demoMode);
   useEffect(()=>setActiveGroup(activeGroupProp),[activeGroupProp]);
   const go=(id,target)=>{
     setActiveGroup(id);
+    setMobileMenuOpen(false);
     setPage(target);
     window.scrollTo({top:0,behavior:"smooth"});
   };
@@ -94,11 +142,16 @@ function PravoHeader({setPage,signedIn=true,onLogin,isAdmin=false,activeGroup:ac
           })}
         </nav>
 
-        <button className="pravo-mobile-menu" onClick={()=>setPage("light")} type="button" style={{display:"none",border:0,background:"#F6F0FB",color:"#6D2BC1",borderRadius:16,padding:"9px 12px",fontSize:12,fontWeight:800,cursor:"pointer",marginLeft:"auto"}}>Главная</button>
+        <button className="pravo-mobile-menu" aria-expanded={mobileMenuOpen} onClick={()=>setMobileMenuOpen(v=>!v)} type="button" style={{display:"none",border:0,background:"#F6F0FB",color:"#6D2BC1",borderRadius:16,padding:"9px 12px",fontSize:12,fontWeight:800,cursor:"pointer",marginLeft:"auto"}}>Меню</button>
+        {mobileMenuOpen&&<div className="mobile-nav-panel" style={{position:"absolute",left:12,right:12,top:"calc(100% + 8px)",background:"#fff",border:"1px solid #E9E1EF",borderRadius:20,padding:8,boxShadow:"0 20px 55px rgba(38,15,65,.16)",zIndex:90}}>
+          {groups.map(item=><button key={item.id} type="button" onClick={()=>go(item.id,item.target)} style={{width:"100%",border:0,background:activeGroup===item.id?"#F5EEFC":"transparent",color:activeGroup===item.id?"#5F17B8":"#10052F",borderRadius:13,padding:"12px 13px",textAlign:"left",fontSize:14,fontWeight:800,cursor:"pointer"}}>{item.label}</button>)}
+          <button type="button" onClick={()=>{setMobileMenuOpen(false);signedIn?setPage("cabinet-light"):onLogin?.();}} style={{width:"100%",border:0,background:"#10052F",color:"#fff",borderRadius:13,padding:"12px 13px",textAlign:"left",fontSize:14,fontWeight:800,cursor:"pointer",marginTop:4}}>Мой спорт</button>
+          {canSeeAdmin&&<button type="button" onClick={()=>{setMobileMenuOpen(false);setPage("admin");}} style={{width:"100%",border:0,background:"#F7F1FC",color:"#6D2BC1",borderRadius:13,padding:"12px 13px",textAlign:"left",fontSize:14,fontWeight:800,cursor:"pointer",marginTop:4}}>Админка</button>}
+        </div>}
         <button className="pravo-participate" onClick={()=>signedIn?setPage("cabinet-light"):onLogin?.()} style={{height:44,border:0,borderRadius:20,background:"#10052F",color:"#fff",fontWeight:800,fontSize:13.5,padding:"0 19px",cursor:"pointer",marginLeft:9,boxShadow:"0 8px 18px rgba(16,5,47,.13)"}}>
           Мой спорт <span style={{marginLeft:6,opacity:.8}}>↗</span>
         </button>
-        {signedIn&&<button type="button" className="pravo-admin-link" onClick={()=>setPage("admin")} style={{height:40,border:"1px solid #E9E1EF",borderRadius:18,background:"#fff",color:"#6F687A",fontWeight:800,fontSize:12.5,padding:"0 13px",cursor:"pointer",marginLeft:8}}>Админка</button>}
+        {canSeeAdmin&&<button type="button" className="pravo-admin-link" onClick={()=>setPage("admin")} style={{height:40,border:"1px solid #E9E1EF",borderRadius:18,background:"#fff",color:"#6F687A",fontWeight:800,fontSize:12.5,padding:"0 13px",cursor:"pointer",marginLeft:8}}>Админка</button>}
         {signedIn
           ? <button className="pravo-avatar" onClick={account} style={{width:42,height:42,borderRadius:"50%",border:"3px solid #fff",boxShadow:"0 0 0 1px #E6D9F0",background:"#D90A78",color:"#fff",fontWeight:900,fontSize:16,cursor:"pointer",marginLeft:9}}>Д</button>
           : <button className="pravo-avatar" onClick={onLogin} style={{width:42,height:42,borderRadius:"50%",border:"1px solid #E6D9F0",background:"#fff",color:"#8D27EE",fontWeight:800,fontSize:11,cursor:"pointer",marginLeft:9}}>Войти</button>}
@@ -1528,7 +1581,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
 
 
 export default function App(){
-  const [page,setPage]=useState("light");
+  const [page,setPage]=useState(()=>hashToPage(window.location.hash));
   const load=(key,fallback)=>readData(key,fallback);
   const [news,setNews]=useState(()=>load(STORAGE_KEYS.news,INIT_NEWS));
   const [appChallenges,setAppChallenges]=useState(()=>load(STORAGE_KEYS.challenges,CHALLENGES));
@@ -1554,6 +1607,19 @@ export default function App(){
   useEffect(()=>{writeData(STORAGE_KEYS.eventLog,eventLog.slice(-500));},[eventLog]);
   useEffect(()=>{writeData(STORAGE_KEYS.registeredEvents,registeredEvents);},[registeredEvents]);
   useEffect(()=>{writeData(STORAGE_KEYS.signedIn,signedIn);},[signedIn]);
+  useEffect(()=>{
+    const syncFromUrl=()=>setPage(hashToPage(window.location.hash));
+    window.addEventListener("popstate",syncFromUrl);
+    window.addEventListener("hashchange",syncFromUrl);
+    return()=>{
+      window.removeEventListener("popstate",syncFromUrl);
+      window.removeEventListener("hashchange",syncFromUrl);
+    };
+  },[]);
+  useEffect(()=>{
+    const next=pageToHash(page);
+    if(window.location.hash!==next)window.history.pushState({page},"",next);
+  },[page]);
 
   const notify=msg=>{setToast(msg);setTimeout(()=>setToast(null),3000);};
   const trackEvent=(eventName,entityId="",meta={})=>{const event=createAnalyticsEvent(eventName,entityId,meta);setEventLog(p=>[...p,event].slice(-500));sendAnalyticsEvent(event);};
@@ -1627,6 +1693,7 @@ export default function App(){
         .admin-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}.admin-head h1{margin:18px 0 4px;font-size:32px}.admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}.stat-card,.admin-form,.admin-list{background:#fff;border:1px solid #eadff5;border-radius:20px;padding:22px;box-shadow:0 10px 35px rgba(76,29,149,.06)}.stat-card strong{display:block;color:#8C26EA;font-size:29px}.stat-card span{font-size:12px;color:#756f7e}.admin-grid{display:grid;grid-template-columns:1.4fr .8fr;gap:20px}.admin-form{display:flex;flex-direction:column;gap:14px}.admin-form h2,.admin-list h2{margin:4px 0 8px}.admin-tabs{display:flex;gap:6px;flex-wrap:wrap}.admin-tabs button{border:0;border-radius:999px;padding:8px 12px;background:#f3eef8;color:#6d6476;font-weight:700;cursor:pointer}.admin-tabs button.active{background:#8C26EA;color:#fff}.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-list-row{display:flex;gap:12px;padding:12px 0;border-top:1px solid #eee7f5}.admin-list-row>span{font-size:23px}.admin-list-row b,.admin-list-row small{display:block}.admin-list-row small{margin-top:3px;color:#8a8494}.login-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.login-choice{border:1px solid #e3d9ed;border-radius:16px;background:#fff;padding:18px;text-align:left;cursor:pointer}.login-choice b{display:block;margin-bottom:5px}.login-choice span{font-size:12px;color:#756f7e}
         @media(max-width:820px){.pravo-admin-link{display:none!important}.metrics-grid,.admin-stats{grid-template-columns:repeat(2,1fr)}.cabinet-grid,.admin-grid{grid-template-columns:1fr}.profile-head,.admin-head{align-items:flex-start;flex-direction:column}.achievement-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}.login-actions{grid-template-columns:1fr}}
         .group-nav-btn,.platform-block-card,.platform-module-btn{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease,background .18s ease,color .18s ease}
+        .mobile-nav-panel button:hover{background:#F5EEFC!important;color:#5F17B8!important}
         .overview-module-grid button{transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
         .overview-module-grid button:hover{transform:translateY(-2px);border-color:#D9CBE4!important;box-shadow:0 12px 28px rgba(50,25,80,.07)!important}
         .group-nav-btn:hover{background:#FAF7FD!important;color:#5F17B8!important}
@@ -1835,7 +1902,9 @@ export default function App(){
       {page==="challenges"&&<LightChallengesPage setPage={setPage} challenges={appChallenges} signedIn={signedIn} isAdmin={isAdmin} joinedChallenges={joinedChallenges} onJoin={joinChallenge} onLogin={()=>setShowLogin(true)}/>}
       {page==="news"&&<LightNewsPage setPage={setPage} news={news} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/>}
       {page==="cabinet-light"&&<LightCabinet setPage={setPage} challenges={appChallenges} events={events} results={results} registeredEvents={registeredEvents} joinedChallenges={joinedChallenges} onSubmitResult={addResult} onToggleEvent={toggleEvent} isAdmin={isAdmin}/>}
-      {page==="admin"&&<AdminPanel setPage={setPage} challenges={appChallenges} events={events} news={news} results={results} registeredEvents={registeredEvents} joinedChallenges={joinedChallenges} onAddChallenge={adminAddChallenge} onAddEvent={adminAddEvent} onAddNews={adminAddNews} onUpdateChallenge={adminUpdateChallenge} onUpdateEvent={adminUpdateEvent} onUpdateNews={adminUpdateNews}/>}
+      {page==="admin"&&(signedIn&&(isAdmin||ADMIN_ACCESS_POLICY.demoMode)
+        ? <AdminPanel setPage={setPage} challenges={appChallenges} events={events} news={news} results={results} registeredEvents={registeredEvents} joinedChallenges={joinedChallenges} onAddChallenge={adminAddChallenge} onAddEvent={adminAddEvent} onAddNews={adminAddNews} onUpdateChallenge={adminUpdateChallenge} onUpdateEvent={adminUpdateEvent} onUpdateNews={adminUpdateNews}/>
+        : <div style={{minHeight:"100vh",background:lightPageBg}}><PravoHeader setPage={setPage} signedIn={signedIn} isAdmin={isAdmin} onLogin={()=>setShowLogin(true)}/><main style={{maxWidth:760,margin:"0 auto",padding:"80px 24px",textAlign:"center",color:"#10052F"}}><h1 style={{fontSize:40,margin:"0 0 12px"}}>Доступ только для администратора</h1><p style={{color:"#756F7E",lineHeight:1.55}}>В production административный раздел доступен только пользователям с административной ролью.</p><button className="primary-btn" onClick={()=>signedIn?setPage("light"):setShowLogin(true)}>Вернуться</button></main></div>)}
 
       {showLogin&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setShowLogin(false)}><div className="light-modal"><button className="modal-close" onClick={()=>setShowLogin(false)}>×</button><h2>Вход в право(спорт)</h2><p className="muted">Выберите роль для демонстрации интерфейса.</p><div className="login-actions"><button className="login-choice" onClick={()=>login("employee")}><b>👤 Сотрудник</b><span>Челленджи, результаты и события</span></button><button className="login-choice" onClick={()=>login("admin")}><b>⚙️ Администратор</b><span>Контент и запуск активностей</span></button></div></div></div>}
     </div>
