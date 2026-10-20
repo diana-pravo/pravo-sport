@@ -112,7 +112,7 @@ const PLATFORM_BLOCKS=[
   {
     id:"participate",n:"01",title:"Участвовать",eyebrow:"ВКЛЮЧАЙСЯ В ДВИЖЕНИЕ",
     description:"Выбирай формат, регистрируйся и участвуй — от челленджей до живых встреч.",
-    accent:"#8D27EE",soft:"#F3EAFE",image:MVP_SURF,
+    accent:"#8D27EE",soft:"#F3EAFE",image:MVP_SPLASH,
     modules:[
       {id:"challenges",icon:"🏆",title:"Челленджи",text:"Активные, будущие и прошедшие челленджи.",target:"challenges",features:["Активные челленджи","Будущие анонсы","Прошедшие челленджи","Рейтинг"]},
       {id:"starts",icon:"🏃",title:"Забеги / старты",text:"Твои старты, календарь и заявки.",features:["Твои старты","Календарь ПравоТех","Заявка на компенсацию","Новости стартов"]},
@@ -263,7 +263,7 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
               <p style={{fontSize:15,color:"#746D7E",margin:0,maxWidth:760,lineHeight:1.55}}>Не каталог сервисов, а четыре понятных маршрута: участвовать, находить людей, видеть свой прогресс и получать поддержку.</p>
             </div>
           </div>
-          <div className="platform-block-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:18}}>
+          <div className="platform-block-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:18,alignItems:"start"}}>
             {PLATFORM_BLOCKS.map(block=><article key={block.id} id={`block-${block.id}`} className="platform-block-card" style={{position:"relative",overflow:"hidden",border:"1px solid #E7E0EC",borderRadius:30,background:"#fff",boxShadow:"0 14px 38px rgba(50,25,80,.06)",scrollMarginTop:190}}>
               <div className="platform-block-hero" style={{position:"relative",minHeight:190,padding:"26px 28px",background:`linear-gradient(105deg,${block.soft} 0%,${block.soft}F2 52%,rgba(255,255,255,.12) 100%)`,overflow:"hidden"}}>
                 <img src={block.image} alt="" onError={e=>{e.currentTarget.style.display="none";}} style={{position:"absolute",right:0,top:0,width:"48%",height:"100%",objectFit:"cover",objectPosition:"center",opacity:.94,filter:"saturate(.92) contrast(.98)",maskImage:"linear-gradient(90deg,transparent 0%,#000 30%)",WebkitMaskImage:"linear-gradient(90deg,transparent 0%,#000 30%)"}}/>
@@ -358,7 +358,7 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
             {homeNews.map((n,i)=>{
               if(n.mode==="split") return <article className="home-news-split" key={i} onClick={()=>setPage("news")} style={{height:350,borderRadius:28,overflow:"hidden",display:"grid",gridTemplateColumns:"1.03fr .97fr",background:"#10052F",color:"#fff",cursor:"pointer"}}>
                 <div style={{padding:"32px",display:"flex",flexDirection:"column"}}><span style={{alignSelf:"flex-start",background:"#8D27EE",borderRadius:18,padding:"7px 12px",fontSize:11,fontWeight:800}}>{n.type}</span><h3 style={{fontSize:31,lineHeight:1.05,letterSpacing:"-1.3px",margin:"30px 0 14px",fontWeight:800}}>{n.title}</h3><p style={{fontSize:13,lineHeight:1.55,color:"#BDB5CC",margin:0}}>{n.text}</p><b style={{fontSize:15,marginTop:"auto"}}>Читать историю →</b></div>
-                <img src={MVP_SPLASH} alt="Спортивная история" style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 48%",background:"#DCECF2"}}/>
+                <img src={MVP_SURF} alt="Спортивная история" onError={e=>{e.currentTarget.src=MVP_HERO;}} style={{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center 48%",background:"#DCECF2"}}/>
               </article>;
               if(n.mode==="white") return <article key={i} style={{height:350,borderRadius:28,background:"#fff",border:"1px solid #DED8E3",padding:"30px",display:"flex",flexDirection:"column"}}>
                 <span style={{alignSelf:"flex-start",background:"#E9FF1F",borderRadius:18,padding:"7px 12px",fontSize:11,fontWeight:800}}>{n.type}</span><div style={{fontSize:12,color:"#81798B",marginTop:23}}>{n.date}</div><h3 style={{fontSize:25,lineHeight:1.08,letterSpacing:"-.9px",margin:"28px 0 0",fontWeight:800}}>{n.title}</h3><button type="button" onClick={()=>setPage("news")} style={{marginTop:"auto",width:48,height:48,borderRadius:"50%",border:0,background:"#10052F",color:"#fff",fontSize:24,cursor:"pointer"}}>↗</button>
@@ -1001,7 +1001,7 @@ function LightNewsPage({setPage,news=INIT_NEWS,signedIn=false,onLogin,isAdmin=fa
   const visibleNews=news.filter(n=>!n.archived);
   return(
     <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
-      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin} activeGroup="block-support"/>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin} activeGroup="news"/>
       <main className="light-main light-list-main" style={{maxWidth:1450,margin:"0 auto",padding:"48px 42px 72px"}}>
         <div style={{fontSize:13,fontWeight:800,letterSpacing:"2px",color:"#8D27EE",marginBottom:16}}>БУДЬ В КУРСЕ</div>
         <div className="light-section-head" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:20,marginBottom:34}}>
@@ -1098,6 +1098,8 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
       desc:challenge.desc||"",
       status:challenge.status||"active",
       daysLeft:Number(challenge.daysLeft||0),
+      startDate:challenge.startDate||"",
+      endDate:challenge.endDate||"",
       type:challenge.type||"steps"
     });
   };
@@ -1200,7 +1202,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
       <PravoHeader setPage={setPage} signedIn={true} isAdmin={true}/>
       <div className="light-dashboard-content" style={{maxWidth:1220,margin:"0 auto",padding:"36px 32px 70px"}}>
         <div className="admin-head">
-          <div><h1 style={{margin:"0 0 5px",fontSize:38,letterSpacing:"-1.5px"}}>Панель администратора</h1><p className="muted">Управление контентом, спортивной программой и эффективностью платформы · {DATA_MODE==="local-demo"?"локальный MVP":"API ready"}</p></div>
+          <div><h1 style={{margin:"0 0 5px",fontSize:38,letterSpacing:"-1.5px"}}>Панель администратора</h1><p className="muted">Управление контентом, спортивной программой и эффективностью платформы · {DATA_MODE==="local-demo"?"локальный режим":"API ready"}</p></div>
           <div style={{display:"flex",gap:10,alignItems:"center"}}><button className="plain-link" onClick={()=>setPage("cabinet-light")}>Личный кабинет →</button><div className="role-pill">Администратор</div></div>
         </div>
 
@@ -1259,7 +1261,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
                   <p className="muted" style={{fontSize:12,lineHeight:1.45,margin:"0 0 12px"}}>{ch.desc}</p>
                   <div className="challenge-admin-metrics" style={{display:"flex",gap:18,flexWrap:"wrap",fontSize:11,color:"#756D7E"}}>
                     <span><b style={{color:"#10052F"}}>{ch.participants||0}</b> участников*</span>
-                    <span><b style={{color:"#10052F"}}>{ownResults.length}</b> результатов в MVP</span>
+                    <span><b style={{color:"#10052F"}}>{ownResults.length}</b> результатов</span>
                     <span><b style={{color:"#10052F"}}>{ch.daysLeft||0}</b> дней</span>
                     {joinedHere&&<span style={{color:"#159B66",fontWeight:800}}>✓ текущий пользователь участвует</span>}
                   </div>
@@ -1369,7 +1371,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
                 ["result_submit","Внесение результата"],
                 ["event_signup","Запись на событие"]
               ].map(([event,label],i)=><div key={event} className="admin-list-row" style={{alignItems:"center"}}><span style={{fontSize:15,color:"#8D27EE"}}>●</span><div><b style={{fontSize:12}}>{label}</b><small>{event}</small></div></div>)}
-              <div style={{background:"#F7F1FC",borderRadius:12,padding:"12px",fontSize:11,lineHeight:1.5,color:"#756D7E",marginTop:10}}>Для общей статистики по сотрудникам события должны отправляться в централизованное хранилище. Данные только из localStorage не подходят для продуктовой аналитики.</div>
+              <div style={{background:"#F7F1FC",borderRadius:12,padding:"12px",fontSize:11,lineHeight:1.5,color:"#756D7E",marginTop:10}}>Общая статистика станет доступна после подключения корпоративного хранилища данных.</div>
             </section>
           </div>
         </>}
@@ -1392,6 +1394,8 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
               </select>
             </label>
             <label>Дней до завершения<input type="number" min="0" value={manageDraft.daysLeft} onChange={e=>setManageDraft(p=>({...p,daysLeft:Number(e.target.value)}))}/></label>
+            <label>Дата начала<input type="date" value={manageDraft.startDate||""} onChange={e=>setManageDraft(p=>({...p,startDate:e.target.value}))}/></label>
+            <label>Дата окончания<input type="date" value={manageDraft.endDate||""} onChange={e=>setManageDraft(p=>({...p,endDate:e.target.value}))}/></label>
             <label style={{gridColumn:"1/-1"}}>Тип результата
               <select value={manageDraft.type} onChange={e=>setManageDraft(p=>({...p,type:e.target.value}))}>
                 <option value="steps">Шаги</option>
@@ -1406,7 +1410,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
             <div style={{background:"#F7F1FC",borderRadius:16,padding:"16px"}}>
               <div style={{fontSize:10,fontWeight:800,color:"#8D27EE",letterSpacing:"1px",marginBottom:8}}>УЧАСТНИКИ</div>
               <div style={{fontSize:24,fontWeight:800}}>{managedChallenge.participants||0}</div>
-              <div className="muted" style={{fontSize:11}}>общий демо-счётчик</div>
+              <div className="muted" style={{fontSize:11}}>общий счётчик</div>
               {joinedChallenges.includes(managedChallenge.id)&&<div style={{marginTop:10,fontSize:11,fontWeight:700,color:"#159B66"}}>✓ Текущий пользователь участвует</div>}
               <div style={{marginTop:8,fontSize:9.5,lineHeight:1.4,color:"#AAA2B2"}}>Полный список сотрудников появится после корпоративной авторизации и backend.</div>
             </div>
@@ -1439,7 +1443,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
           <div style={{background:"#F7F1FC",borderRadius:16,padding:"16px",margin:"18px 0"}}>
             <div style={{fontSize:10,fontWeight:800,color:"#8D27EE",letterSpacing:"1px",marginBottom:8}}>РЕГИСТРАЦИИ</div>
             <div style={{fontSize:24,fontWeight:800}}>{registeredEvents.includes(managedEvent.id)?1:0}</div>
-            <div className="muted" style={{fontSize:11}}>видно в текущем MVP-браузере</div>
+            <div className="muted" style={{fontSize:11}}>текущих регистраций</div>
             {registeredEvents.includes(managedEvent.id)&&<div style={{marginTop:10,fontSize:11,fontWeight:700,color:"#159B66"}}>✓ Текущий пользователь зарегистрирован</div>}
             <div style={{marginTop:8,fontSize:9.5,lineHeight:1.4,color:"#AAA2B2"}}>После backend здесь будет полный список сотрудников, дата регистрации и выгрузка участников.</div>
           </div>
@@ -1563,6 +1567,7 @@ export default function App(){
         button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid rgba(141,39,238,.22);outline-offset:2px}
         html,body,button,input,textarea,select{font-family:'Open Sans',Arial,sans-serif}
         .light-section-title,.light-page-title{font-size:52px!important;line-height:1.02!important;letter-spacing:-2.4px!important}
+        .how-title{font-size:52px!important;line-height:1.02!important;letter-spacing:-2.4px!important}
         .light-hero-title{font-size:clamp(56px,5.4vw,78px)!important;letter-spacing:-3.8px!important}
         .platform-block-hero{min-height:168px!important}
         .platform-block-hero h3{font-size:28px!important}
