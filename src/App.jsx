@@ -410,6 +410,29 @@ const PLATFORM_BLOCKS=[
 
 const PLATFORM_MODULES=PLATFORM_BLOCKS.flatMap(block=>block.modules.map(module=>({...module,blockId:block.id,blockTitle:block.title,accent:block.accent,soft:block.soft,image:block.image})));
 
+const COMMUNITY_PEOPLE=[
+  {id:"p1",name:"Алексей К.",city:"Москва",sports:["Бег","Велосипед"],level:"Регулярно",about:"Готовлюсь к полумарафону и люблю длинные велопрогулки.",role:"Амбассадор бега",avatar:"АК"},
+  {id:"p2",name:"Мария П.",city:"Москва",sports:["Йога","Бег"],level:"Начинаю",about:"Ищу компанию для лёгких пробежек после работы.",role:"",avatar:"МП"},
+  {id:"p3",name:"Иван С.",city:"Санкт-Петербург",sports:["Плавание","Бег"],level:"Регулярно",about:"Плаваю на открытой воде, иногда бегаю трейлы.",role:"Амбассадор плавания",avatar:"ИС"},
+  {id:"p4",name:"Ольга С.",city:"Казань",sports:["Велосипед","Йога"],level:"Регулярно",about:"Люблю городские веломаршруты и утреннюю йогу.",role:"",avatar:"ОС"},
+  {id:"p5",name:"Никита Р.",city:"Новосибирск",sports:["Бег","Лыжи"],level:"Продвинутый",about:"Могу помочь с планом подготовки к первому старту.",role:"Амбассадор бега",avatar:"НР"},
+  {id:"p6",name:"Анна В.",city:"Санкт-Петербург",sports:["Йога","Плавание"],level:"Начинаю",about:"Хочу найти бадди для бассейна 1–2 раза в неделю.",role:"",avatar:"АВ"}
+];
+
+const COMMUNITY_TEAMS=[
+  {id:"t1",name:"Pravo Runners · Москва",city:"Москва",sport:"Бег",members:34,desc:"Совместные тренировки по вторникам и субботам.",emoji:"🏃"},
+  {id:"t2",name:"Open Water Crew",city:"Санкт-Петербург",sport:"Плавание",members:18,desc:"Бассейн зимой, открытая вода летом.",emoji:"🏊"},
+  {id:"t3",name:"Velo Weekend",city:"Казань",sport:"Велосипед",members:21,desc:"Неспешные городские и загородные маршруты.",emoji:"🚴"},
+  {id:"t4",name:"Yoga Morning",city:"Москва",sport:"Йога",members:27,desc:"Короткие утренние практики онлайн и офлайн.",emoji:"🧘"}
+];
+
+const DEFAULT_COMMUNITY_ACTIVITIES=[
+  {id:"a1",title:"Лёгкая пробежка 5 км",city:"Москва",sport:"Бег",when:"Среда · 19:30",author:"Мария П.",people:6},
+  {id:"a2",title:"Веломаршрут вдоль набережной",city:"Казань",sport:"Велосипед",when:"Суббота · 10:00",author:"Ольга С.",people:9},
+  {id:"a3",title:"Бассейн после работы",city:"Санкт-Петербург",sport:"Плавание",when:"Четверг · 20:00",author:"Анна В.",people:4},
+  {id:"a4",title:"Йога перед рабочим днём",city:"Москва",sport:"Йога",when:"Пятница · 08:00",author:"Мария П.",people:11}
+];
+
 function LightChallengeCard({c,i,onOpen}){
   const isDaily=c.title==="Движение каждый день";
   const fallbackPhoto=
@@ -610,7 +633,165 @@ function LightHome({setPage,challenges=CHALLENGES,news=INIT_NEWS,signedIn=false,
   );
 }
 
+function CommunityModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=false}){
+  const module=PLATFORM_MODULES.find(item=>item.id===moduleId);
+  const [city,setCity]=useState("Все города");
+  const [sport,setSport]=useState("Все виды");
+  const [query,setQuery]=useState("");
+  const [activities,setActivities]=useState(()=>readData(STORAGE_KEYS.communityActivities,DEFAULT_COMMUNITY_ACTIVITIES));
+  const [joinedTeams,setJoinedTeams]=useState(()=>readData(STORAGE_KEYS.communityTeams,[]));
+  const [buddyRequests,setBuddyRequests]=useState(()=>readData(STORAGE_KEYS.communityBuddyRequests,[]));
+  const [applications,setApplications]=useState(()=>readData(STORAGE_KEYS.communityApplications,[]));
+  const [showActivityForm,setShowActivityForm]=useState(false);
+  const [activityForm,setActivityForm]=useState({title:"",city:"Москва",sport:"Бег",when:""});
+  const communityTabs=[
+    ["city-sport","Спорт по городам"],
+    ["teams","Команды"],
+    ["buddy","Спортивный бадди"],
+    ["ambassadors","Амбассадоры"],
+    ["athlete-card","Карточки спортсменов"]
+  ];
+  const requireLogin=fn=>{if(!signedIn){onLogin?.();return;} fn();};
+  const save=(key,value)=>{writeData(key,value);return value;};
+  const track=(name,id,meta={})=>sendAnalyticsEvent(createAnalyticsEvent(name,id,meta));
+  const toggleTeam=id=>requireLogin(()=>{
+    setJoinedTeams(prev=>{
+      const next=prev.includes(id)?prev.filter(x=>x!==id):[...prev,id];
+      save(STORAGE_KEYS.communityTeams,next);
+      track(prev.includes(id)?"community_team_leave":"community_team_join",id);
+      return next;
+    });
+  });
+  const toggleBuddy=id=>requireLogin(()=>{
+    setBuddyRequests(prev=>{
+      const next=prev.includes(id)?prev.filter(x=>x!==id):[...prev,id];
+      save(STORAGE_KEYS.communityBuddyRequests,next);
+      track(prev.includes(id)?"community_buddy_cancel":"community_buddy_request",id);
+      return next;
+    });
+  });
+  const toggleApplication=id=>requireLogin(()=>{
+    setApplications(prev=>{
+      const next=prev.includes(id)?prev.filter(x=>x!==id):[...prev,id];
+      save(STORAGE_KEYS.communityApplications,next);
+      track(prev.includes(id)?"community_application_cancel":"community_application_submit",id);
+      return next;
+    });
+  });
+  const addActivity=()=>requireLogin(()=>{
+    if(!activityForm.title.trim()||!activityForm.when.trim())return;
+    const item={id:`a${Date.now()}`,...activityForm,author:"Вы",people:1};
+    const next=[item,...activities];
+    setActivities(next);save(STORAGE_KEYS.communityActivities,next);
+    track("community_activity_create",item.id,{city:item.city,sport:item.sport});
+    setActivityForm({title:"",city:"Москва",sport:"Бег",when:""});
+    setShowActivityForm(false);
+  });
+  const filteredPeople=COMMUNITY_PEOPLE.filter(p=>(city==="Все города"||p.city===city)&&(sport==="Все виды"||p.sports.includes(sport))&&(!query||(`${p.name} ${p.city} ${p.sports.join(" ")}`).toLowerCase().includes(query.toLowerCase())));
+  const filteredActivities=activities.filter(a=>(city==="Все города"||a.city===city)&&(sport==="Все виды"||a.sport===sport)&&(!query||(`${a.title} ${a.city} ${a.sport}`).toLowerCase().includes(query.toLowerCase())));
+  const ambassadors=COMMUNITY_PEOPLE.filter(p=>p.role);
+  const cities=["Все города","Москва","Санкт-Петербург","Казань","Новосибирск"];
+  const sports=["Все виды","Бег","Плавание","Велосипед","Йога","Лыжи"];
+  const cardStyle={background:"#fff",border:"1px solid #E7E0EC",borderRadius:24,boxShadow:"0 10px 28px rgba(50,25,80,.045)"};
+  return(
+    <div style={{minHeight:"100vh",background:lightPageBg,color:"#10052F",fontFamily:"'Open Sans',Arial,sans-serif"}}>
+      <PravoHeader setPage={setPage} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>
+      <main className="light-main community-main" style={{maxWidth:1450,margin:"0 auto",padding:"38px 42px 80px"}}>
+        <section className="community-hero" style={{...cardStyle,position:"relative",overflow:"hidden",padding:"38px",background:"linear-gradient(115deg,#EAF7FB 0%,#F7F3FC 58%,#fff 100%)"}}>
+          <img src={MVP_SURF} alt="" style={{position:"absolute",right:0,top:0,width:"39%",height:"100%",objectFit:"cover",opacity:.86,maskImage:"linear-gradient(90deg,transparent,#000 32%)",WebkitMaskImage:"linear-gradient(90deg,transparent,#000 32%)"}}/>
+          <div style={{position:"relative",zIndex:2,maxWidth:760}}>
+            <div style={{fontSize:11,fontWeight:900,letterSpacing:"1.6px",color:"#1699C4",marginBottom:10}}>ЛЮДИ И СООБЩЕСТВО</div>
+            <h1 className="light-page-title" style={{fontSize:58,lineHeight:1,letterSpacing:"-2.8px",margin:"0 0 12px",fontWeight:800}}>Находи своих в право(спорт)</h1>
+            <p style={{fontSize:16,lineHeight:1.55,color:"#6E6877",margin:0,maxWidth:650}}>Команды, спортивные партнёры, амбассадоры и активности коллег — без ручного поиска по чатам.</p>
+          </div>
+        </section>
+
+        <nav className="community-tabs" style={{display:"flex",gap:8,overflowX:"auto",padding:"18px 0 8px",scrollbarWidth:"none"}}>
+          {communityTabs.map(([id,label])=><button key={id} type="button" onClick={()=>setPage(`module:${id}`)} style={{flex:"0 0 auto",border:moduleId===id?0:"1px solid #E5DCEB",background:moduleId===id?"#10052F":"#fff",color:moduleId===id?"#fff":"#554C62",borderRadius:18,padding:"10px 15px",fontSize:12.5,fontWeight:800,cursor:"pointer"}}>{label}</button>)}
+        </nav>
+
+        {["city-sport","buddy"].includes(moduleId)&&<div className="community-filters" style={{...cardStyle,padding:"16px",margin:"12px 0 18px",display:"grid",gridTemplateColumns:"1.4fr .8fr .8fr",gap:10}}>
+          <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Поиск по людям, спорту или активности" style={{border:"1px solid #E5DCEB",borderRadius:14,padding:"11px 13px",font:"inherit",outline:"none"}}/>
+          <select value={city} onChange={e=>setCity(e.target.value)} style={{border:"1px solid #E5DCEB",borderRadius:14,padding:"11px 13px",font:"inherit",background:"#fff"}}>{cities.map(x=><option key={x}>{x}</option>)}</select>
+          <select value={sport} onChange={e=>setSport(e.target.value)} style={{border:"1px solid #E5DCEB",borderRadius:14,padding:"11px 13px",font:"inherit",background:"#fff"}}>{sports.map(x=><option key={x}>{x}</option>)}</select>
+        </div>}
+
+        {moduleId==="city-sport"&&<>
+          <div className="community-section-head" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,margin:"28px 0 16px"}}>
+            <div><div style={{fontSize:11,fontWeight:900,color:"#1699C4",letterSpacing:"1.3px"}}>РЯДОМ С ТОБОЙ</div><h2 style={{fontSize:31,margin:"5px 0 0",letterSpacing:"-1.2px"}}>Активности коллег</h2></div>
+            <button type="button" onClick={()=>requireLogin(()=>setShowActivityForm(true))} style={{border:0,borderRadius:18,background:"#8D27EE",color:"#fff",padding:"11px 16px",fontWeight:800,cursor:"pointer"}}>+ Предложить активность</button>
+          </div>
+          <div className="community-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:14}}>
+            {filteredActivities.map(a=><article key={a.id} style={{...cardStyle,padding:"22px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",gap:12,marginBottom:18}}><span style={{background:"#EAF7FB",color:"#1484A9",padding:"6px 10px",borderRadius:999,fontSize:10,fontWeight:800}}>{a.sport}</span><span style={{fontSize:11,color:"#7D7587"}}>{a.city}</span></div>
+              <h3 style={{fontSize:22,margin:"0 0 8px"}}>{a.title}</h3><p style={{fontSize:13,color:"#756E7E",margin:"0 0 18px"}}>{a.when} · организатор {a.author}</p>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><span style={{fontSize:12,color:"#756E7E"}}>👥 {a.people} уже идут</span><button onClick={()=>requireLogin(()=>{track("community_activity_join",a.id);setActivities(prev=>prev.map(x=>x.id===a.id?{...x,people:x.people+1}:x));})} type="button" style={{border:"1px solid #DCCDEA",background:"#fff",color:"#7C2BD0",borderRadius:14,padding:"8px 12px",fontWeight:800,cursor:"pointer"}}>Присоединиться</button></div>
+            </article>)}
+          </div>
+        </>}
+
+        {moduleId==="teams"&&<>
+          <div className="community-section-head" style={{margin:"28px 0 16px"}}><div style={{fontSize:11,fontWeight:900,color:"#1699C4",letterSpacing:"1.3px"}}>КОМАНДЫ</div><h2 style={{fontSize:31,margin:"5px 0 0",letterSpacing:"-1.2px"}}>Найди команду по интересам</h2></div>
+          <div className="community-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:14}}>
+            {COMMUNITY_TEAMS.map(t=>{const joined=joinedTeams.includes(t.id);return <article key={t.id} style={{...cardStyle,padding:"22px",display:"grid",gridTemplateColumns:"58px 1fr auto",gap:16,alignItems:"center"}}>
+              <div style={{width:58,height:58,borderRadius:18,background:"#F2E9FC",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28}}>{t.emoji}</div>
+              <div><h3 style={{fontSize:18,margin:"0 0 5px"}}>{t.name}</h3><div style={{fontSize:12,color:"#756E7E"}}>{t.city} · {t.sport} · {t.members+(joined?1:0)} участников</div><p style={{fontSize:12,color:"#756E7E",margin:"8px 0 0"}}>{t.desc}</p></div>
+              <button type="button" onClick={()=>toggleTeam(t.id)} style={{border:joined?0:"1px solid #DCCDEA",background:joined?"#E9F8EF":"#fff",color:joined?"#08783F":"#7C2BD0",borderRadius:14,padding:"9px 12px",fontWeight:800,cursor:"pointer"}}>{joined?"✓ В команде":"Вступить"}</button>
+            </article>})}
+          </div>
+        </>}
+
+        {moduleId==="buddy"&&<>
+          <div className="community-section-head" style={{margin:"28px 0 16px"}}><div style={{fontSize:11,fontWeight:900,color:"#1699C4",letterSpacing:"1.3px"}}>СПОРТИВНЫЙ БАДДИ</div><h2 style={{fontSize:31,margin:"5px 0 0",letterSpacing:"-1.2px"}}>Найди партнёра для тренировок</h2></div>
+          <div className="community-people-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:14}}>
+            {filteredPeople.map(p=>{const sent=buddyRequests.includes(p.id);return <article key={p.id} style={{...cardStyle,padding:"22px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:14}}><div style={{width:48,height:48,borderRadius:"50%",background:colFor(p.id),color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>{p.avatar}</div><div><b>{p.name}</b><div style={{fontSize:11,color:"#7D7587"}}>{p.city} · {p.level}</div></div></div>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:12}}>{p.sports.map(s=><span key={s} style={{background:"#F4EEF8",color:"#6B2BB4",padding:"5px 8px",borderRadius:999,fontSize:10,fontWeight:800}}>{s}</span>)}</div>
+              <p style={{fontSize:12.5,lineHeight:1.5,color:"#756E7E",minHeight:56}}>{p.about}</p>
+              <button type="button" onClick={()=>toggleBuddy(p.id)} style={{width:"100%",border:sent?0:"1px solid #DCCDEA",background:sent?"#E9F8EF":"#fff",color:sent?"#08783F":"#7C2BD0",borderRadius:14,padding:"9px 12px",fontWeight:800,cursor:"pointer"}}>{sent?"✓ Запрос отправлен":"Предложить тренировку"}</button>
+            </article>})}
+          </div>
+        </>}
+
+        {moduleId==="ambassadors"&&<>
+          <div className="community-section-head" style={{margin:"28px 0 16px"}}><div style={{fontSize:11,fontWeight:900,color:"#1699C4",letterSpacing:"1.3px"}}>АМБАССАДОРЫ</div><h2 style={{fontSize:31,margin:"5px 0 0",letterSpacing:"-1.2px"}}>Люди, которые двигают сообщество</h2></div>
+          <div className="community-people-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:14}}>
+            {ambassadors.map(p=>{const applied=applications.includes(`amb-${p.id}`);return <article key={p.id} style={{...cardStyle,padding:"22px",background:"linear-gradient(160deg,#fff,#F6F1FB)"}}>
+              <div style={{width:58,height:58,borderRadius:"50%",background:colFor(p.id),color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:17,marginBottom:16}}>{p.avatar}</div>
+              <div style={{fontSize:10,fontWeight:900,color:"#8D27EE",letterSpacing:"1px"}}>{p.role.toUpperCase()}</div><h3 style={{fontSize:22,margin:"7px 0"}}>{p.name}</h3><p style={{fontSize:12.5,lineHeight:1.5,color:"#756E7E",minHeight:58}}>{p.about}</p>
+              <button type="button" onClick={()=>toggleApplication(`amb-${p.id}`)} style={{border:0,background:applied?"#E9F8EF":"#10052F",color:applied?"#08783F":"#fff",borderRadius:14,padding:"9px 12px",fontWeight:800,cursor:"pointer"}}>{applied?"✓ Заявка отправлена":"Предложить инициативу"}</button>
+            </article>})}
+          </div>
+          <div style={{...cardStyle,marginTop:16,padding:"24px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:20,background:"#E9FF1F"}}><div><div style={{fontSize:11,fontWeight:900,letterSpacing:"1.2px"}}>ХОЧЕШЬ БОЛЬШЕ?</div><h3 style={{fontSize:24,margin:"6px 0 0"}}>Стань амбассадором своего вида спорта</h3></div><button type="button" onClick={()=>toggleApplication("become-ambassador")} style={{border:0,background:"#10052F",color:"#fff",borderRadius:16,padding:"11px 15px",fontWeight:800,cursor:"pointer"}}>{applications.includes("become-ambassador")?"✓ Заявка отправлена":"Подать заявку"}</button></div>
+        </>}
+
+        {moduleId==="athlete-card"&&<>
+          <div className="community-section-head" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,margin:"28px 0 16px"}}><div><div style={{fontSize:11,fontWeight:900,color:"#1699C4",letterSpacing:"1.3px"}}>ИСТОРИИ КОЛЛЕГ</div><h2 style={{fontSize:31,margin:"5px 0 0",letterSpacing:"-1.2px"}}>Карточки спортсменов</h2></div><button type="button" onClick={()=>toggleApplication("athlete-story")} style={{border:0,background:"#8D27EE",color:"#fff",borderRadius:16,padding:"10px 14px",fontWeight:800,cursor:"pointer"}}>{applications.includes("athlete-story")?"✓ Заявка отправлена":"Хочу стать героем"}</button></div>
+          <div className="community-people-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:14}}>
+            {COMMUNITY_PEOPLE.slice(0,6).map((p,i)=><article key={p.id} style={{...cardStyle,overflow:"hidden"}}>
+              <div style={{height:120,background:i%2===0?"linear-gradient(135deg,#E7D7F9,#D7EFF7)":"linear-gradient(135deg,#FFF0D9,#F3E3FA)",display:"flex",alignItems:"flex-end",padding:"18px"}}>
+                <div style={{width:64,height:64,borderRadius:"50%",background:colFor(p.id),color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:18,border:"4px solid #fff"}}>{p.avatar}</div>
+              </div>
+              <div style={{padding:"18px"}}><h3 style={{fontSize:20,margin:"0 0 5px"}}>{p.name}</h3><div style={{fontSize:11,color:"#7D7587"}}>{p.city} · {p.sports.join(" · ")}</div><p style={{fontSize:12.5,lineHeight:1.5,color:"#756E7E",minHeight:58}}>{p.about}</p><button type="button" onClick={()=>track("profile_view",p.id)} style={{border:0,background:"transparent",color:"#8D27EE",padding:0,fontWeight:800,cursor:"pointer"}}>Открыть историю ↗</button></div>
+            </article>)}
+          </div>
+        </>}
+      </main>
+
+      {showActivityForm&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setShowActivityForm(false)}><div className="light-modal">
+        <button className="modal-close" onClick={()=>setShowActivityForm(false)}>×</button><h2>Предложить активность</h2>
+        <label>Название<input value={activityForm.title} onChange={e=>setActivityForm(p=>({...p,title:e.target.value}))} placeholder="Например, пробежка 5 км"/></label>
+        <label>Город<select value={activityForm.city} onChange={e=>setActivityForm(p=>({...p,city:e.target.value}))} style={{border:"1px solid #e3d9ed",borderRadius:11,padding:"11px 12px",font:"inherit"}}>{cities.filter(x=>x!=="Все города").map(x=><option key={x}>{x}</option>)}</select></label>
+        <label>Вид спорта<select value={activityForm.sport} onChange={e=>setActivityForm(p=>({...p,sport:e.target.value}))} style={{border:"1px solid #e3d9ed",borderRadius:11,padding:"11px 12px",font:"inherit"}}>{sports.filter(x=>x!=="Все виды").map(x=><option key={x}>{x}</option>)}</select></label>
+        <label>Когда<input value={activityForm.when} onChange={e=>setActivityForm(p=>({...p,when:e.target.value}))} placeholder="Суббота · 10:00"/></label>
+        <button className="primary-btn" onClick={addActivity}>Опубликовать</button>
+      </div></div>}
+    </div>
+  );
+}
+
 function PlatformModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=false}){
+  if(["city-sport","teams","buddy","ambassadors","athlete-card"].includes(moduleId)) return <CommunityModulePage setPage={setPage} moduleId={moduleId} signedIn={signedIn} onLogin={onLogin} isAdmin={isAdmin}/>;
   const module=PLATFORM_MODULES.find(item=>item.id===moduleId);
   if(!module){setTimeout(()=>setPage("light"),0);return null;}
   const primary=()=>{
@@ -1545,6 +1726,9 @@ export default function App(){
         .platform-block-card:hover{transform:translateY(-2px);box-shadow:0 18px 42px rgba(50,25,80,.08)!important}
         .platform-module-btn:hover{transform:translateY(-2px);border-color:#D8CBE3!important;box-shadow:0 10px 24px rgba(50,25,80,.07)}
         .module-feature-grid>div{transition:transform .18s ease}.module-feature-grid>div:hover{transform:translateY(-2px)}
+        .community-tabs::-webkit-scrollbar{display:none}.community-main select,.community-main input{color:#10052F}
+        @media(max-width:1000px){.community-people-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.community-filters{grid-template-columns:1fr 1fr!important}.community-filters input{grid-column:1/-1}.community-grid{grid-template-columns:1fr!important}}
+        @media(max-width:620px){.community-main{padding-top:24px!important}.community-hero{padding:26px!important}.community-hero>img{width:58%!important;opacity:.55!important}.community-hero>div{max-width:78%!important}.community-people-grid{grid-template-columns:1fr!important}.community-filters{grid-template-columns:1fr!important}.community-filters input{grid-column:auto}.community-section-head{align-items:flex-start!important;flex-direction:column!important}.community-grid article[style*="grid-template-columns"]{grid-template-columns:52px 1fr!important}.community-grid article[style*="grid-template-columns"]>button{grid-column:1/-1!important;width:100%!important}}
         @media(max-width:1100px){.module-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
         @media(max-width:760px){.pravo-group-nav{display:none!important}.pravo-mobile-menu{display:block!important}.pravo-search{display:none!important}.platform-block-grid{grid-template-columns:1fr!important}.platform-block-hero{min-height:190px!important;padding:24px!important}.platform-block-hero>div{max-width:70%!important}.module-hero{min-height:330px!important;padding:30px!important}.module-hero>div{max-width:72%!important}.module-feature-grid{grid-template-columns:1fr!important}}
         @media(max-width:520px){.platform-module-grid{grid-template-columns:1fr!important}.platform-block-hero{min-height:220px!important}.platform-block-hero>img{width:48%!important;opacity:.72!important}.platform-block-hero>div{max-width:78%!important}.platform-module-btn{min-height:82px!important;padding:14px!important}.module-hero{min-height:390px!important;padding:24px!important;align-items:flex-end!important}.module-hero>img{width:100%!important;height:48%!important;mask-image:linear-gradient(180deg,#000,transparent)!important;-webkit-mask-image:linear-gradient(180deg,#000,transparent)!important}.module-hero>div{max-width:100%!important}.module-hero h1{font-size:42px!important}}
