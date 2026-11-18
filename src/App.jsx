@@ -59,6 +59,15 @@ const hashToPage=hash=>{
   if(parts.length===2&&["participate","community","progress","support","module"].includes(parts[0]))return `module:${parts[1]}`;
   return "light";
 };
+const MERCHI_RULES=[
+  {id:"team",title:"Командный челлендж",value:"30",how:"Выполнить план — 10 мерчиков; победителю — ещё 20.",frequency:"За каждое участие"},
+  {id:"solo",title:"Сольный челлендж",value:"20",how:"Выполнить план: +10. Топ-3: дополнительные +10 / +20 / +30.",frequency:"За каждое участие"},
+  {id:"start",title:"Забег / старт в футболке компании",value:"40",how:"Подтвердить участие в старте.",frequency:"За каждое участие"},
+  {id:"interview",title:"Спортивное интервью",value:"20",how:"Участие в спортивном интервью.",frequency:"По факту публикации"},
+  {id:"ambassador",title:"Амбассадор спорта",value:"200",how:"Активная популяризация спорта: посты, тренировки, старты.",frequency:"Единоразово"},
+  {id:"season",title:"Попадание в рейтинг сезона",value:"100",how:"Попадание в рейтинг квартала / года.",frequency:"1 раз в квартал"}
+];
+
 const CHALLENGES=[
   {id:"c1",emoji:"👟",title:"Шаговый май",desc:"10 дней — 6 000 шагов",participants:24,status:"active",statusLabel:"Активный",color:"#7C3AED",daysLeft:14,startDate:"2026-10-12",endDate:"2026-10-31",type:"steps",bg:"linear-gradient(135deg,#1a0533 0%,#2D1B69 50%,#4C1D95 100%)"},
   {id:"c2",emoji:"🏃",title:"Бег — Этап 1",desc:"Максимум км за июнь",participants:18,status:"soon",statusLabel:"Скоро",color:"#059669",daysLeft:30,startDate:"2026-11-19",endDate:"2026-12-19",type:"run",bg:"linear-gradient(135deg,#052e16 0%,#064e3b 50%,#065f46 100%)"},
@@ -225,7 +234,7 @@ const PLATFORM_BLOCKS=[
     accent:"#D97706",soft:"#FFF4E5",image:MVP_ICE,
     modules:[
       {id:"ratings",icon:"▥",title:"Рейтинги",text:"Сравнивай прогресс и следи за результатами.",features:["Рейтинг челленджей","Спортивные соревнования","Рейтинг амбассадоров"]},
-      {id:"coins",icon:"◉",title:"Коины",text:"Начисления за спортивную активность.",features:["Баланс коинов","История начислений","Начисления за активности"]},
+      {id:"coins",icon:"◉",title:"Мерчики",text:"Начисления за спортивную активность.",features:["Баланс коинов","История начислений","Начисления за активности"]},
       {id:"benefits",icon:"🎁",title:"Бенефиты",text:"Спортивные сервисы и доступные преимущества.",features:["Спортивные сервисы","Fitmost","Корпоративные предложения"]},
       {id:"achievement",icon:"⚑",title:"Заяви о достижении",text:"Поделись результатом и получи признание.",features:["Заявка о достижении","Подтверждение результата","Публикация достижения"]}
     ]
@@ -665,8 +674,10 @@ function CommunityModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fa
 }
 
 function ProgressModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=false}){
-  const tabs=[["ratings","Рейтинги"],["coins","Коины"],["benefits","Бенефиты"],["achievement","Достижения"]];
+  const tabs=[["ratings","Рейтинги"],["coins","Мерчики"],["benefits","Бенефиты"],["achievement","Достижения"]];
   const [redemptions,setRedemptions]=useState(()=>readData(STORAGE_KEYS.rewardRedemptions,[]));
+  const [rewardOrders,setRewardOrders]=useState(()=>readData(STORAGE_KEYS.rewardOrders,[]));
+  const [pendingReward,setPendingReward]=useState(null);
   const [claims,setClaims]=useState(()=>readData(STORAGE_KEYS.achievementClaims,[]));
   const [claimTitle,setClaimTitle]=useState("");
   const [claimText,setClaimText]=useState("");
@@ -692,12 +703,22 @@ function ProgressModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fal
     {id:"starter",icon:"flag",title:"Первый старт",text:"Первый подтверждённый результат",done:true},
     {id:"leader",icon:"trophy",title:"Топ-3 сезона",text:"Попади в тройку рейтинга",done:false}
   ];
-  const coinBalance=145-redemptions.reduce((sum,id)=>sum+(rewards.find(r=>r.id===id)?.cost||0),0);
-  const redeem=reward=>requireLogin(()=>{
-    if(redemptions.includes(reward.id)||coinBalance<reward.cost)return;
+  const merchiBalance=145-redemptions.reduce((sum,id)=>sum+(rewards.find(r=>r.id===id)?.cost||0),0);
+  const selectReward=reward=>requireLogin(()=>{
+    if(redemptions.includes(reward.id)||merchiBalance<reward.cost)return;
+    setPendingReward(reward.id);
+    track("reward_select",reward.id,{cost:reward.cost});
+  });
+  const confirmReward=()=>requireLogin(()=>{
+    const reward=rewards.find(r=>r.id===pendingReward);
+    if(!reward||redemptions.includes(reward.id)||merchiBalance<reward.cost)return;
     const next=[...redemptions,reward.id];
+    const order={id:`reward-${Date.now()}`,rewardId:reward.id,title:reward.title,cost:reward.cost,status:"Подтверждено",date:new Date().toLocaleString("ru-RU")};
+    const nextOrders=[order,...rewardOrders];
     setRedemptions(next);writeData(STORAGE_KEYS.rewardRedemptions,next);
-    track("reward_redeem",reward.id,{cost:reward.cost});
+    setRewardOrders(nextOrders);writeData(STORAGE_KEYS.rewardOrders,nextOrders);
+    setPendingReward(null);
+    track("reward_confirm",reward.id,{cost:reward.cost});
   });
   const submitClaim=()=>requireLogin(()=>{
     if(!claimTitle.trim()||!claimText.trim())return;
@@ -740,21 +761,28 @@ function ProgressModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=fal
 
         {moduleId==="coins"&&<>
           <section style={{...card,marginTop:16,padding:"28px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,alignItems:"center",background:"linear-gradient(135deg,#10052F,#2D1260)",color:"#fff"}}>
-            <div><div style={{fontSize:11,fontWeight:900,letterSpacing:"1.2px",color:"#DCC4F8"}}>ТВОЙ БАЛАНС</div><div style={{fontSize:64,fontWeight:800,letterSpacing:"-3px",marginTop:8}}>{coinBalance}</div><div style={{fontSize:13,color:"#D6C8E4"}}>коинов доступно</div></div>
-            <div style={{fontSize:13,lineHeight:1.6,color:"#E8DEF1"}}>Коины начисляются за участие, регулярность, результаты и поддержку сообщества. Правила начисления будут синхронизироваться автоматически с корпоративной системой.</div>
+            <div><div style={{fontSize:11,fontWeight:900,letterSpacing:"1.2px",color:"#DCC4F8"}}>ТВОЙ БАЛАНС</div><div style={{fontSize:64,fontWeight:800,letterSpacing:"-3px",marginTop:8}}>{merchiBalance}</div><div style={{fontSize:13,color:"#D6C8E4"}}>мерчиков доступно</div></div>
+            <div style={{fontSize:13,lineHeight:1.6,color:"#E8DEF1"}}>Мерчики начисляются по правилам спортивной геймификации. За каждый внесённый результат мы показываем, что прогресс учтён, а итоговое начисление происходит по правилам активности.</div>
           </section>
-          <div className="coin-grid" style={{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:14,marginTop:16}}>
-            {[["Челлендж завершён","+40"],["7 дней активности","+25"],["Помощь команде","+15"],["Новый результат","+10"],["Участие в старте","+30"],["Инициатива сообщества","+20"]].map(([t,v])=><div key={t} style={{...card,padding:"20px"}}><span style={{fontSize:11,color:"#7B7484"}}>{t}</span><strong style={{display:"block",fontSize:23,color:"#D97706",marginTop:8}}>{v}</strong></div>)}
+          <div className="coin-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:14,marginTop:16}}>
+            {MERCHI_RULES.map(rule=><div key={rule.id} style={{...card,padding:"20px",display:"grid",gridTemplateColumns:"1fr auto",gap:12}}>
+              <div><strong style={{display:"block",fontSize:15}}>{rule.title}</strong><span style={{display:"block",fontSize:11,color:"#7B7484",lineHeight:1.5,marginTop:6}}>{rule.how}</span><span style={{display:"block",fontSize:10,color:"#A099A8",marginTop:7}}>{rule.frequency}</span></div>
+              <strong style={{fontSize:28,color:"#D97706"}}>{rule.value}</strong>
+            </div>)}
           </div>
         </>}
 
         {moduleId==="benefits"&&<>
-          <div className="progress-section-head" style={{margin:"28px 0 16px"}}><div style={{fontSize:11,fontWeight:900,color:"#D97706",letterSpacing:"1.3px"}}>БЕНЕФИТЫ</div><h2 style={{fontSize:31,margin:"5px 0 0",letterSpacing:"-1.2px"}}>На что можно потратить коины</h2></div>
+          <div className="progress-section-head" style={{margin:"28px 0 16px"}}><div style={{fontSize:11,fontWeight:900,color:"#D97706",letterSpacing:"1.3px"}}>БЕНЕФИТЫ</div><h2 style={{fontSize:31,margin:"5px 0 0",letterSpacing:"-1.2px"}}>На что можно потратить мерчики</h2></div>
+          {pendingReward&&<section style={{...card,padding:"18px 20px",marginBottom:14,display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,background:"#FFF8E8"}}>
+            <div><b style={{fontSize:14}}>Подтвердить выбор: {rewards.find(r=>r.id===pendingReward)?.title}</b><div style={{fontSize:11.5,color:"#756E7E",marginTop:4}}>До подтверждения выбор можно изменить. После подтверждения он считается окончательным.</div></div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button type="button" className="mini-btn" onClick={()=>setPendingReward(null)}>Отменить</button><button type="button" className="primary-btn" style={{width:"auto",padding:"9px 14px"}} onClick={confirmReward}>Подтвердить</button></div>
+          </section>}
           <div className="benefit-grid" style={{display:"grid",gridTemplateColumns:"repeat(2,minmax(0,1fr))",gap:14}}>
-            {rewards.map(r=>{const used=redemptions.includes(r.id);const disabled=used||coinBalance<r.cost;return <article key={r.id} style={{...card,padding:"22px",display:"grid",gridTemplateColumns:"58px 1fr auto",gap:16,alignItems:"center"}}>
+            {rewards.map(r=>{const used=redemptions.includes(r.id);const selected=pendingReward===r.id;const disabled=used||merchiBalance<r.cost;return <article key={r.id} style={{...card,padding:"22px",display:"grid",gridTemplateColumns:"58px 1fr auto",gap:16,alignItems:"center",border:selected?"2px solid #D97706":"1px solid #E8E1ED"}}>
               <div style={{width:58,height:58,borderRadius:18,background:"#FFF4E5",display:"flex",alignItems:"center",justifyContent:"center",fontSize:27}}><SportIcon name={r.icon} size={27}/></div>
-              <div><h3 style={{fontSize:18,margin:"0 0 5px"}}>{r.title}</h3><p style={{fontSize:12,color:"#756E7E",margin:0,lineHeight:1.45}}>{r.text}</p><div style={{fontSize:11,fontWeight:900,color:"#D97706",marginTop:8}}>{r.cost} коинов</div></div>
-              <button onClick={()=>redeem(r)} disabled={disabled} type="button" style={{border:0,background:used?"#E9F8EF":disabled?"#F2EEF4":"#10052F",color:used?"#08783F":disabled?"#9991A0":"#fff",borderRadius:14,padding:"9px 12px",fontWeight:800,cursor:disabled?"default":"pointer"}}>{used?"✓ Выбрано":coinBalance<r.cost?"Не хватает":"Выбрать"}</button>
+              <div><h3 style={{fontSize:18,margin:"0 0 5px"}}>{r.title}</h3><p style={{fontSize:12,color:"#756E7E",margin:0,lineHeight:1.45}}>{r.text}</p><div style={{fontSize:11,fontWeight:900,color:"#D97706",marginTop:8}}>{r.cost} мерчиков</div></div>
+              <button onClick={()=>selectReward(r)} disabled={disabled} type="button" style={{border:0,background:used?"#E9F8EF":selected?"#FFF1CF":disabled?"#F2EEF4":"#10052F",color:used?"#08783F":selected?"#9A5B00":disabled?"#9991A0":"#fff",borderRadius:14,padding:"9px 12px",fontWeight:800,cursor:disabled?"default":"pointer"}}>{used?"✓ Подтверждено":selected?"Выбрано":merchiBalance<r.cost?"Не хватает":"Выбрать"}</button>
             </article>})}
           </div>
         </>}
@@ -965,7 +993,7 @@ function ParticipateModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=
         {moduleId==="meetups"&&<>
           <div className="participate-section-head" style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,margin:"28px 0 16px"}}>
             <div><div style={{fontSize:11,fontWeight:900,color:"#8D27EE",letterSpacing:"1.3px"}}>МИТАПЫ И ЛЕКТОРИИ</div><h2 style={{fontSize:31,margin:"5px 0 0",letterSpacing:"-1.2px"}}>Встречи, знания и истории коллег</h2></div>
-            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button type="button" onClick={()=>requireLogin(()=>setShowForm("topic"))} style={{border:"1px solid #D9CCE5",background:"#fff",color:"#7C2BD0",borderRadius:16,padding:"10px 14px",fontWeight:800,cursor:"pointer"}}>Предложить тему</button><button type="button" onClick={()=>requireLogin(()=>setShowForm("hero"))} style={{border:0,background:"#10052F",color:"#fff",borderRadius:16,padding:"10px 14px",fontWeight:800,cursor:"pointer"}}>Стать героем</button></div>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}><button type="button" onClick={()=>requireLogin(()=>setShowForm("topic"))} style={{border:"1px solid #D9CCE5",background:"#fff",color:"#7C2BD0",borderRadius:16,padding:"10px 14px",fontWeight:800,cursor:"pointer"}}>Хочу послушать тему</button><button type="button" onClick={()=>requireLogin(()=>setShowForm("hero"))} style={{border:0,background:"#10052F",color:"#fff",borderRadius:16,padding:"10px 14px",fontWeight:800,cursor:"pointer"}}>Стать героем</button></div>
           </div>
           <div className="participate-list" style={{display:"grid",gap:12}}>{meetups.map(e=><EventCard key={e.id} e={e}/>)}</div>
           {(meetupTopics.length>0||heroApplications.length>0)&&<section style={{...card,padding:"20px",marginTop:16}}><h3 style={{margin:"0 0 10px"}}>Мои заявки</h3>{[...meetupTopics,...heroApplications].map(x=><div key={x.id} style={{display:"grid",gridTemplateColumns:"1fr auto",gap:12,padding:"10px 0",borderTop:"1px solid #EEE7F2"}}><div><b style={{fontSize:12}}>{x.title}</b><div style={{fontSize:11,color:"#7B7484"}}>{x.comment||"Заявка отправлена"}</div></div><span style={{fontSize:10,fontWeight:800,color:"#8D27EE",background:"#F4EEF8",padding:"6px 9px",borderRadius:999,alignSelf:"start"}}>{x.status}</span></div>)}</section>}
@@ -974,11 +1002,11 @@ function ParticipateModulePage({setPage,moduleId,signedIn=false,onLogin,isAdmin=
 
       {showForm&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setShowForm("")}><div className="light-modal">
         <button className="modal-close" onClick={()=>setShowForm("")}>×</button>
-        <h2>{showForm==="reimbursement"?"Заявка на компенсацию":showForm==="offline"?"Предложить активность":showForm==="topic"?"Предложить тему":"Стать героем лектория"}</h2>
+        <h2>{showForm==="reimbursement"?"Заявка на компенсацию":showForm==="offline"?"Предложить активность":showForm==="topic"?"Предложить тему, которую хочется послушать":"Стать героем лектория"}</h2>
         <label>Название<input value={form.title} onChange={e=>setForm(p=>({...p,title:e.target.value}))} placeholder={showForm==="reimbursement"?"Название старта":"Короткое название"}/></label>
         {(showForm==="reimbursement"||showForm==="offline")&&<label>Дата<input type="date" value={form.date} onChange={e=>setForm(p=>({...p,date:e.target.value}))}/></label>}
         {showForm==="offline"&&<label>Место<input value={form.place} onChange={e=>setForm(p=>({...p,place:e.target.value}))} placeholder="Где встречаемся"/></label>}
-        <label>{showForm==="hero"?"О чём хочешь рассказать":"Комментарий"}<textarea value={form.comment} onChange={e=>setForm(p=>({...p,comment:e.target.value}))} placeholder={showForm==="topic"?"Почему эта тема полезна коллегам":showForm==="hero"?"Коротко опиши свою спортивную историю":"Дополнительная информация"}/></label>
+        <label>{showForm==="hero"?"О чём хочешь рассказать":"Комментарий"}<textarea value={form.comment} onChange={e=>setForm(p=>({...p,comment:e.target.value}))} placeholder={showForm==="topic"?"О чём хотелось бы послушать и почему это интересно?":showForm==="hero"?"Коротко опиши свою спортивную историю":"Дополнительная информация"}/></label>
         <button className="primary-btn" onClick={submitForm}>Отправить</button>
       </div></div>}
     </div>
@@ -1177,15 +1205,16 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
   const [value,setValue]=useState("");
   const [comment,setComment]=useState("");
   const [proof,setProof]=useState(null);
+  const [proofError,setProofError]=useState("");
   const myChallenges=challenges.filter(c=>joinedChallenges.includes(c.id));
   const visibleEvents=events.filter(e=>!e.archived);
   const totalSteps=results.filter(r=>r.type==="steps").reduce((sum,r)=>sum+Number(r.value||0),8100);
-  const totalPoints=42+results.reduce((sum,r)=>sum+Number(r.points||0),0);
   const submit=e=>{
     e.preventDefault();
     if(!value||!activeChallenge)return;
-    onSubmitResult({id:Date.now(),challengeId:activeChallenge.id,challengeTitle:activeChallenge.title,type:activeChallenge.type,value:Number(value),comment,proofName:proof?.name||"",date:new Date().toLocaleString("ru-RU"),points:Math.max(1,Math.min(20,Number(value)/1000))});
-    setValue("");setComment("");setProof(null);setActiveChallenge(null);
+    if(!proof){setProofError("Для фиксации результата приложи скрин или фото подтверждения.");return;}
+    onSubmitResult({id:Date.now(),challengeId:activeChallenge.id,challengeTitle:activeChallenge.title,type:activeChallenge.type,value:Number(value),comment,proofName:proof.name||"",proofType:proof.type||"",verificationStatus:"На проверке",date:new Date().toLocaleString("ru-RU"),points:0});
+    setValue("");setComment("");setProof(null);setProofError("");setActiveChallenge(null);
   };
   const card={...lg(0.88),borderRadius:20,padding:"22px 24px"};
   return(
@@ -1204,7 +1233,7 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
         </div>
         <div className="cabinet-grid">
           <div style={{display:"flex",flexDirection:"column",gap:20}}>
-            <section style={card}><div className="section-title"><span>Мои челленджи</span><span style={{color:BP,fontSize:13}}>⭐ {totalPoints.toFixed(1)}</span></div>
+            <section style={card}><div className="section-title"><span>Мои челленджи</span><span style={{color:BP,fontSize:12}}>Мерчики — по итогам активности</span></div>
               {myChallenges.length===0?<div className="empty-state"><div style={{marginBottom:12}}>Вы пока не участвуете ни в одном челлендже.</div><button className="mini-btn active" onClick={()=>setPage("challenges")}>Выбрать челлендж</button></div>:myChallenges.slice(0,6).map((c,i)=>{const own=results.filter(r=>r.challengeId===c.id).reduce((s,r)=>s+Number(r.value||0),0);const base=i===0?60:0;const progress=Math.min(100,base+own/1000);return <div key={c.id} className="challenge-row"><div style={{display:"flex",justifyContent:"space-between",gap:12}}><b>{c.emoji} {c.title}</b><button className="mini-btn" onClick={()=>setActiveChallenge(c)}>+ Результат</button></div><div className="progress-track"><div style={{width:`${progress}%`}}/></div><div className="muted" style={{fontSize:11}}>{progress.toFixed(0)}% · внесено: {own.toLocaleString("ru-RU")}</div></div>})}
             </section>
             <section style={card}><div className="section-title">Последняя активность</div>{results.length===0?<div className="empty-state">После внесения результата здесь появится история активности.</div>:results.slice().reverse().slice(0,6).map(r=><div key={r.id} className="activity-row"><div className="activity-icon">✓</div><div style={{flex:1}}><b>{r.challengeTitle}</b><div className="muted" style={{fontSize:11}}>{r.date}{r.proofName?` · 📎 ${r.proofName}`:""}</div></div><strong style={{color:BP}}>{Number(r.value).toLocaleString("ru-RU")}</strong></div>)}</section>
@@ -1215,7 +1244,7 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
           </div>
         </div>
       </div>
-      {activeChallenge&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setActiveChallenge(null)}><form className="light-modal" onSubmit={submit}><button type="button" className="modal-close" onClick={()=>setActiveChallenge(null)}>×</button><h2>{activeChallenge.emoji} {activeChallenge.title}</h2><p className="muted">Внесите результат — прогресс и баллы пересчитаются автоматически.</p><label>Результат<input type="number" min="1" required value={value} onChange={e=>setValue(e.target.value)} placeholder="Например, 8500"/></label><label>Комментарий<textarea value={comment} onChange={e=>setComment(e.target.value)} placeholder="Как прошла активность?"/></label><label className="upload-box">📎 {proof?proof.name:"Прикрепить фото или файл"}<input type="file" accept="image/*,.pdf" onChange={e=>setProof(e.target.files?.[0]||null)}/></label><div className="points-preview">Будет начислено: +{Math.max(0,Math.min(20,Number(value||0)/1000)).toFixed(1)} ⭐</div><button className="primary-btn" type="submit">Сохранить результат</button></form></div>}
+      {activeChallenge&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setActiveChallenge(null)}><form className="light-modal" onSubmit={submit}><button type="button" className="modal-close" onClick={()=>setActiveChallenge(null)}>×</button><h2>{activeChallenge.emoji} {activeChallenge.title}</h2><p className="muted">Укажи результат и обязательно приложи скрин или фото из приложения. Подтверждение считается источником результата.</p><label>Результат<input type="number" min="1" required value={value} onChange={e=>setValue(e.target.value)} placeholder="Например, 8500"/></label><label>Комментарий<textarea value={comment} onChange={e=>setComment(e.target.value)} placeholder="Как прошла активность?"/></label><label className="upload-box" style={proofError?{borderColor:"#D64545",background:"#FFF6F6"}:undefined}>📎 {proof?proof.name:"Прикрепить скрин / фото результата *"}<input type="file" accept="image/*" onChange={e=>{setProof(e.target.files?.[0]||null);setProofError("");}}/></label>{proofError&&<div style={{fontSize:11,color:"#B52F2F",fontWeight:700}}>{proofError}</div>}<div className="points-preview">✨ Результат будет учтён после проверки подтверждения. Мерчики начисляются по правилам активности, а не за каждый внесённый шаг.</div><button className="primary-btn" type="submit">Сохранить результат</button></form></div>}
     </div>
   );
 }
