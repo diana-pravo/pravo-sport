@@ -1201,6 +1201,17 @@ function LightNewsPage({setPage,news=INIT_NEWS,signedIn=false,onLogin,isAdmin=fa
 
 // Светлый личный кабинет: результаты, подтверждения, активность и записи на события.
 function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],registeredEvents=[],joinedChallenges=[],onSubmitResult,onToggleEvent,isAdmin=false}){
+  const [showOrganizer,setShowOrganizer]=useState(false);
+  const [organizerForm,setOrganizerForm]=useState({type:"Вопрос по челленджу",message:"",fileName:""});
+  const submitOrganizer=()=>{
+    if(!organizerForm.message.trim())return;
+    const item={id:`org-${Date.now()}`,...organizerForm,status:"Новая",employee:"Текущий пользователь",date:new Date().toLocaleString("ru-RU")};
+    const current=readData(STORAGE_KEYS.organizerMessages,[]);
+    writeData(STORAGE_KEYS.organizerMessages,[item,...current]);
+    setOrganizerForm({type:"Вопрос по челленджу",message:"",fileName:""});
+    setShowOrganizer(false);
+  };
+
   const [activeChallenge,setActiveChallenge]=useState(null);
   const [value,setValue]=useState("");
   const [comment,setComment]=useState("");
@@ -1243,7 +1254,19 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
             <section style={card}><div className="section-title">Достижения</div><div className="achievement-grid">{[{e:"🔥",l:"7 дней подряд"},{e:"🏊",l:"10 км плавания"},{e:"👟",l:"Первый результат"},{e:"🚴",l:"Велопрогулка"}].map((a,i)=><div key={i} className="achievement"><span>{a.e}</span><small>{a.l}</small></div>)}</div></section>
           </div>
         </div>
+        <section style={{...card,marginTop:20,display:"flex",justifyContent:"space-between",alignItems:"center",gap:16,background:"linear-gradient(110deg,#F4ECFD,#fff)"}}>
+          <div><div style={{fontSize:10,fontWeight:900,letterSpacing:"1.2px",color:"#8C26EA"}}>НУЖНА ПОМОЩЬ?</div><h3 style={{fontSize:18,margin:"5px 0 4px"}}>Написать организатору</h3><p className="muted" style={{fontSize:12,margin:0}}>Вопрос по челленджу, результату, регистрации или любой другой ситуации.</p></div>
+          <button className="primary-btn" type="button" style={{width:"auto",padding:"10px 15px"}} onClick={()=>setShowOrganizer(true)}>Написать</button>
+        </section>
       </div>
+      {showOrganizer&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setShowOrganizer(false)}><div className="light-modal">
+        <button className="modal-close" onClick={()=>setShowOrganizer(false)}>×</button>
+        <h2>Написать организатору</h2>
+        <label>Тип вопроса<select value={organizerForm.type} onChange={e=>setOrganizerForm(p=>({...p,type:e.target.value}))} style={{border:"1px solid #e3d9ed",borderRadius:11,padding:"11px 12px",font:"inherit",background:"#fff"}}>{["Вопрос по челленджу","Проблема с результатом","Регистрация / событие","Мерчики / награда","Другое"].map(x=><option key={x}>{x}</option>)}</select></label>
+        <label>Сообщение<textarea value={organizerForm.message} onChange={e=>setOrganizerForm(p=>({...p,message:e.target.value}))} placeholder="Опиши ситуацию"/></label>
+        <label className="upload-box">📎 {organizerForm.fileName||"Приложить файл"}<input type="file" onChange={e=>setOrganizerForm(p=>({...p,fileName:e.target.files?.[0]?.name||""}))}/></label>
+        <button className="primary-btn" type="button" onClick={submitOrganizer}>Отправить</button>
+      </div></div>}
       {activeChallenge&&<div className="modal-backdrop" onClick={e=>e.target===e.currentTarget&&setActiveChallenge(null)}><form className="light-modal" onSubmit={submit}><button type="button" className="modal-close" onClick={()=>setActiveChallenge(null)}>×</button><h2>{activeChallenge.emoji} {activeChallenge.title}</h2><p className="muted">Укажи результат и обязательно приложи скрин или фото из приложения. Подтверждение считается источником результата.</p><label>Результат<input type="number" min="1" required value={value} onChange={e=>setValue(e.target.value)} placeholder="Например, 8500"/></label><label>Комментарий<textarea value={comment} onChange={e=>setComment(e.target.value)} placeholder="Как прошла активность?"/></label><label className="upload-box" style={proofError?{borderColor:"#D64545",background:"#FFF6F6"}:undefined}>📎 {proof?proof.name:"Прикрепить скрин / фото результата *"}<input type="file" accept="image/*" onChange={e=>{setProof(e.target.files?.[0]||null);setProofError("");}}/></label>{proofError&&<div style={{fontSize:11,color:"#B52F2F",fontWeight:700}}>{proofError}</div>}<div className="points-preview">✨ Результат будет учтён после проверки подтверждения. Мерчики начисляются по правилам активности, а не за каждый внесённый шаг.</div><button className="primary-btn" type="submit">Сохранить результат</button></form></div>}
     </div>
   );
@@ -1251,6 +1274,35 @@ function LightCabinet({setPage,challenges=CHALLENGES,events=[],results=[],regist
 
 
 function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=[],joinedChallenges=[],onAddChallenge,onAddEvent,onAddNews,onUpdateChallenge,onUpdateEvent,onUpdateNews}){
+  const [requestFilter,setRequestFilter]=useState("all");
+  const [requestStatus,setRequestStatus]=useState(()=>readData(STORAGE_KEYS.adminInbox,{}));
+  const updateRequestStatus=(key,status)=>{
+    const next={...requestStatus,[key]:status};
+    setRequestStatus(next);writeData(STORAGE_KEYS.adminInbox,next);
+  };
+  const requestSources=[
+    ...readData(STORAGE_KEYS.trainerQuestions,[]).map(x=>({...x,_key:`trainer:${x.id}`,_type:"Тренер",_title:x.topic||"Вопрос тренеру",_text:x.text})),
+    ...readData(STORAGE_KEYS.ambassadorApplications,[]).map(x=>({...x,_key:`ambassador:${x.id}`,_type:"Амбассадор",_title:`${x.sport||"Спорт"} · ${x.city||""}`,_text:x.idea||x.experience})),
+    ...readData(STORAGE_KEYS.achievementClaims,[]).map(x=>({...x,_key:`achievement:${x.id}`,_type:"Достижение",_title:x.title,_text:x.text})),
+    ...readData(STORAGE_KEYS.startReimbursements,[]).map(x=>({...x,_key:`reimburse:${x.id}`,_type:"Компенсация",_title:x.title||"Старт",_text:x.comment||""})),
+    ...readData(STORAGE_KEYS.offlineProposals,[]).map(x=>({...x,_key:`offline:${x.id}`,_type:"Офлайн",_title:x.title,_text:`${x.place||""} ${x.comment||""}`})),
+    ...readData(STORAGE_KEYS.meetupTopicProposals,[]).map(x=>({...x,_key:`topic:${x.id}`,_type:"Тема встречи",_title:x.title,_text:x.comment||""})),
+    ...readData(STORAGE_KEYS.meetupHeroApplications,[]).map(x=>({...x,_key:`hero:${x.id}`,_type:"Герой",_title:x.title,_text:x.comment||""})),
+    ...readData(STORAGE_KEYS.organizerMessages,[]).map(x=>({...x,_key:`organizer:${x.id}`,_type:"Организатору",_title:x.type||"Сообщение",_text:x.message||""})),
+    ...readData(STORAGE_KEYS.rewardOrders,[]).map(x=>({...x,_key:`reward:${x.id}`,_type:"Награда",_title:x.title,_text:`${x.cost||0} мерчиков`}))
+  ].sort((a,b)=>String(b.date||b.dateCreated||"").localeCompare(String(a.date||a.dateCreated||"")));
+  const requestTypes=["all",...new Set(requestSources.map(x=>x._type))];
+  const visibleRequests=requestFilter==="all"?requestSources:requestSources.filter(x=>x._type===requestFilter);
+  const joinedTeams=readData(STORAGE_KEYS.communityTeams,[]);
+  const activityJoins=readData(STORAGE_KEYS.communityActivityJoins,[]);
+  const participantRecords=[
+    ...joinedChallenges.map(id=>({id:`challenge-${id}`,kind:"Челлендж",title:challenges.find(x=>x.id===id)?.title||id,status:"Участвует"})),
+    ...registeredEvents.map(id=>({id:`event-${id}`,kind:"Событие",title:events.find(x=>x.id===id)?.title||id,status:"Записан"})),
+    ...joinedTeams.map(id=>({id:`team-${id}`,kind:"Команда",title:COMMUNITY_TEAMS.find(x=>x.id===id)?.name||id,status:"Вступил"})),
+    ...activityJoins.map(id=>({id:`activity-${id}`,kind:"Активность",title:readData(STORAGE_KEYS.communityActivities,DEFAULT_COMMUNITY_ACTIVITIES).find(x=>x.id===id)?.title||id,status:"Идёт"})),
+    ...results.map(r=>({id:`result-${r.id}`,kind:"Результат",title:r.challengeTitle||r.challengeId,status:r.verificationStatus||"Получен",meta:`${Number(r.value||0).toLocaleString("ru-RU")} · ${r.proofName||"без файла"}`}))
+  ];
+
   const [tab,setTab]=useState("challenge");
   const [section,setSection]=useState("content");
   const [analyticsPeriod,setAnalyticsPeriod]=useState("30");
@@ -1323,7 +1375,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
     closeNewsManage();
   };
   const managedNews=manageNewsId?news.find(x=>x.id===manageNewsId):null;
-  const [form,setForm]=useState({title:"",desc:"",date:"",startDate:"",endDate:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",fileName:"",fileType:"",fileData:""});
+  const [form,setForm]=useState({title:"",desc:"",date:"",startDate:"",endDate:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",publishNews:true,fileName:"",fileType:"",fileData:""});
   const change=(k,v)=>setForm(p=>({...p,[k]:v}));
   const handleFile=e=>{
     const file=e.target.files?.[0];
@@ -1343,7 +1395,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
     if(tab==="challenge")onAddChallenge(form);
     if(tab==="event")onAddEvent(form);
     if(tab==="news")onAddNews(form);
-    setForm({title:"",desc:"",date:"",startDate:"",endDate:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",fileName:"",fileType:"",fileData:""});
+    setForm({title:"",desc:"",date:"",startDate:"",endDate:"",place:"",kind:"Челлендж",emoji:"🏃",text:"",publishNews:true,fileName:"",fileType:"",fileData:""});
   };
 
   // MVP demo until central event tracking / backend analytics is connected.
@@ -1377,7 +1429,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
         </div>
 
         <div className="admin-section-tabs" style={{display:"flex",gap:8,marginBottom:22}}>
-          {[["content","Контент"],["manage","Управление"],["analytics","Аналитика"]].map(([id,label])=><button key={id} type="button" onClick={()=>setSection(id)} style={{border:section===id?0:"1px solid #E2D7EC",background:section===id?"#10052F":"#fff",color:section===id?"#fff":"#10052F",borderRadius:24,padding:"11px 18px",fontWeight:800,cursor:"pointer"}}>{label}</button>)}
+          {[["content","Контент"],["requests","Заявки"],["records","Участники и записи"],["manage","Управление"],["analytics","Аналитика"]].map(([id,label])=><button key={id} type="button" onClick={()=>setSection(id)} style={{border:section===id?0:"1px solid #E2D7EC",background:section===id?"#10052F":"#fff",color:section===id?"#fff":"#10052F",borderRadius:24,padding:"11px 18px",fontWeight:800,cursor:"pointer"}}>{label}</button>)}
         </div>
 
         {section==="content"?<>
@@ -1393,6 +1445,7 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
                 ? <div className="form-row"><label>Дата начала<input type="date" value={form.startDate} onChange={e=>change("startDate",e.target.value)}/></label><label>Дата окончания<input type="date" value={form.endDate} onChange={e=>change("endDate",e.target.value)}/></label></div>
                 : <div className="form-row"><label>Дата<input type="date" value={form.date} onChange={e=>change("date",e.target.value)}/></label><label>Место / ссылка<input value={form.place} onChange={e=>change("place",e.target.value)} placeholder="Zoom или адрес"/></label></div>}</>}
               {tab==="news"&&<label>Текст<textarea value={form.text} onChange={e=>change("text",e.target.value)}/></label>}
+              {tab==="challenge"&&<label style={{display:"flex",flexDirection:"row",alignItems:"center",gap:9,fontSize:12,fontWeight:700}}><input type="checkbox" checked={!!form.publishNews} onChange={e=>change("publishNews",e.target.checked)} style={{width:16,height:16}}/> Опубликовать анонс в новостях</label>}
               <label>Фото / файл
                 <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip" onChange={handleFile}/>
                 {form.fileName&&<span style={{fontSize:11,color:"#756f7e",fontWeight:600}}>Прикреплено: {form.fileName}</span>}
@@ -1402,6 +1455,19 @@ function AdminPanel({setPage,challenges,events,news,results=[],registeredEvents=
             </form>
             <aside className="admin-list"><h2>Последние изменения</h2>{[...news.slice(0,3).map(x=>({e:x.emoji||"📢",t:x.title,s:"Публикация"})),...challenges.slice(0,3).map(x=>({e:x.emoji,t:x.title,s:x.statusLabel}))].slice(0,6).map((x,i)=><div key={i} className="admin-list-row"><span>{x.e}</span><div><b>{x.t}</b><small>{x.s}</small></div></div>)}</aside>
           </div>
+        </>:section==="requests"?<>
+          <div className="manage-toolbar" style={{marginBottom:16}}><div><h2 style={{fontSize:28,margin:"0 0 5px"}}>Заявки</h2><p className="muted" style={{fontSize:12,margin:0}}>Всё, где нужен ответ или решение организатора.</p></div></div>
+          <div style={{display:"flex",gap:7,flexWrap:"wrap",marginBottom:16}}>{requestTypes.map(type=><button key={type} type="button" onClick={()=>setRequestFilter(type)} className={requestFilter===type?"mini-btn active":"mini-btn"}>{type==="all"?"Все":type}</button>)}</div>
+          <div style={{display:"grid",gap:10}}>
+            {visibleRequests.length===0?<div className="admin-form" style={{textAlign:"center",color:"#81798B"}}>Новых заявок в этой категории пока нет.</div>:visibleRequests.map(item=>{const status=requestStatus[item._key]||item.status||"Новая";return <section key={item._key} className="admin-form" style={{display:"grid",gridTemplateColumns:"1fr auto",gap:16,padding:"18px 20px"}}>
+              <div><div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}><span style={{fontSize:10,fontWeight:900,color:"#8D27EE",background:"#F4EEF8",borderRadius:999,padding:"5px 8px"}}>{item._type}</span><b style={{fontSize:14}}>{item._title||"Заявка"}</b></div><p style={{fontSize:12.5,color:"#665F70",lineHeight:1.5,margin:"9px 0 5px"}}>{item._text||"Без комментария"}</p><div style={{fontSize:10.5,color:"#9A92A2"}}>{item.employee||"Текущий пользователь"} · {item.date||item.dateCreated||""}{item.fileName?" · 📎 "+item.fileName:""}</div></div>
+              <select value={status} onChange={e=>updateRequestStatus(item._key,e.target.value)} style={{alignSelf:"start",border:"1px solid #E3D9ED",borderRadius:12,padding:"8px 10px",background:"#fff",fontWeight:700,color:"#10052F"}}>{["Новая","В работе","Одобрена","Отклонена","Подтверждено"].map(x=><option key={x}>{x}</option>)}</select>
+            </section>})}
+          </div>
+        </>:section==="records"?<>
+          <div className="manage-toolbar" style={{marginBottom:16}}><div><h2 style={{fontSize:28,margin:"0 0 5px"}}>Участники и записи</h2><p className="muted" style={{fontSize:12,margin:0}}>Регистрации, вступления и результаты — без ручной обработки.</p></div></div>
+          <div className="admin-stats">{[{v:joinedChallenges.length,l:"участий в челленджах"},{v:registeredEvents.length,l:"регистраций на события"},{v:joinedTeams.length,l:"вступлений в команды"},{v:results.length,l:"результатов"}].map((s,i)=><div key={i} className="stat-card"><strong>{s.v}</strong><span>{s.l}</span></div>)}</div>
+          <div style={{display:"grid",gap:9}}>{participantRecords.map(item=><section key={item.id} className="admin-form" style={{display:"grid",gridTemplateColumns:"120px 1fr auto",gap:14,alignItems:"center",padding:"15px 18px"}}><span style={{fontSize:10,fontWeight:900,color:"#6D2BC1"}}>{item.kind.toUpperCase()}</span><div><b style={{fontSize:13}}>{item.title}</b>{item.meta&&<div style={{fontSize:10.5,color:"#81798B",marginTop:3}}>{item.meta}</div>}</div><span style={{fontSize:10.5,fontWeight:800,color:"#159B66",background:"#EAF8F1",borderRadius:999,padding:"6px 9px"}}>{item.status}</span></section>)}</div>
         </>:section==="manage"?<>
           <div className="manage-toolbar" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",gap:16,marginBottom:18}}>
             <div>
@@ -1715,7 +1781,13 @@ export default function App(){
   const login=role=>{setSignedIn(true);setIsAdmin(role==="admin");setShowLogin(false);setPage(role==="admin"?"admin":"cabinet-light");};
   const addResult=result=>{setResults(p=>[...p,result]);setJoinedChallenges(p=>p.includes(result.challengeId)?p:[...p,result.challengeId]);trackEvent("result_submit",result.challengeId,{value:result.value});notify("Результат сохранён, прогресс обновлён");};
   const toggleEvent=id=>setRegisteredEvents(p=>{const joined=!p.includes(id);trackEvent(joined?"event_signup":"event_unregister",id,{source:"user_action"});return joined?[...p,id]:p.filter(x=>x!==id);});
-  const adminAddChallenge=form=>{setAppChallenges(p=>[{id:`c${Date.now()}`,emoji:form.emoji||"🏃",title:form.title,desc:form.desc||"Новый корпоративный челлендж",participants:0,status:"active",statusLabel:"Активный",color:BP,daysLeft:30,startDate:form.startDate||"",endDate:form.endDate||"",type:"steps",attachmentName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||"",bg:"linear-gradient(135deg,#EDE1FB,#D9E8FB)"},...p]);notify("Челлендж запущен");};
+  const adminAddChallenge=form=>{
+    const id=`c${Date.now()}`;
+    const challenge={id,emoji:form.emoji||"🏃",title:form.title,desc:form.desc||"Новый корпоративный челлендж",participants:0,status:"active",statusLabel:"Активный",color:BP,daysLeft:30,startDate:form.startDate||"",endDate:form.endDate||"",type:"steps",attachmentName:form.fileName||"",attachmentType:form.fileType||"",attachmentData:form.fileData||"",bg:"linear-gradient(135deg,#EDE1FB,#D9E8FB)"};
+    setAppChallenges(p=>[challenge,...p]);
+    if(form.publishNews!==false)setNews(p=>[{id:`news-${id}`,title:`Новый челлендж: ${form.title}`,cat:"Анонс",date:new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"long",year:"numeric"}),text:form.desc||"Новый корпоративный челлендж уже открыт для участия.",emoji:form.emoji||"🏃",archived:false,bg:"linear-gradient(160deg,#F3EEFA,#E9F6EF)"},...p]);
+    notify(form.publishNews!==false?"Челлендж запущен и анонс опубликован":"Челлендж запущен");
+  };
   const adminUpdateChallenge=(id,patch)=>{
     setAppChallenges(p=>p.map(ch=>ch.id===id?{...ch,...patch}:ch));
     trackEvent("admin_challenge_update",id,{status:patch.status});
