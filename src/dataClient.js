@@ -24,6 +24,9 @@ export const STORAGE_KEYS = Object.freeze({
   offlineProposals: "pravo-sport-offline-proposals",
   meetupTopicProposals: "pravo-sport-meetup-topic-proposals",
   meetupHeroApplications: "pravo-sport-meetup-hero-applications",
+  adminInbox: "pravo-sport-admin-inbox",
+  rewardOrders: "pravo-sport-reward-orders",
+  organizerMessages: "pravo-sport-organizer-messages",
 });
 
 export const DATA_MODE = API_BASE_URL ? "remote-ready" : "local-demo";
